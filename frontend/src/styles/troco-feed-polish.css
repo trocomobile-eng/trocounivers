@@ -1,0 +1,85 @@
+/* Troco feed / global visual polish — clearer, whiter, more editorial */
+
+:root {
+  --troco-bg:
+    radial-gradient(circle at top left, rgba(45,212,191,0.035), transparent 28%),
+    radial-gradient(circle at top right, rgba(34,211,238,0.03), transparent 32%),
+    linear-gradient(to bottom, #fcfffe 0%, #ffffff 100%);
+
+  --troco-card-bg: rgba(255,255,255,0.94);
+  --troco-card-bg-strong: rgba(255,255,255,0.97);
+  --troco-card-border: rgba(225,238,233,0.96);
+  --troco-shadow-soft: 0 12px 30px rgba(15,23,42,0.045);
+  --troco-shadow-card: 0 16px 38px rgba(15,23,42,0.055);
+}
+
+body,
+.troco-desktop-root,
+.troco-app-bg,
+.troco-page-bg,
+.troco-screen,
+.page {
+  background:
+    radial-gradient(circle at top left, rgba(45,212,191,0.035), transparent 28%),
+    radial-gradient(circle at top right, rgba(34,211,238,0.03), transparent 32%),
+    linear-gradient(to bottom, #fcfffe 0%, #ffffff 100%) !important;
+}
+
+.troco-card,
+.card,
+.troco-panel,
+.troco-row-card {
+  background: rgba(255,255,255,0.94) !important;
+  border-color: rgba(225,238,233,0.96) !important;
+  box-shadow: 0 12px 30px rgba(15,23,42,0.045) !important;
+}
+
+.troco-location-chip {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.78);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.86);
+  padding: 0 11px;
+  color: #1f3f3a;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 18px rgba(15,23,42,0.075);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Existing location chips if any old classes remain */
+[class*="location"],
+[class*="district"] {
+  text-rendering: geometricPrecision;
+}
+
+/* Bottom nav: quieter, less glow, more iOS */
+.bottom-nav,
+.troco-bottom-nav,
+nav[aria-label="Navigation principale"] {
+  box-shadow: 0 12px 34px rgba(15,23,42,0.075) !important;
+}
+
+.bottom-nav *,
+.troco-bottom-nav * {
+  text-shadow: none !important;
+}
+
+/* Common active nav pills in the project */
+.bottom-nav .active,
+.troco-bottom-nav .active,
+.bottom-nav [aria-current="page"],
+.troco-bottom-nav [aria-current="page"] {
+  filter: saturate(0.88) brightness(1.02);
+  box-shadow: 0 8px 20px rgba(20,184,166,0.12) !important;
+}
+
+/* Object cards: cleaner text rhythm */
+.troco-feed-card-title,
+.item-card-title {
+  letter-spacing: -0.035em;
+}

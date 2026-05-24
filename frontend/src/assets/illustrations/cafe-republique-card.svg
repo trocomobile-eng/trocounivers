@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" fill="none">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="640" y2="360" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#F6F3EA"/>
+    <stop offset="1" stop-color="#E1F3EA"/>
+  </linearGradient>
+</defs>
+<rect width="640" height="360" rx="28" fill="url(#bg)"/>
+<rect x="42" y="70" width="556" height="218" rx="28" fill="white" fill-opacity=".34"/>
+<path d="M86 126H554" stroke="#7C9A86" stroke-width="12" stroke-linecap="round" opacity=".35"/>
+<path d="M120 280C202 226 287 226 350 280" stroke="#8B6B4A" stroke-width="16" stroke-linecap="round" opacity=".45"/>
+<path d="M330 280C392 231 470 227 533 277" stroke="#8B6B4A" stroke-width="16" stroke-linecap="round" opacity=".45"/>
+<circle cx="158" cy="176" r="28" fill="#E8D8BE"/>
+<circle cx="282" cy="166" r="32" fill="#E8D8BE"/>
+<circle cx="434" cy="170" r="29" fill="#E8D8BE"/>
+<path d="M122 289V180" stroke="#67A77A" stroke-width="12" stroke-linecap="round"/>
+<path d="M122 224C148 194 178 203 188 207C177 235 152 251 122 252V224Z" fill="#A7DDB6"/>
+<path d="M520 288V156" stroke="#67A77A" stroke-width="12" stroke-linecap="round"/>
+<path d="M520 217C493 188 462 196 452 201C464 230 490 246 520 246V217Z" fill="#A7DDB6"/>
+<text x="44" y="330" font-family="Inter, Arial" font-size="26" font-weight="800" fill="#122033">Café République</text>
+</svg>

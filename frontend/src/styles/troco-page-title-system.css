@@ -1,0 +1,95 @@
+/* Troco global page title system */
+
+.troco-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.troco-page-header-top {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.troco-page-title-block {
+  max-width: 460px;
+}
+
+.troco-page-eyebrow {
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #0f9f9a;
+}
+
+.troco-page-title {
+  margin: 0;
+  font-size: 40px;
+  line-height: 0.96;
+  font-weight: 850;
+  letter-spacing: -0.055em;
+  color: #081225;
+}
+
+.troco-page-subtitle {
+  margin-top: 12px;
+  max-width: 330px;
+  font-size: 17px;
+  line-height: 1.55;
+  font-weight: 500;
+  color: rgb(100 116 139);
+}
+
+.troco-header-avatar {
+  height: 40px;
+  width: 40px;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.8);
+  background: white;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.055);
+}
+
+.troco-header-avatar-fallback {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #21c7ff, #14b8a6, #35d18f);
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+@media (min-width: 768px) {
+  .troco-page-title {
+    font-size: 40px;
+  }
+
+  .troco-page-subtitle {
+    max-width: 460px;
+  }
+}
+
+/* Optional helper: use when a page cannot yet use TrocoPageHeader */
+.troco-title-reset {
+  font-size: 40px !important;
+  line-height: 0.96 !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.055em !important;
+  color: #081225 !important;
+}
+
+.troco-subtitle-reset {
+  margin-top: 12px !important;
+  font-size: 17px !important;
+  line-height: 1.55 !important;
+  font-weight: 500 !important;
+  color: rgb(100 116 139) !important;
+}

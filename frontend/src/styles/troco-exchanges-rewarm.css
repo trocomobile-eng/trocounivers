@@ -1,0 +1,14 @@
+/* ExchangesPage rewarm refinement */
+.troco-rewarm-cta {
+  background: linear-gradient(135deg, #18B89D 0%, #21C986 100%) !important;
+  color: white !important;
+  box-shadow: 0 12px 30px rgba(24,184,157,0.16) !important;
+  border: 0 !important;
+}
+
+.troco-main-page {
+  background:
+    radial-gradient(circle at top left, rgba(45,212,191,0.035), transparent 28%),
+    radial-gradient(circle at top right, rgba(16,185,129,0.025), transparent 34%),
+    linear-gradient(to bottom, #fcfffd 0%, #ffffff 100%) !important;
+}

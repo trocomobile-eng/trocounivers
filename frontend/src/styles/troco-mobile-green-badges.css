@@ -1,0 +1,7 @@
+/* Troco mobile color tune */
+.troco-notification-green [class*="bg-rose"],
+.troco-notification-green [class*="bg-red"],
+.troco-bottom-green-badges [class*="bg-rose"],
+.troco-bottom-green-badges [class*="bg-red"] {
+  background-color: #18B89D !important;
+}

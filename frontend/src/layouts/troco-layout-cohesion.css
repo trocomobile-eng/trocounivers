@@ -1,0 +1,141 @@
+
+:root {
+  --troco-bg:
+    radial-gradient(circle at 18% 6%, rgba(45,212,191,0.045), transparent 30%),
+    radial-gradient(circle at 86% 10%, rgba(34,211,238,0.025), transparent 32%),
+    linear-gradient(to bottom, #fbfffe 0%, #ffffff 100%);
+
+  --troco-card-bg: rgba(255,255,255,0.965);
+  --troco-card-border: rgba(225,238,233,0.96);
+  --troco-text: #102033;
+  --troco-muted: #66758a;
+  --troco-green: #18a98e;
+  --troco-green-strong: #1abea3;
+  --troco-shadow: 0 12px 30px rgba(15,23,42,0.045);
+  --troco-shadow-strong: 0 18px 44px rgba(15,23,42,0.06);
+}
+
+.troco-desktop-shell,
+.troco-app-bg,
+.troco-page-bg,
+.troco-main-page {
+  background: var(--troco-bg) !important;
+  color: var(--troco-text);
+}
+
+.troco-page-container {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding: 24px 32px 56px;
+}
+
+.troco-page-container--wide {
+  max-width: 1320px;
+}
+
+.troco-compact-header {
+  margin-bottom: 18px;
+}
+
+.troco-compact-header-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 520px);
+  align-items: end;
+  gap: 24px;
+}
+
+@media (max-width: 1023px) {
+  .troco-page-container {
+    padding: 10px 16px 96px;
+  }
+
+  .troco-compact-header-row {
+    display: block;
+  }
+}
+
+.troco-card-surface {
+  background: var(--troco-card-bg);
+  border: 1px solid var(--troco-card-border);
+  box-shadow: var(--troco-shadow);
+}
+
+.troco-search-surface {
+  height: 48px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(203,230,222,0.86);
+  box-shadow: 0 10px 26px rgba(15,23,42,0.04);
+}
+
+.troco-soft-title {
+  color: var(--troco-text);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+}
+
+.troco-soft-muted {
+  color: var(--troco-muted);
+}
+
+.troco-accent {
+  color: var(--troco-green);
+}
+
+.btn-primary,
+.troco-cta {
+  background: linear-gradient(135deg, #1abea3 0%, #36c982 100%) !important;
+  color: white !important;
+  box-shadow: 0 10px 26px rgba(26,190,163,0.14) !important;
+  border: 0 !important;
+}
+
+
+
+/* Header actions consistency */
+.troco-page-header button[aria-label*="Notification"],
+.troco-page-header button[aria-label*="notification"],
+.troco-page-header button[aria-label="Notifications"] {
+  color: #18A98E !important;
+}
+
+.troco-page-header button[aria-label*="Notification"] span,
+.troco-page-header button[aria-label*="notification"] span,
+.troco-page-header button[aria-label="Notifications"] span {
+  background-color: #18A98E !important;
+}
+
+.troco-bottom-nav-badge,
+nav span[class*="bg-rose"],
+nav span[class*="rose"] {
+  background-color: #18A98E !important;
+}
+
+
+/* Unified page header: no duplicate logo in desktop content */
+.troco-page-header {
+  width: 100%;
+}
+
+.troco-page-header .troco-soft-title {
+  color: #102033;
+}
+
+.troco-page-header button[aria-label*="Notification"],
+.troco-page-header button[aria-label*="notification"],
+.troco-page-header button[aria-label="Notifications"] {
+  color: #18A98E !important;
+}
+
+.troco-page-header button[aria-label*="Notification"] span,
+.troco-page-header button[aria-label*="notification"] span,
+.troco-page-header button[aria-label="Notifications"] span {
+  background-color: #18A98E !important;
+}
+
+@media (min-width: 1024px) {
+  .troco-page-header {
+    margin-top: 0;
+  }
+}

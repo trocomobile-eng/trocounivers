@@ -1,308 +1,576 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { db, storage } from "../firebase";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
 import {
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
-} from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { TopBar, LoadingSpinner, EmptyState, CategoryBadge } from "../components/UI";
+  ArrowLeft,
+  Gift,
+  Heart,
+  MapPin,
+  MessageCircle,
+  PenLine,
+  Repeat2,
+  Share2,
+} from "lucide-react";
+
+import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import ItemCard from "../components/ItemCard";
 import BottomNav from "../components/BottomNav";
-import { CATEGORIES } from "../constants/categories";
+
+import {
+  formatLocation,
+  getDisplayItemDetails,
+  getDisplayItemType,
+  getItemImage,
+} from "../utils/format";
+import { getTradePreferences, normalizePreferenceLabel } from "../components/profile/profileUtils";
+
+function clean(value = "") {
+  return String(value).trim().replace(/\s+/g, " ");
+}
+
+function getOwnerId(item) {
+  return item?.ownerId || item?.userId || item?.ownerUid || item?.createdBy || item?.uid || "";
+}
+
+function isOwnItem(item, user) {
+  if (!item || !user?.uid) return false;
+
+  const userId = String(user.uid);
+  const email = String(user.email || "").toLowerCase();
+
+  return (
+    String(item.ownerId || "") === userId ||
+    String(item.userId || "") === userId ||
+    String(item.ownerUid || "") === userId ||
+    String(item.createdBy || "") === userId ||
+    String(item.uid || "") === userId ||
+    (email && String(item.ownerEmail || "").toLowerCase() === email) ||
+    (email && String(item.userEmail || "").toLowerCase() === email) ||
+    (email && String(item.createdByEmail || "").toLowerCase() === email)
+  );
+}
+
+function getOwnerName(item, ownerProfile) {
+  return (
+    clean(item?.ownerName) ||
+    clean(item?.ownerDisplayName) ||
+    clean(ownerProfile?.displayName) ||
+    clean(item?.ownerEmail) ||
+    "Utilisateur Troco"
+  );
+}
+
+function getOwnerAvatar(item, ownerProfile) {
+  return (
+    item?.ownerPhotoURL ||
+    item?.ownerAvatar ||
+    ownerProfile?.photoURL ||
+    ownerProfile?.avatar ||
+    ""
+  );
+}
+
+function getCondition(item) {
+  return item?.condition || item?.conditionLabel || item?.itemCondition || item?.state || "Très bon état";
+}
+
+function getPostedDate(item) {
+  const raw =
+    item?.createdAt ||
+    item?.publishedAt ||
+    item?.postedAt ||
+    item?.updatedAt ||
+    item?.date ||
+    null;
+
+  if (!raw) return "Posté récemment";
+
+  let date;
+
+  if (typeof raw?.toDate === "function") {
+    date = raw.toDate();
+  } else if (raw?.seconds) {
+    date = new Date(raw.seconds * 1000);
+  } else {
+    date = new Date(raw);
+  }
+
+  if (!date || Number.isNaN(date.getTime())) return "Posté récemment";
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 5) return "Posté à l’instant";
+  if (diffMinutes < 60) return `Posté il y a ${diffMinutes} min`;
+  if (diffHours < 24) return `Posté il y a ${diffHours} h`;
+  if (diffDays === 1) return "Posté hier";
+  if (diffDays < 7) return `Posté il y a ${diffDays} jours`;
+  if (diffDays < 31) return `Posté il y a ${Math.floor(diffDays / 7)} sem.`;
+
+  return `Posté le ${date.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+  })}`;
+}
+
+function getImages(item) {
+  const images = [
+    ...(Array.isArray(item?.images) ? item.images : []),
+    ...(Array.isArray(item?.imageUrls) ? item.imageUrls : []),
+    ...(Array.isArray(item?.photos) ? item.photos : []),
+    item?.imageUrl,
+    item?.photoURL,
+    item?.photoUrl,
+  ].filter(Boolean);
+
+  return [...new Set(images)];
+}
+
+function shortName(name = "") {
+  const cleaned = clean(name);
+  if (!cleaned) return "Utilisateur";
+  if (cleaned.includes("@")) return cleaned.split("@")[0];
+
+  const parts = cleaned.split(" ");
+  if (parts.length <= 1) return cleaned;
+
+  return `${parts[0]} ${parts[1]?.charAt(0) || ""}.`.trim();
+}
+
+function PreferenceChip({ children }) {
+  return (
+    <span className="rounded-[14px] bg-slate-50 px-4 py-2 text-[14px] font-bold text-slate-700">
+      {children}
+    </span>
+  );
+}
 
 export default function ItemDetailPage() {
-  const { id } = useParams();
+  const { id, itemId } = useParams();
+  const requestedItemId = id || itemId;
+
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
 
-  const [item, setItem] = useState(null);
-  const [otherItems, setOtherItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    category: "",
-  });
-
-  const isMine = item?.ownerId === user?.uid;
-  const images = item?.images?.length ? item.images : item?.imageUrl ? [item.imageUrl] : [];
-
-  const load = async () => {
-    setLoading(true);
-
-    try {
-      const snap = await getDoc(doc(db, "items", id));
-
-      if (!snap.exists()) {
-        setItem(null);
-        return;
-      }
-
-      const data = { id: snap.id, ...snap.data() };
-      setItem(data);
-
-      setForm({
-        title: data.title || "",
-        description: data.description || "",
-        category: data.category || "",
-      });
-
-      if (data.ownerId) {
-        const q = query(
-          collection(db, "items"),
-          where("ownerId", "==", data.ownerId),
-          where("status", "==", "active")
-        );
-
-        const snapshot = await getDocs(q);
-
-        const items = snapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((i) => i.id !== data.id);
-
-        setOtherItems(items);
-      }
-    } catch (error) {
-      console.error("Erreur chargement objet :", error);
-      setItem(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [item, setItem] = useState(location.state?.item || null);
+  const [ownerProfile, setOwnerProfile] = useState(null);
+  const [loading, setLoading] = useState(!location.state?.item);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
-    load();
-  }, [id]);
+    async function loadItem() {
+      if (!requestedItemId) return;
 
-  const saveChanges = async () => {
-    if (!isMine) return;
+      setLoading(true);
 
-    setSaving(true);
+      try {
+        const snapshot = await getDoc(doc(db, "items", requestedItemId));
 
-    try {
-      await updateDoc(doc(db, "items", id), {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        category: form.category,
-        updatedAt: serverTimestamp(),
-      });
+        if (!snapshot.exists()) {
+          setItem(null);
+          setOwnerProfile(null);
+          return;
+        }
 
-      setEditing(false);
-      await load();
-    } catch (error) {
-      console.error("Erreur modification :", error);
-      alert("Erreur lors de la modification.");
-    } finally {
-      setSaving(false);
+        const loadedItem = { id: snapshot.id, ...snapshot.data() };
+        setItem(loadedItem);
+
+        const ownerId = getOwnerId(loadedItem);
+
+        if (ownerId) {
+          try {
+            const ownerSnapshot = await getDoc(doc(db, "users", ownerId));
+            setOwnerProfile(ownerSnapshot.exists() ? ownerSnapshot.data() : null);
+          } catch (error) {
+            console.error("Erreur chargement profil propriétaire :", error);
+            setOwnerProfile(null);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur chargement objet :", error);
+        setItem(null);
+        setOwnerProfile(null);
+      } finally {
+        setLoading(false);
+      }
     }
-  };
 
-  const handleAddPhoto = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !isMine) return;
+    loadItem();
+  }, [requestedItemId]);
 
-    setSaving(true);
+  const images = useMemo(() => getImages(item), [item]);
+  const mainImage = images[activeImageIndex] || getItemImage(item);
 
-    try {
-      const cleanName = file.name.replace(/\s+/g, "-").toLowerCase();
-      const imageRef = ref(storage, `items/${user.uid}/${Date.now()}-${cleanName}`);
+  const ownerName = getOwnerName(item, ownerProfile);
+  const ownerAvatar = getOwnerAvatar(item, ownerProfile);
+  const isOwner = isOwnItem(item, user);
 
-      await uploadBytes(imageRef, file);
-      const url = await getDownloadURL(imageRef);
+  const title = getDisplayItemType(item) || item?.title || item?.itemType || item?.type || "Objet";
+  const details = getDisplayItemDetails(item) || item?.category || "";
+  const condition = getCondition(item);
+  const itemLocation = item ? formatLocation(item) : "Paris";
+  const postedDate = getPostedDate(item);
+  const description =
+    clean(item?.description || item?.details || item?.itemDetails) ||
+    "Encore en bon état, disponible pour un échange.";
 
-      const nextImages = [...images, url];
+  function goToEdit() {
+    if (!item?.id) return;
 
-      await updateDoc(doc(db, "items", id), {
-        imageUrl: item.imageUrl || url,
-        images: nextImages,
-        updatedAt: serverTimestamp(),
-      });
+    navigate(`/items/${item.id}/edit`, {
+      state: { item },
+    });
+  }
 
-      await load();
-    } catch (error) {
-      console.error("Erreur ajout photo :", error);
-      alert("Erreur lors de l’ajout de photo.");
-    } finally {
-      setSaving(false);
+  function proposeExchange() {
+    if (!user?.uid) {
+      navigate("/login");
+      return;
     }
-  };
 
-  const deleteItem = async () => {
-    if (!isMine) return;
-    if (!confirm("Supprimer cet objet ?")) return;
+    if (!item?.id) return;
 
-    setSaving(true);
-
-    try {
-      await deleteDoc(doc(db, "items", id));
-      navigate("/profile");
-    } catch (error) {
-      console.error("Erreur suppression :", error);
-      alert("Erreur lors de la suppression.");
-    } finally {
-      setSaving(false);
+    if (isOwner) {
+      goToEdit();
+      return;
     }
-  };
 
-  if (loading) return <LoadingSpinner />;
+    navigate(`/propose/${item.id}`);
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="page">
+        <main className="px-5 pb-32 pt-5">
+          <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 text-center text-sm font-bold text-slate-500 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            Chargement de l’objet...
+          </div>
+        </main>
+
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (!item) {
-    return <EmptyState icon="📦" title="Objet introuvable" />;
+    return (
+      <div className="page">
+        <main className="px-5 pb-32 pt-5">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/82 text-slate-700 shadow-[0_8px_22px_rgba(15,23,42,0.04)]"
+            aria-label="Retour"
+          >
+            <ArrowLeft size={21} strokeWidth={2.3} />
+          </button>
+
+          <div className="rounded-[28px] border border-white/80 bg-white/82 p-7 text-center shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <p className="text-lg font-black text-[#081225]">Objet introuvable</p>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              Cet objet n’existe plus ou n’est pas disponible.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate("/feed")}
+              className="mt-5 rounded-[20px] bg-gradient-to-r from-[#2ECC8A] to-cyan-400 px-5 py-3 text-sm font-black text-white"
+            >
+              Retour au feed
+            </button>
+          </div>
+        </main>
+
+        <BottomNav />
+      </div>
+    );
   }
 
   return (
-    <div className="page max-w-lg mx-auto min-h-screen bg-gradient-to-b from-sky-100 via-white to-emerald-50">
-      <TopBar back={() => navigate(-1)} title={isMine ? "Mon objet" : "Objet"} />
-
-      <div className="px-5 pb-24 space-y-5">
-        <div className="rounded-[2rem] overflow-hidden bg-white/80 shadow-sm border border-white">
-          {images.length > 0 ? (
-            <div className="flex overflow-x-auto snap-x">
-              {images.map((url) => (
+    <div className="page">
+      <main className="mx-auto max-w-[760px] px-5 pb-36 pt-4">
+        <section className="relative">
+          <div className="overflow-hidden rounded-[32px] bg-slate-100 shadow-[0_12px_34px_rgba(15,23,42,0.07)]">
+            <div className="aspect-[1.3/1] w-full">
+              {mainImage ? (
                 <img
-                  key={url}
-                  src={url}
-                  alt={item.title}
-                  className="w-full h-72 object-cover flex-shrink-0 snap-center"
+                  src={mainImage}
+                  alt={title}
+                  className="h-full w-full object-cover"
                 />
-              ))}
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-5xl text-slate-300">
+                  📦
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="h-72 flex items-center justify-center text-gray-400">
-              Pas d’image
-            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/86 text-[#081225] shadow-[0_8px_22px_rgba(15,23,42,0.08)] backdrop-blur-xl"
+            aria-label="Retour"
+          >
+            <ArrowLeft size={22} strokeWidth={2.4} />
+          </button>
+
+          <button
+            type="button"
+            onClick={isOwner ? goToEdit : undefined}
+            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/86 text-[#081225] shadow-[0_8px_22px_rgba(15,23,42,0.08)] backdrop-blur-xl"
+            aria-label={isOwner ? "Modifier l’objet" : "Ajouter aux favoris"}
+          >
+            {isOwner ? (
+              <PenLine size={20} strokeWidth={2.25} />
+            ) : (
+              <Heart size={21} strokeWidth={2.2} />
+            )}
+          </button>
+
+          {images.length > 1 && (
+            <>
+              <div className="absolute bottom-4 left-1/2 rounded-full bg-black/42 px-3 py-1 text-[12px] font-black text-white backdrop-blur-md -translate-x-1/2">
+                {activeImageIndex + 1}/{images.length}
+              </div>
+
+              <div className="mt-3 flex justify-center gap-2">
+                {images.map((image, index) => (
+                  <button
+                    key={image}
+                    type="button"
+                    onClick={() => setActiveImageIndex(index)}
+                    className={[
+                      "h-2 rounded-full transition",
+                      index === activeImageIndex ? "w-5 bg-[#0f9f9a]" : "w-2 bg-slate-300",
+                    ].join(" ")}
+                    aria-label={`Voir l’image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </>
           )}
-        </div>
+        </section>
 
-        {isMine && (
-          <div className="bg-white/90 rounded-3xl p-4 shadow-sm border border-white space-y-3">
-            <p className="text-xs uppercase font-black text-slate-400">Gestion de mon objet</p>
+        <section className="mt-5 rounded-[30px] border border-white/90 bg-white/92 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#0f9f9a]">
+                {isOwner ? "Ton objet" : "Objet proposé"}
+              </p>
 
-            <div className="grid grid-cols-2 gap-2">
-              <button className="btn-secondary w-full" onClick={() => setEditing((v) => !v)}>
-                {editing ? "Annuler" : "Modifier"}
-              </button>
-
-              <label className="btn-secondary w-full text-center cursor-pointer">
-                Ajouter photo
-                <input type="file" accept="image/*" className="hidden" onChange={handleAddPhoto} />
-              </label>
+              <h1 className="mt-2 text-[24px] font-black leading-[0.98] tracking-[-0.055em] text-[#081225] sm:text-[28px]">
+                {title}
+              </h1>
             </div>
 
             <button
-              className="w-full rounded-xl py-3 font-semibold bg-red-50 text-red-600"
-              onClick={deleteItem}
-              disabled={saving}
+              type="button"
+              onClick={isOwner ? goToEdit : undefined}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#0f9f9a] shadow-[0_8px_22px_rgba(15,23,42,0.05)]"
+              aria-label={isOwner ? "Modifier l’objet" : "Partager"}
             >
-              Supprimer l’objet
+              {isOwner ? (
+                <PenLine size={20} strokeWidth={2.25} />
+              ) : (
+                <Share2 size={20} strokeWidth={2.25} />
+              )}
             </button>
           </div>
-        )}
 
-        <div className="bg-white/90 rounded-3xl p-5 shadow-sm border border-white space-y-3">
-          {editing ? (
+          <div className="mt-3 flex items-center gap-2 text-[14px] font-semibold text-slate-500">
+            {ownerAvatar ? (
+              <img
+                src={ownerAvatar}
+                alt={ownerName}
+                className="h-7 w-7 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[12px] font-black text-slate-500">
+                {ownerName.charAt(0).toUpperCase()}
+              </span>
+            )}
+
+            <span>
+              {postedDate} par{" "}
+              <span className="font-black text-slate-700">
+                {isOwner ? "toi" : shortName(ownerName)}
+              </span>
+            </span>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-[14px] bg-[#E8F7EF] px-3 py-1.5 text-[14px] font-black text-[#0f9f9a]">
+              {condition}
+            </span>
+
+            {details && (
+              <span className="rounded-[14px] bg-slate-50 px-3 py-1.5 text-[14px] font-bold text-slate-600">
+                {details}
+              </span>
+            )}
+
+            {isOwner && (
+              <span className="rounded-[14px] bg-sky-50 px-3 py-1.5 text-[14px] font-black text-sky-700">
+                Visible dans ta bibliothèque
+              </span>
+            )}
+          </div>
+
+          <p className="mt-5 flex items-center gap-3 text-[17px] font-semibold text-slate-500">
+            <MapPin size={21} className="text-[#0f9f9a]" strokeWidth={2.25} />
+            {itemLocation}
+          </p>
+
+          <div className="mt-6 h-px bg-slate-100" />
+
+          <div className="mt-5">
+            <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#0f9f9a]">
+              Description
+            </p>
+
+            <p className="mt-3 text-[16px] font-medium leading-relaxed text-slate-600">
+              {description}
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[30px] border border-white/90 bg-white/92 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+          {isOwner ? (
             <>
-              <input
-                className="input"
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="Titre"
-              />
+              <p className="text-[17px] font-semibold leading-relaxed text-[#081225]">
+                C’est ton objet. Tu peux modifier les photos, le titre, la catégorie ou le retirer de Troco.
+              </p>
 
-              <textarea
-                className="input resize-none"
-                rows={3}
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Description"
-              />
-
-              <select
-                className="input"
-                value={form.category}
-                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+              <button
+                type="button"
+                onClick={goToEdit}
+                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-[#2ECC8A] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
               >
-                <option value="">Catégorie</option>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-
-              <button className="btn-primary w-full" onClick={saveChanges} disabled={saving}>
-                {saving ? "Sauvegarde..." : "Sauvegarder"}
+                <PenLine size={20} strokeWidth={2.4} />
+                Modifier mon objet
               </button>
             </>
           ) : (
             <>
-              <CategoryBadge category={item.category} />
-
-              <h1 className="text-xl font-black text-slate-900">
-                {item.title || "Sans titre"}
-              </h1>
-
-              <p className="text-sm text-slate-600 leading-relaxed">
-                {item.description || "Aucune description."}
+              <p className="text-[17px] font-semibold leading-relaxed text-[#081225]">
+                Tu as un objet qui pourrait plaire à {shortName(ownerName)} ?
               </p>
 
-              <div className="inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-100 px-3 py-1.5">
-                <span className="text-xs">📍</span>
-                <p className="text-xs font-bold text-slate-600">
-                  {item.locationArea || item.locationDetails || "Paris"}
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={proposeExchange}
+                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-[#2ECC8A] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
+              >
+                <Repeat2 size={20} strokeWidth={2.4} />
+                Proposer un troc
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/messages")}
+                className="mt-4 flex w-full items-center justify-center gap-2 text-[16px] font-black text-[#0f766e]"
+              >
+                <MessageCircle size={20} strokeWidth={2.3} />
+                Ou envoyer un message
+              </button>
             </>
           )}
-        </div>
+        </section>
 
-        {!isMine && (
-          <>
-            <div className="bg-white/90 rounded-3xl p-4 shadow-sm border border-white flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-sky-500 to-emerald-500 text-white flex items-center justify-center font-black">
-                {item.ownerEmail?.[0]?.toUpperCase() || "U"}
+        {!isOwner && (() => {
+          const ownerPrefs = getTradePreferences(ownerProfile || {});
+          const hasLooking = ownerPrefs.lookingFor.length > 0;
+          const hasNotLooking = ownerPrefs.notLookingFor.length > 0;
+
+          return (
+            <section className="mt-5 rounded-[30px] border border-white/90 bg-white/92 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                  <Gift size={22} strokeWidth={2.25} />
+                </div>
+                <div>
+                  <p className="text-[12px] font-black uppercase tracking-[0.22em] text-emerald-700">
+                    Ses envies
+                  </p>
+                  <h3 className="mt-1 text-[24px] font-black leading-[1] tracking-[-0.04em] text-[#081225]">
+                    Ce qu'il recherche
+                  </h3>
+                </div>
               </div>
 
-              <div>
-                <p className="font-semibold text-slate-900">
-                  {item.ownerName || item.ownerEmail || "Utilisateur Troco"}
+              {hasLooking ? (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {ownerPrefs.lookingFor.map((tag) => (
+                    <PreferenceChip key={tag}>{normalizePreferenceLabel(tag)}</PreferenceChip>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-[20px] bg-slate-50 p-4 text-[15px] font-medium leading-relaxed text-slate-500">
+                  {shortName(ownerName)} n'a pas encore précisé ses envies.{" "}
+                  <span className="font-bold text-emerald-700">Tu peux quand même proposer un troc.</span>
+                </div>
+              )}
+
+              {ownerPrefs.note ? (
+                <p className="mt-4 text-[15px] font-medium leading-relaxed text-slate-500">
+                  {ownerPrefs.note}
                 </p>
-                <p className="text-xs text-slate-500">Propriétaire de l’objet</p>
-              </div>
-            </div>
+              ) : hasLooking ? (
+                <p className="mt-4 text-[14px] font-medium leading-relaxed text-slate-400">
+                  Ces indices t'aident à proposer un objet qui pourrait vraiment lui plaire.
+                </p>
+              ) : null}
 
-            <button onClick={() => navigate(`/propose/${item.id}`)} className="btn-primary w-full">
-              Proposer un échange
-            </button>
-          </>
-        )}
+              {hasNotLooking && (
+                <div className="mt-5">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                    Il n'est pas intéressé par
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {ownerPrefs.notLookingFor.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-[14px] bg-slate-100 px-4 py-2 text-[13px] font-bold text-slate-500"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {!isMine && otherItems.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-sm font-black text-slate-500 uppercase">
-              Autres objets de cet utilisateur
-            </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  const ownerId = getOwnerId(item);
+                  if (ownerId) navigate("/users/" + ownerId);
+                }}
+                className="mt-5 text-[13px] font-black text-[#0f9f9a]"
+              >
+                Voir le profil complet de {shortName(ownerName)} →
+              </button>
+            </section>
+          );
+        })()}
+      </main>
 
-            <div className="grid grid-cols-2 gap-4">
-              {otherItems.slice(0, 4).map((i) => (
-                <ItemCard key={i.id} item={i} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {!isOwner && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/60 bg-white/92 px-4 pb-[calc(72px+env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-xl lg:hidden">
+          <button
+            type="button"
+            onClick={proposeExchange}
+            className="flex h-[54px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-[#2ECC8A] text-[16px] font-black text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition active:scale-[0.98]"
+          >
+            <Repeat2 size={19} strokeWidth={2.4} />
+            Proposer un troc avec {shortName(ownerName)}
+          </button>
+        </div>
+      )}
 
       <BottomNav />
     </div>

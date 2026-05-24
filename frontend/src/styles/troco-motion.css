@@ -1,0 +1,105 @@
+/* Troco unified motion system */
+
+:root {
+  --troco-ease: cubic-bezier(.2,.8,.2,1);
+  --troco-fast: 160ms;
+  --troco-base: 220ms;
+  --troco-slow: 320ms;
+}
+
+.troco-page-enter {
+  animation: trocoPageEnter 360ms var(--troco-ease) both;
+}
+
+.troco-soft-enter {
+  animation: trocoSoftEnter 420ms var(--troco-ease) both;
+}
+
+.troco-press {
+  transition:
+    transform var(--troco-fast) var(--troco-ease),
+    box-shadow var(--troco-base) ease,
+    background var(--troco-base) ease,
+    opacity var(--troco-base) ease;
+}
+
+.troco-press:active {
+  transform: scale(0.985);
+}
+
+.troco-hover-lift {
+  transition:
+    transform var(--troco-base) var(--troco-ease),
+    box-shadow 240ms ease,
+    background 240ms ease,
+    border-color 240ms ease;
+}
+
+.troco-image-zoom {
+  transition:
+    transform 520ms var(--troco-ease),
+    opacity 260ms ease,
+    filter 260ms ease;
+}
+
+.troco-focus-ring {
+  transition:
+    transform var(--troco-base) var(--troco-ease),
+    box-shadow 240ms ease,
+    border-color 240ms ease,
+    background 240ms ease;
+}
+
+@media (hover:hover) {
+  .troco-hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .troco-hover-lift:hover .troco-image-zoom {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes trocoPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes trocoSoftEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .troco-page-enter,
+  .troco-soft-enter {
+    animation: none !important;
+  }
+
+  .troco-press,
+  .troco-hover-lift,
+  .troco-image-zoom,
+  .troco-focus-ring {
+    transition: none !important;
+  }
+
+  .troco-press:active,
+  .troco-hover-lift:hover,
+  .troco-hover-lift:hover .troco-image-zoom {
+    transform: none !important;
+  }
+}

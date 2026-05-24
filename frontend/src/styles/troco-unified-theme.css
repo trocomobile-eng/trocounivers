@@ -1,0 +1,385 @@
+/* Troco unified desktop system — single source of truth */
+
+:root {
+  color-scheme: light;
+
+  --troco-ink: #081225;
+  --troco-muted: #64748b;
+  --troco-muted-soft: #94a3b8;
+
+  --troco-mint: #2dd4bf;
+  --troco-cyan: #22d3ee;
+  --troco-green: #34d399;
+  --troco-sage: #4b7b63;
+
+  --troco-page-max-width: 1480px;
+  --troco-sidebar-width: 236px;
+
+  --troco-bg:
+    radial-gradient(circle at top left, rgba(45,212,191,0.05), transparent 28%),
+    radial-gradient(circle at top right, rgba(34,211,238,0.04), transparent 32%),
+    linear-gradient(to bottom, #fbfffe 0%, #ffffff 100%);
+
+  --troco-card-bg: rgba(255,255,255,0.92);
+  --troco-card-bg-strong: rgba(255,255,255,0.96);
+  --troco-card-border: rgba(220,235,230,0.9);
+
+  --troco-radius-xl: 30px;
+  --troco-radius-lg: 24px;
+  --troco-radius-md: 18px;
+
+  --troco-shadow-soft: 0 12px 34px rgba(15,23,42,0.05);
+  --troco-shadow-card: 0 16px 44px rgba(15,23,42,0.06);
+  --troco-shadow-light: 0 8px 24px rgba(15,23,42,0.035);
+
+  --troco-content-px: 32px;
+  --troco-content-py: 32px;
+  --troco-gap: 24px;
+}
+
+body {
+  color: var(--troco-ink);
+  background: var(--troco-bg);
+}
+
+.troco-app-bg,
+.troco-page-bg,
+.troco-screen,
+.page {
+  background: var(--troco-bg) !important;
+}
+
+.troco-desktop-root {
+  min-height: 100vh;
+  color: var(--troco-ink);
+  background: var(--troco-bg);
+}
+
+.troco-desktop-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.troco-desktop-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.troco-desktop-page,
+.troco-shell {
+  width: 100%;
+  max-width: var(--troco-page-max-width);
+  margin-inline: auto;
+  padding: var(--troco-content-py) var(--troco-content-px) 80px;
+}
+
+.troco-desktop-section {
+  margin-top: var(--troco-gap);
+}
+
+.troco-desktop-sidebar {
+  position: sticky;
+  top: 0;
+  display: none;
+  width: var(--troco-sidebar-width);
+  height: 100vh;
+  flex-shrink: 0;
+  flex-direction: column;
+  padding: 28px 18px 20px;
+  border-right: 1px solid rgba(220,235,230,0.82);
+  background: rgba(255,255,255,0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@media (min-width: 1024px) {
+  .troco-desktop-sidebar {
+    display: flex;
+  }
+}
+
+.troco-sidebar-logo {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 24px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.troco-sidebar-logo img {
+  width: 124px;
+  height: auto;
+  object-fit: contain;
+}
+
+.troco-sidebar-publish {
+  display: inline-flex;
+  height: 46px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  border: 0;
+  border-radius: 18px;
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22d3ee 0%, #34d399 100%);
+  box-shadow: 0 10px 22px rgba(20,184,166,0.12);
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.troco-sidebar-publish:active {
+  transform: scale(0.985);
+}
+
+.troco-sidebar-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.troco-sidebar-link {
+  display: flex;
+  height: 42px;
+  align-items: center;
+  gap: 12px;
+  border-radius: 15px;
+  padding-inline: 13px;
+  color: #65747b;
+  font-size: 14px;
+  font-weight: 800;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.troco-sidebar-link:hover {
+  color: var(--troco-ink);
+  background: rgba(255,255,255,0.72);
+}
+
+.troco-sidebar-link.is-active {
+  color: #123f35;
+  background: rgba(236,253,245,0.78);
+  box-shadow: inset 0 0 0 1px rgba(190,230,215,0.6);
+}
+
+.troco-sidebar-note {
+  margin-top: auto;
+  border: 1px solid rgba(220,235,230,0.72);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.68);
+  padding: 14px;
+  box-shadow: var(--troco-shadow-light);
+}
+
+.troco-sidebar-note p {
+  margin: 0;
+  color: #65747b;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.troco-sidebar-note button {
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--troco-ink);
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.troco-page-header {
+  margin-bottom: 28px;
+}
+
+.troco-page-header.is-compact {
+  margin-bottom: 22px;
+}
+
+.troco-page-header-top {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.troco-page-header-left {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+}
+
+.troco-page-header-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.troco-header-logo {
+  display: flex;
+  height: 44px;
+  align-items: center;
+}
+
+.troco-header-logo img {
+  width: 112px;
+  max-width: 38vw;
+  height: auto;
+  object-fit: contain;
+}
+
+.troco-header-avatar,
+.troco-header-round-button {
+  display: flex;
+  height: 40px;
+  width: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(220,235,230,0.88);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.90);
+  color: var(--troco-ink);
+  box-shadow: var(--troco-shadow-light);
+  transition: transform 160ms ease;
+}
+
+.troco-header-avatar img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.troco-header-avatar span {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #315f51;
+  font-size: 14px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #e8f4ef, #ddf1ea, #f6efe5);
+}
+
+.troco-page-heading {
+  margin-top: 22px;
+}
+
+.troco-page-header.is-compact .troco-page-heading {
+  margin-top: 14px;
+}
+
+.troco-page-eyebrow {
+  margin: 0 0 8px;
+  color: #0f9f9a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.troco-page-title {
+  margin: 0;
+  color: var(--troco-ink);
+  font-size: clamp(34px, 3vw, 48px);
+  font-weight: 900;
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+}
+
+.troco-page-subtitle {
+  max-width: 560px;
+  margin: 12px 0 0;
+  color: #64748b;
+  font-size: 15.5px;
+  font-weight: 550;
+  line-height: 1.55;
+}
+
+.troco-card,
+.card {
+  border: 1px solid var(--troco-card-border) !important;
+  border-radius: var(--troco-radius-xl) !important;
+  background: var(--troco-card-bg) !important;
+  box-shadow: var(--troco-shadow-soft) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.troco-card-strong {
+  border: 1px solid var(--troco-card-border) !important;
+  border-radius: calc(var(--troco-radius-xl) + 2px) !important;
+  background: var(--troco-card-bg-strong) !important;
+  box-shadow: var(--troco-shadow-card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.troco-search,
+.troco-search-input,
+.troco-desktop-search {
+  height: 54px;
+  border: 1px solid #e6efeb;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.96);
+  box-shadow: 0 8px 24px rgba(15,23,42,0.045);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.troco-primary-btn,
+.troco-primary-button,
+.btn-primary {
+  border: 0 !important;
+  border-radius: 999px !important;
+  color: white !important;
+  font-weight: 900 !important;
+  background: linear-gradient(135deg, #22d3ee 0%, #34d399 100%) !important;
+  box-shadow: 0 10px 22px rgba(20,184,166,0.12) !important;
+}
+
+.troco-secondary-btn,
+.troco-secondary-button,
+.btn-secondary {
+  border: 1px solid var(--troco-card-border) !important;
+  border-radius: 999px !important;
+  color: #315f51 !important;
+  background: rgba(255,255,255,0.92) !important;
+  box-shadow: var(--troco-shadow-light) !important;
+}
+
+.troco-badge,
+.tag {
+  border: 1px solid rgba(220,235,230,0.86) !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,0.86) !important;
+  color: #315f51 !important;
+  font-weight: 800 !important;
+}
+
+@media (min-width: 1024px) {
+  .troco-desktop-content > .troco-app-bg,
+  .troco-desktop-content > .troco-page-bg,
+  .troco-desktop-content > .page {
+    min-height: auto !important;
+    background: transparent !important;
+  }
+
+  .troco-desktop-content > .page {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

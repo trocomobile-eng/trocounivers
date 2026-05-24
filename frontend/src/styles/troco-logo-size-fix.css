@@ -1,0 +1,30 @@
+/* Logo size corrections */
+
+:root {
+  --troco-sidebar-logo-width: 152px;
+  --troco-header-logo-width: 132px;
+  --troco-landing-logo-width: clamp(220px, 22vw, 340px);
+}
+
+.troco-sidebar-logo img {
+  width: var(--troco-sidebar-logo-width) !important;
+}
+
+.troco-header-logo img {
+  width: var(--troco-header-logo-width) !important;
+}
+
+.troco-landing-logo,
+.landing-logo,
+.hero-logo {
+  width: var(--troco-landing-logo-width) !important;
+  max-width: 72vw !important;
+  height: auto !important;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --troco-header-logo-width: 122px;
+    --troco-landing-logo-width: clamp(210px, 62vw, 290px);
+  }
+}

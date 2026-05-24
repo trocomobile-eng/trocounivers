@@ -1,0 +1,117 @@
+/* =========================================================
+   TROCO — MOBILE PAGES LESS TIGHT
+   Objectif :
+   - Ne PAS toucher au feed qui est déjà bien.
+   - Détendre les autres pages mobile devenues trop étroites.
+   - Annuler l’effet “colonne serrée / carte compressée”.
+   ========================================================= */
+
+@media (max-width: 767px) {
+  /*
+    Toutes les pages app classiques sauf le feed ont besoin
+    d’utiliser presque toute la largeur iPhone.
+  */
+  body:not(.troco-feed-page) .troco-page-bg > main,
+  body:not(.troco-feed-page) .troco-app-bg > main,
+  body:not(.troco-feed-page) .troco-screen > main {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /*
+    Corrige les anciens wrappers qui forcent max-w-[430px],
+    max-w-[480px], max-w-md, max-w-lg, etc.
+  */
+  body:not(.troco-feed-page) .troco-page-bg .max-w-\[430px\],
+  body:not(.troco-feed-page) .troco-page-bg .max-w-\[480px\],
+  body:not(.troco-feed-page) .troco-page-bg .max-w-md,
+  body:not(.troco-feed-page) .troco-page-bg .max-w-lg,
+  body:not(.troco-feed-page) .troco-app-bg .max-w-\[430px\],
+  body:not(.troco-feed-page) .troco-app-bg .max-w-\[480px\],
+  body:not(.troco-feed-page) .troco-app-bg .max-w-md,
+  body:not(.troco-feed-page) .troco-app-bg .max-w-lg {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /*
+    Plusieurs pages ont de trop gros titres qui compressent
+    le contenu. On garde une hiérarchie forte, mais plus mobile-native.
+  */
+  body:not(.troco-feed-page) .troco-page-bg h1,
+  body:not(.troco-feed-page) .troco-app-bg h1 {
+    max-width: 100% !important;
+    font-size: clamp(38px, 11vw, 48px) !important;
+    line-height: 0.96 !important;
+    letter-spacing: -0.055em !important;
+  }
+
+  /*
+    Sous-textes plus lisibles et moins étroits.
+  */
+  body:not(.troco-feed-page) .troco-page-bg header p,
+  body:not(.troco-feed-page) .troco-app-bg header p {
+    max-width: 100% !important;
+  }
+
+  /*
+    Search bar de bibliothèque : évite l’effet petite pilule
+    perdue au centre.
+  */
+  body:not(.troco-feed-page) .troco-page-bg label:has(input),
+  body:not(.troco-feed-page) .troco-app-bg label:has(input) {
+    max-width: 100% !important;
+  }
+
+  /*
+    Cards : plus de largeur, moins d’effet carte skinny.
+  */
+  body:not(.troco-feed-page) .troco-card,
+  body:not(.troco-feed-page) .troco-card-strong,
+  body:not(.troco-feed-page) .card {
+    width: 100%;
+  }
+
+  /*
+    Messages : les items étaient trop serrés.
+    On force une carte horizontale plus lisible.
+  */
+  body:not(.troco-feed-page) a[href*="/messages"],
+  body:not(.troco-feed-page) button[class*="rounded"] {
+    min-width: 0;
+  }
+
+  /*
+    Grilles 2 colonnes : si elles deviennent trop compressées,
+    on garde 2 colonnes mais avec un gap plus naturel.
+  */
+  body:not(.troco-feed-page) .grid.grid-cols-2 {
+    gap: 14px !important;
+  }
+
+  /*
+    Les stats sur Trocs étaient trop verticales / comprimées.
+  */
+  body:not(.troco-feed-page) .grid.grid-cols-2 > div,
+  body:not(.troco-feed-page) .grid.grid-cols-3 > div {
+    min-width: 0;
+  }
+
+  /*
+    AddItem : supprime l’effet grande colonne bleu/carte étroite
+    quand un wrapper interne impose une largeur trop petite.
+  */
+  body:not(.troco-feed-page) form {
+    width: 100%;
+  }
+
+  /*
+    Bottom nav : laisse respirer le bas des pages.
+  */
+  body:not(.troco-feed-page) .troco-page-bg,
+  body:not(.troco-feed-page) .troco-app-bg {
+    padding-bottom: 112px !important;
+  }
+}

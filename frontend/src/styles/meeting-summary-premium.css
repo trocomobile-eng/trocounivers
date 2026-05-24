@@ -1,0 +1,15 @@
+
+/* TROCO — Meeting summary premium redesign */
+
+.troco-page-bg {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(186,230,253,0.14), transparent 30%),
+    radial-gradient(circle at 82% 14%, rgba(187,247,208,0.12), transparent 32%),
+    linear-gradient(180deg,#fbfffd 0%,#f5fcf8 54%,#ffffff 100%);
+}
+
+@media (max-width: 768px) {
+  .troco-page-bg main {
+    padding-top: 10px;
+  }
+}

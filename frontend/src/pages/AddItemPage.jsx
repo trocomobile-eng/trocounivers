@@ -1,255 +1,693 @@
-import { useEffect, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TopBar, CategorySelect } from "../components/UI";
-import BottomNav from "../components/BottomNav";
-import { useAuth } from "../context/AuthContext";
-import { db, storage } from "../firebase";
-import { collection, addDoc, doc, getDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
+import {
+  ArrowLeft,
+  Camera,
+  Check,
+  ImagePlus,
+  Loader2,
+  Sparkles,
+  Trash2,
+  Wand2,
+  MapPin,
+} from "lucide-react";
 
-const ARRONDISSEMENTS = [
-  "Paris 1", "Paris 2", "Paris 3", "Paris 4", "Paris 5",
-  "Paris 6", "Paris 7", "Paris 8", "Paris 9", "Paris 10",
-  "Paris 11", "Paris 12", "Paris 13", "Paris 14", "Paris 15",
-  "Paris 16", "Paris 17", "Paris 18", "Paris 19", "Paris 20",
+import { db, storage } from "../firebase";
+import { useAuth } from "../context/AuthContext";
+import BottomNav from "../components/BottomNav";
+import TradePreferencesForm from "../components/TradePreferencesForm";
+import TradePreferencesPreview from "../components/TradePreferencesPreview";
+import {
+  buildCleanItemFromSuggestion,
+  getItemSuggestions,
+} from "../utils/itemSuggestions";
+
+const BACKGROUND =
+  "radial-gradient(circle at 18% 8%, rgba(186,230,253,0.10), transparent 26%), radial-gradient(circle at 82% 12%, rgba(187,247,208,0.07), transparent 28%), linear-gradient(180deg,#ffffff 0%,#fbfffd 48%,#ffffff 100%)";
+
+const CONDITION_OPTIONS = [
+  "Comme neuf",
+  "Très bon état",
+  "Bon état",
+  "Quelques traces d’usage",
+  "Usé mais fonctionnel",
+];
+
+const CATEGORY_OPTIONS = [
+  "Maison",
+  "Tech",
+  "Mode",
+  "Musique",
+  "Livres",
+  "Sport",
+  "Enfants",
   "Autre",
 ];
 
+
+
+// Compression image via canvas — réduit de 5-10x sans perte visible
+// Max 1200px de large, qualité JPEG 0.82, max 400 KB
+async function compressImage(file, { maxWidth = 1200, maxSizeKB = 400, quality = 0.82 } = {}) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      const scale = Math.min(1, maxWidth / img.width);
+      const width = Math.round(img.width * scale);
+      const height = Math.round(img.height * scale);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Essayer avec la qualité demandée, réduire si trop gros
+      function tryQuality(q) {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file); // fallback sur l'original si canvas échoue
+              return;
+            }
+
+            if (blob.size / 1024 > maxSizeKB && q > 0.5) {
+              tryQuality(Math.round((q - 0.08) * 100) / 100);
+              return;
+            }
+
+            const compressed = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+
+            resolve(compressed);
+          },
+          "image/jpeg",
+          q
+        );
+      }
+
+      tryQuality(quality);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file); // fallback
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+function getGeoPoint(value) {
+  if (!value) return null;
+
+  if (typeof value.lat === "number" && typeof value.lng === "number") {
+    return { lat: value.lat, lng: value.lng };
+  }
+
+  if (typeof value.latitude === "number" && typeof value.longitude === "number") {
+    return { lat: value.latitude, lng: value.longitude };
+  }
+
+  return null;
+}
+
+function SectionCard({ children, className = "" }) {
+  return (
+    <section
+      className={[
+        "rounded-[28px] border border-white/80 bg-white/92 p-5 shadow-[0_10px_28px_rgba(15,23,42,0.045)] backdrop-blur-xl",
+        className,
+      ].join(" ")}
+    >
+      {children}
+    </section>
+  );
+}
+
+function Field({ label, hint, children }) {
+  return (
+    <label className="block">
+      <span className="text-[14px] font-black text-[#081225]">{label}</span>
+
+      {hint && (
+        <span className="mt-1 block text-[13px] font-medium leading-relaxed text-slate-500">
+          {hint}
+        </span>
+      )}
+
+      <div className="mt-3">{children}</div>
+    </label>
+  );
+}
+
+function TextInput(props) {
+  return (
+    <input
+      {...props}
+      className={[
+        "h-[50px] w-full rounded-[18px] border border-slate-100 bg-white px-4 text-[15px] font-semibold text-[#081225] outline-none transition placeholder:text-slate-400 focus:border-emerald-200 focus:ring-4 focus:ring-emerald-50",
+        props.className || "",
+      ].join(" ")}
+    />
+  );
+}
+
+function SuggestionChip({ suggestion, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[13px] font-black transition active:scale-[0.98]",
+        active
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-slate-100 bg-white text-slate-600 shadow-[0_5px_14px_rgba(15,23,42,0.025)]",
+      ].join(" ")}
+    >
+      {active && <Check size={14} strokeWidth={2.8} />}
+      {suggestion.label}
+    </button>
+  );
+}
+
 export default function AddItemPage() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const fileInputRef = useRef(null);
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    category: "",
-    location_area: "",
-    location_details: "",
+  const [rawTitle, setRawTitle] = useState("");
+  const [title, setTitle] = useState("");
+  const [itemDetails, setItemDetails] = useState("");
+  const [category, setCategory] = useState("");
+  const [condition, setCondition] = useState("Très bon état");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("Paris");
+  const [availability, setAvailability] = useState("");
+  const [photos, setPhotos] = useState([]);
+  const [selectedSuggestionKey, setSelectedSuggestionKey] = useState("");
+  const [tradePreferences, setTradePreferences] = useState({
+    categories: [],
+    ideas: "",
+    openToSurprises: true,
   });
+  const [saving, setSaving] = useState(false);
+  const [useMyLocation, setUseMyLocation] = useState(true);
 
-  const [showLocationEdit, setShowLocationEdit] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
-  const [preview, setPreview] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [error, setError] = useState("");
+  const suggestions = useMemo(() => getItemSuggestions(rawTitle), [rawTitle]);
 
-  useEffect(() => {
-    async function loadProfileLocation() {
-      if (authLoading) return;
+  const previewUrls = useMemo(
+    () => photos.map((photo) => photo.previewUrl),
+    [photos]
+  );
 
-      if (!user?.uid) {
-        setProfileLoading(false);
-        return;
-      }
+  function handleRawTitleChange(value) {
+    setRawTitle(value);
 
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        const arrondissement = snap.exists() ? snap.data().arrondissement || "" : "";
+    if (!title || title === rawTitle) {
+      setTitle(value);
+    }
+  }
 
-        setForm((current) => ({
-          ...current,
-          location_area: arrondissement,
-        }));
+  function applySuggestion(suggestion) {
+    const cleanItem = buildCleanItemFromSuggestion(rawTitle, suggestion);
 
-        if (!arrondissement) {
-          setShowLocationEdit(true);
-        }
-      } catch (error) {
-        console.error("Erreur profil :", error);
-        setShowLocationEdit(true);
-      } finally {
-        setProfileLoading(false);
-      }
+    if (!cleanItem) return;
+
+    setSelectedSuggestionKey(suggestion.id || suggestion.label);
+    setTitle(cleanItem.itemType || suggestion.label || rawTitle);
+    setItemDetails(cleanItem.itemDetails || "");
+    setCategory(cleanItem.category || "");
+  }
+
+  function handleCategoryClick(nextCategory) {
+    setCategory(nextCategory);
+  }
+
+  async function handlePhotoSelection(event) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const filesToProcess = files.slice(0, 6 - photos.length);
+
+    const nextPhotos = await Promise.all(
+      filesToProcess.map(async (file) => {
+        const compressed = await compressImage(file);
+        return {
+          file: compressed,
+          previewUrl: URL.createObjectURL(compressed),
+          id: `${file.name}-${file.lastModified}-${crypto.randomUUID?.() || Date.now()}`,
+        };
+      })
+    );
+
+    setPhotos((current) => [...current, ...nextPhotos].slice(0, 6));
+    event.target.value = "";
+  }
+
+  function removePhoto(photoId) {
+    setPhotos((current) => {
+      const photo = current.find((item) => item.id === photoId);
+      if (photo?.previewUrl) URL.revokeObjectURL(photo.previewUrl);
+
+      return current.filter((item) => item.id !== photoId);
+    });
+  }
+
+  async function uploadPhotos(itemId) {
+    if (!photos.length) return [];
+
+    const urls = [];
+
+    for (const photo of photos) {
+      const safeName = photo.file.name.replace(/\s+/g, "-").toLowerCase();
+      const storageRef = ref(
+        storage,
+        `items/${itemId}/${Date.now()}-${safeName}`
+      );
+
+      await uploadBytes(storageRef, photo.file);
+      const url = await getDownloadURL(storageRef);
+      urls.push(url);
     }
 
-    loadProfileLocation();
-  }, [user, authLoading]);
+    return urls;
+  }
 
-  const set = (key) => (value) => {
-    setForm((current) => ({
-      ...current,
-      [key]: value?.target ? value.target.value : value,
-    }));
-  };
-
-  const handleImage = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImageFile(file);
-    setPreview(URL.createObjectURL(file));
-  };
-
-  const handleSubmit = async () => {
-    setError("");
-
-    if (authLoading || profileLoading) {
-      return setError("Chargement du profil, réessaie dans une seconde.");
-    }
+  async function handleSubmit(event) {
+    event.preventDefault();
 
     if (!user?.uid) {
-      return setError("Vous devez être connecté pour publier un objet.");
+      navigate("/login");
+      return;
     }
 
-    if (!form.title || !form.description || !form.category || !form.location_area) {
-      return setError("Titre, description, catégorie et localisation sont requis.");
+    const finalTitle = title.trim() || rawTitle.trim();
+
+    if (!finalTitle) {
+      alert("Ajoute un nom d’objet.");
+      return;
     }
 
-    if (form.location_area === "Autre" && !form.location_details.trim()) {
-      return setError("Merci de préciser la localisation.");
-    }
-
-    setLoading(true);
+    setSaving(true);
 
     try {
-      let imageUrl = "";
+      let ownerLocation = null;
 
-      if (imageFile) {
-        const cleanName = imageFile.name.replace(/\s+/g, "-").toLowerCase();
-        const imageRef = ref(storage, `items/${user.uid}/${Date.now()}-${cleanName}`);
-
-        await uploadBytes(imageRef, imageFile);
-        imageUrl = await getDownloadURL(imageRef);
+      if (useMyLocation && user?.uid) {
+        const userSnapshot = await getDoc(doc(db, "users", user.uid));
+        ownerLocation = getGeoPoint(userSnapshot.data()?.location);
       }
 
-      await addDoc(collection(db, "items"), {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        category: form.category,
-        imageUrl,
-        images: imageUrl ? [imageUrl] : [],
+      const draftRef = await addDoc(collection(db, "items"), {
+        title: finalTitle,
+        itemType: finalTitle,
+        generatedTitle: finalTitle,
+        itemDetails: itemDetails.trim(),
+        category: category.trim() || "Autre",
+        condition,
+        description: description.trim(),
+        location: location.trim() || "Paris",
+        locationArea: location.trim() || "Paris",
+        locationPrivacy: "approximate",
+        geo: ownerLocation,
+        hasGeo: Boolean(ownerLocation),
+        availability: availability.trim(),
+        images: [],
+        imageUrl: "",
+        tradePreferences,
         ownerId: user.uid,
+        userId: user.uid,
         ownerEmail: user.email || "",
-        ownerName: user.displayName || "",
-        locationArea: form.location_area,
-        locationDetails: form.location_details.trim(),
-        status: "active",
+        ownerName: user.displayName || user.email || "Utilisateur Troco",
+        ownerPhotoURL: user.photoURL || "",
+        status: "available",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
 
-      navigate("/profile");
-    } catch (e) {
-      console.error("Erreur publication :", e);
-      setError(e.message || "Erreur lors de la publication.");
+      const imageUrls = await uploadPhotos(draftRef.id);
+
+      if (imageUrls.length) {
+        const { updateDoc, doc } = await import("firebase/firestore");
+
+        await updateDoc(doc(db, "items", draftRef.id), {
+          images: imageUrls,
+          imageUrl: imageUrls[0],
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      navigate(`/items/${draftRef.id}`, { replace: true });
+    } catch (error) {
+      console.error("Erreur publication objet :", error);
+      alert(
+        "Impossible de publier l’objet. Vérifie que Firebase Storage est bien configuré."
+      );
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  };
+  }
 
   return (
-       <div className="max-w-lg mx-auto min-h-screen pb-28 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.30),transparent_35%),linear-gradient(180deg,#eefcff,#f4fff8)]">
+    <div
+      className="min-h-screen pb-32 text-[#081225]"
+      style={{ background: BACKGROUND }}
+    >
+      <main className="mx-auto w-full max-w-[430px] px-4 pt-[max(14px,env(safe-area-inset-top))] lg:max-w-4xl lg:px-8 lg:pt-10">
+        <header className="mb-5">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/88 text-[#081225] shadow-[0_8px_22px_rgba(15,23,42,0.045)] backdrop-blur-lg transition active:scale-95"
+            aria-label="Retour"
+          >
+            <ArrowLeft size={21} strokeWidth={2.4} />
+          </button>
 
-      <TopBar title="Publier" back={() => navigate(-1)} />
-
-      <div className="px-5 py-5 pb-28 space-y-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900">Nouvel objet</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Ajoute une photo, une description et publie depuis ton arrondissement.
+          <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#0f9f9a]">
+            Publier
           </p>
-        </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
-            {error}
-          </div>
-        )}
+          <h1 className="mt-2 text-[38px] font-black leading-[0.94] tracking-[-0.06em] text-[#081225] lg:text-[58px]">
+            Ajouter un objet
+          </h1>
 
-        <div className="bg-white/90 rounded-[2rem] border border-white shadow-sm p-4">
-          {preview ? (
-            <div className="relative rounded-2xl overflow-hidden h-64 bg-sky-50">
-              <img src={preview} alt="preview" className="w-full h-full object-contain" />
-              <button
-                type="button"
-                className="absolute top-2 right-2 bg-black/50 text-white w-8 h-8 rounded-full text-sm"
-                onClick={() => {
-                  setPreview("");
-                  setImageFile(null);
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          ) : (
-            <label className="flex flex-col items-center justify-center h-44 bg-sky-50 border-2 border-dashed border-sky-100 rounded-2xl cursor-pointer active:scale-[0.98] transition">
-              <span className="text-3xl mb-2">📷</span>
-              <span className="text-sm font-black text-slate-900">Importer une photo</span>
-              <span className="text-xs text-slate-500 mt-1">JPG, PNG — 5 Mo max</span>
-              <input type="file" accept="image/*" className="hidden" onChange={handleImage} />
-            </label>
-          )}
-        </div>
+          <p className="mt-3 max-w-[330px] text-[16px] font-medium leading-relaxed text-slate-500">
+            Décris-le simplement. Troco t’aide à choisir le bon titre et la bonne catégorie.
+          </p>
+        </header>
 
-        <input className="input" placeholder="Titre de l’objet" value={form.title} onChange={set("title")} />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <SectionCard className="p-4">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className={[
+                "relative flex min-h-[190px] w-full flex-col items-center justify-center overflow-hidden rounded-[26px] border border-dashed transition active:scale-[0.99]",
+                previewUrls.length
+                  ? "border-transparent bg-slate-100"
+                  : "border-emerald-200 bg-emerald-50/35 text-[#0f9f9a]",
+              ].join(" ")}
+            >
+              {previewUrls.length ? (
+                <img
+                  src={previewUrls[0]}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <>
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#0f9f9a] shadow-[0_8px_20px_rgba(15,23,42,0.035)]">
+                    <ImagePlus size={26} strokeWidth={2.2} />
+                  </span>
 
-        <textarea
-          className="input resize-none"
-          rows={3}
-          placeholder="Description : état, marque, détails..."
-          value={form.description}
-          onChange={set("description")}
-        />
+                  <span className="mt-4 text-[17px] font-black">
+                    Ajouter des photos
+                  </span>
 
-        <CategorySelect value={form.category} onChange={set("category")} />
+                  <span className="mt-1 text-[13px] font-semibold text-slate-500">
+                    Jusqu’à 6 images
+                  </span>
+                </>
+              )}
 
-        <div className="bg-white/90 rounded-[2rem] border border-white shadow-sm p-4">
-          <p className="text-sm font-black text-slate-900">Localisation</p>
+              {previewUrls.length > 0 && (
+                <span className="absolute bottom-3 left-3 rounded-full bg-white/88 px-3 py-1.5 text-[12px] font-black text-slate-700 shadow-sm backdrop-blur">
+                  {previewUrls.length} photo{previewUrls.length > 1 ? "s" : ""}
+                </span>
+              )}
+            </button>
 
-          {profileLoading ? (
-            <p className="text-sm text-slate-500 mt-2">Chargement de ton arrondissement...</p>
-          ) : (
-            <>
-              <div className="mt-3 flex items-center justify-between gap-3 bg-sky-50 border border-sky-100 rounded-2xl px-4 py-3">
-                <p className="text-sm font-bold text-slate-700">
-                  📍 {form.location_area || "Aucune localisation définie"}
-                  {form.location_details ? ` — ${form.location_details}` : ""}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handlePhotoSelection}
+              className="hidden"
+            />
+
+            {photos.length > 0 && (
+              <div className="mt-3 grid grid-cols-6 gap-2">
+                {photos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className="relative aspect-square overflow-hidden rounded-[14px] bg-slate-100"
+                  >
+                    <img
+                      src={photo.previewUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(photo.id)}
+                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm backdrop-blur"
+                      aria-label="Supprimer la photo"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                ))}
+
+                {photos.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex aspect-square items-center justify-center rounded-[14px] border border-dashed border-emerald-200 bg-white/75 text-[#0f9f9a]"
+                  >
+                    <ImagePlus size={18} strokeWidth={2.2} />
+                  </button>
+                )}
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard>
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-emerald-50 text-emerald-700">
+                <Wand2 size={21} strokeWidth={2.25} />
+              </span>
+
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
+                  Objet
                 </p>
 
-                <button
-                  type="button"
-                  className="text-xs font-black text-emerald-600"
-                  onClick={() => setShowLocationEdit((v) => !v)}
-                >
-                  Modifier
-                </button>
+                <h2 className="text-[24px] font-black leading-tight tracking-[-0.05em] text-[#081225]">
+                  Titre intelligent
+                </h2>
               </div>
+            </div>
 
-              {showLocationEdit && (
-                <div className="mt-3 space-y-3">
-                  <select className="input" value={form.location_area} onChange={set("location_area")}>
-                    <option value="">Choisir un arrondissement</option>
-                    {ARRONDISSEMENTS.map((a) => (
-                      <option key={a} value={a}>
-                        {a}
-                      </option>
-                    ))}
-                  </select>
+            <div className="mt-5 space-y-4">
+              <Field
+                label="Décris rapidement ton objet"
+                hint="Ex : guitare folk Yamaha, lampe de bureau, jean Levi’s..."
+              >
+                <TextInput
+                  value={rawTitle}
+                  onChange={(event) => handleRawTitleChange(event.target.value)}
+                  placeholder="Ex : guitare folk Yamaha"
+                />
+              </Field>
 
-                  {form.location_area === "Autre" && (
-                    <input
-                      className="input"
-                      placeholder="Précise la ville ou le quartier"
-                      value={form.location_details}
-                      onChange={set("location_details")}
-                    />
-                  )}
+              {suggestions.length > 0 && (
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-[13px] font-black text-[#0f9f9a]">
+                    <Sparkles size={15} strokeWidth={2.4} />
+                    Suggestions Troco
+                  </div>
+
+                  <div className="-mx-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="flex min-w-max gap-2 px-1">
+                      {suggestions.map((suggestion) => (
+                        <SuggestionChip
+                          key={suggestion.id || suggestion.label}
+                          suggestion={suggestion}
+                          active={selectedSuggestionKey === (suggestion.id || suggestion.label)}
+                          onClick={() => applySuggestion(suggestion)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
-            </>
-          )}
-        </div>
 
-        <button
-          type="button"
-          className="btn-primary w-full text-base"
-          onClick={handleSubmit}
-          disabled={loading || authLoading || profileLoading}
-        >
-          {loading ? "Publication..." : "Publier mon objet"}
-        </button>
-      </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Titre affiché">
+                  <TextInput
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="Ex : Guitare folk"
+                  />
+                </Field>
+
+                <Field label="Détail utile">
+                  <TextInput
+                    value={itemDetails}
+                    onChange={(event) => setItemDetails(event.target.value)}
+                    placeholder="Marque, couleur, modèle..."
+                  />
+                </Field>
+              </div>
+
+              <Field label="Catégorie">
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => handleCategoryClick(option)}
+                      className={[
+                        "rounded-full border px-3 py-2 text-[13px] font-black transition active:scale-[0.98]",
+                        category === option
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-slate-100 bg-white text-slate-600",
+                      ].join(" ")}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
+              <Field label="État">
+                <div className="grid grid-cols-2 gap-2">
+                  {CONDITION_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setCondition(option)}
+                      className={[
+                        "rounded-[17px] border px-3 py-3 text-left text-[13px] font-black transition active:scale-[0.98]",
+                        condition === option
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-slate-100 bg-white text-slate-600",
+                      ].join(" ")}
+                    >
+                      {condition === option && <Check size={15} className="mb-1" strokeWidth={2.8} />}
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </div>
+          </SectionCard>
+
+          <SectionCard>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
+              Détails
+            </p>
+
+            <h2 className="mt-1 text-[24px] font-black tracking-[-0.05em] text-[#081225]">
+              Un peu de contexte
+            </h2>
+
+            <div className="mt-5 space-y-4">
+              <Field label="Description">
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  className="min-h-[96px] w-full rounded-[18px] border border-slate-100 bg-white px-4 py-3 text-[15px] font-medium leading-relaxed text-[#081225] outline-none placeholder:text-slate-400 focus:border-emerald-200 focus:ring-4 focus:ring-emerald-50"
+                  placeholder="Ex : je ne l’utilise plus depuis mon déménagement..."
+                />
+              </Field>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field
+                  label="Localisation"
+                  hint="Visible publiquement sous forme approximative, jamais comme adresse exacte."
+                >
+                  <TextInput
+                    value={location}
+                    onChange={(event) => setLocation(event.target.value)}
+                    placeholder="Paris 18e, Montmartre..."
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setUseMyLocation((value) => !value)}
+                    className={[
+                      "mt-3 flex w-full items-center justify-between gap-3 rounded-[18px] border px-4 py-3 text-left text-[13px] font-bold transition active:scale-[0.99]",
+                      useMyLocation
+                        ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                        : "border-slate-100 bg-white text-slate-500",
+                    ].join(" ")}
+                  >
+                    <span className="flex items-center gap-2">
+                      <MapPin size={16} strokeWidth={2.25} />
+                      Associer cet objet à ma position approximative
+                    </span>
+
+                    <span>{useMyLocation ? "Oui" : "Non"}</span>
+                  </button>
+                </Field>
+
+                <Field label="Disponibilité">
+                  <TextInput
+                    value={availability}
+                    onChange={(event) => setAvailability(event.target.value)}
+                    placeholder="Soirs, week-end..."
+                  />
+                </Field>
+              </div>
+            </div>
+          </SectionCard>
+
+          <TradePreferencesForm
+            value={tradePreferences}
+            onChange={setTradePreferences}
+          />
+
+          <TradePreferencesPreview
+            title={title || rawTitle}
+            imageUrls={previewUrls}
+            category={category}
+            condition={condition}
+            location={location}
+            tradePreferences={tradePreferences}
+          />
+
+          <div className="sticky bottom-[88px] z-30 -mx-1 rounded-[26px] border border-white/80 bg-white/86 p-3 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex h-[56px] w-full items-center justify-center gap-2 rounded-[20px] bg-gradient-to-r from-[#2ECC8A] to-cyan-400 text-[16px] font-black text-white shadow-[0_12px_28px_rgba(46,204,138,0.16)] transition active:scale-[0.98] disabled:opacity-60"
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  Publication...
+                </>
+              ) : (
+                "Publier l’objet"
+              )}
+            </button>
+          </div>
+        </form>
+      </main>
 
       <BottomNav />
     </div>

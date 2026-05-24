@@ -1,0 +1,98 @@
+{
+  "landing": {
+    "badge": "Local, simple and human swapping",
+    "title": "Swapping around you.",
+    "description": "Discover, exchange and meet locally. Troco turns forgotten objects into real-life local encounters.",
+    "help": "Help us build Troco",
+    "prototype": "View prototype"
+  },
+  "cards": {
+    "simple": {
+      "title": "Simple",
+      "text": "List an item and suggest a swap in just a few clicks."
+    },
+    "local": {
+      "title": "Local",
+      "text": "Nearby exchanges, in person, in your own city."
+    },
+    "sustainable": {
+      "title": "Sustainable",
+      "text": "Reuse instead of buying, throwing away or letting things sit unused."
+    }
+  },
+  "negotiation": {
+    "badge": "Simple negotiation",
+    "title": "Suggest, adjust, meet.",
+    "description": "If the exchange does not feel balanced, each person can ask for a change, suggest something else or add an item to compensate."
+  },
+  "steps": {
+    "step1": {
+      "title": "Suggest an item",
+      "text": "Pick one or several items from your library to start the exchange."
+    },
+    "step2": {
+      "title": "Discuss and adjust",
+      "text": "The other person can accept, ask for compensation or suggest something else."
+    },
+    "step3": {
+      "title": "Plan the meeting",
+      "text": "Once the swap is accepted, choose a time slot and a reassuring place."
+    }
+  },
+  "why": {
+    "badge": "Why Troco?",
+    "title": "Selling takes time. Giving is not always simple.",
+    "text": "Many objects stay in our homes because we do not want to negotiate a price, handle unanswered messages or organize a complicated meetup. Troco turns those objects into exchange opportunities and local moments."
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "continue": "Continue",
+    "start": "Start",
+    "goToStep": "Go to step {{number}}",
+    "values": {
+      "local": "Local",
+      "surprise": "Surprise",
+      "human": "Human"
+    },
+    "chips": {
+      "sneakers": "Sneakers",
+      "vinyl": "Vinyl",
+      "photo": "Photo",
+      "lamp": "Lamp",
+      "book": "Book",
+      "plant": "Plant",
+      "jacket": "Jacket",
+      "guitar": "Guitar",
+      "suggest": "Suggest",
+      "add": "Add",
+      "adjust": "Adjust",
+      "validate": "Validate",
+      "cafe": "Café",
+      "local": "Local",
+      "human": "Human",
+      "real": "Real"
+    },
+    "slides": {
+      "discovery": {
+        "eyebrow": "Discovery",
+        "title": "Turn what you no longer use into something new.",
+        "text": "A pair of shoes can become a vinyl record. A forgotten lamp can find a new home. On Troco, value comes from desire."
+      },
+      "unexpected": {
+        "eyebrow": "Unexpected swaps",
+        "title": "You do not need to swap like for like.",
+        "text": "Book for plant, jacket for camera, lamp for guitar… Troco opens the door to freer, more personal exchanges."
+      },
+      "guided": {
+        "eyebrow": "Guided exchange",
+        "title": "The best swaps are built together.",
+        "text": "Add an item, suggest something else or refine the proposal. Here, we do not haggle: we find an exchange that feels right."
+      },
+      "local": {
+        "eyebrow": "Local meeting",
+        "title": "Objects create real encounters.",
+        "text": "Choose a time, a reassuring place, then exchange in real life. Troco is designed to move beyond the screen and circulate objects locally."
+      }
+    }
+  }
+}

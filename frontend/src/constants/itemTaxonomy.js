@@ -1,0 +1,16 @@
+export const ITEM_TYPES = [
+  { label: "Chaussures de marche", category: "Vêtements", subcategory: "Chaussures", keywords: ["chaussures", "marche", "randonnée", "rando", "trek"] },
+  { label: "Baskets", category: "Vêtements", subcategory: "Chaussures", keywords: ["baskets", "sneakers", "chaussures sport"] },
+  { label: "Chaussures de ville", category: "Vêtements", subcategory: "Chaussures", keywords: ["chaussures ville", "derbies", "mocassins"] },
+  { label: "T-shirt", category: "Vêtements", subcategory: "Hauts", keywords: ["tshirt", "t-shirt", "tee shirt"] },
+  { label: "Robe", category: "Vêtements", subcategory: "Robes / Jupes", keywords: ["robe", "jupe"] },
+  { label: "Table", category: "Maison", subcategory: "Mobilier", keywords: ["table", "table basse", "bureau"] },
+  { label: "Chaise", category: "Maison", subcategory: "Mobilier", keywords: ["chaise", "fauteuil"] },
+  { label: "Meuble", category: "Maison", subcategory: "Mobilier", keywords: ["meuble", "commode", "armoire", "etagere", "étagère"] },
+  { label: "Assiette", category: "Maison", subcategory: "Cuisine", keywords: ["assiette", "plat"] },
+  { label: "Tournevis", category: "Maison", subcategory: "Outils", keywords: ["tournevis", "outil", "vis"] },
+  { label: "Guitare", category: "Musique", subcategory: "Instruments", keywords: ["guitare", "basse"] },
+  { label: "Piano", category: "Musique", subcategory: "Instruments", keywords: ["piano", "clavier", "synthé", "synthe"] },
+  { label: "Livre", category: "Livres", subcategory: "Romans", keywords: ["livre", "roman", "bd", "manga"] },
+  { label: "Vélo", category: "Sport", subcategory: "Vélo", keywords: ["vélo", "velo", "bicyclette"] },
+];

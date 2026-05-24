@@ -1,0 +1,94 @@
+/* Troco exchange flow cohesion
+   Applies a calm, premium, human/lifestyle direction to the exchange journey.
+   Keep this imported after the main CSS files.
+*/
+
+:root {
+  --troco-flow-bg:
+    radial-gradient(circle at top left, rgba(45,212,191,0.03), transparent 28%),
+    radial-gradient(circle at top right, rgba(16,185,129,0.02), transparent 32%),
+    linear-gradient(to bottom, #fcfffd 0%, #ffffff 100%);
+
+  --troco-flow-card: rgba(255,255,255,0.94);
+  --troco-flow-card-soft: rgba(255,255,255,0.78);
+  --troco-flow-border: rgba(228,239,234,0.92);
+  --troco-flow-text: #081225;
+  --troco-flow-muted: #64748b;
+  --troco-flow-green: #08755c;
+  --troco-flow-green-soft: #eef8f3;
+  --troco-flow-shadow: 0 12px 34px rgba(15,23,42,0.045);
+  --troco-flow-shadow-card: 0 18px 44px rgba(15,23,42,0.055);
+  --troco-flow-radius-xl: 34px;
+  --troco-flow-radius-lg: 26px;
+}
+
+/* global page tone */
+.troco-flow-page,
+.troco-page-bg,
+main.troco-page-bg,
+.min-h-screen.bg-\[\#fbfffd\] {
+  background: var(--troco-flow-bg) !important;
+  color: var(--troco-flow-text);
+}
+
+/* cards / panels */
+.troco-flow-card,
+.troco-card,
+.card,
+[class*="rounded-[30px]"],
+[class*="rounded-[34px]"] {
+  border-color: var(--troco-flow-border) !important;
+}
+
+/* old colored panels become softer */
+[class*="bg-emerald-50"],
+[class*="bg-sky-50"],
+[class*="bg-cyan-50"],
+[class*="bg-orange-50"] {
+  background-color: rgba(255,255,255,0.82) !important;
+}
+
+/* CTA style — Option 7 tonique, slightly desaturated */
+.btn-primary,
+.troco-flow-cta,
+button[class*="bg-emerald-600"],
+button[class*="from-[#22C1C3]"],
+button[class*="from-[#2dd4bf]"] {
+  background: linear-gradient(135deg, #18b89d 0%, #21c986 100%) !important;
+  color: white !important;
+  box-shadow: 0 10px 24px rgba(24,184,157,0.14) !important;
+  border: 0 !important;
+}
+
+/* quieter secondary buttons */
+.troco-flow-secondary,
+button[class*="border-slate-100"],
+button[class*="border-emerald-100"] {
+  border-color: var(--troco-flow-border) !important;
+  background: rgba(255,255,255,0.9) !important;
+}
+
+/* status chips */
+.troco-flow-chip,
+span[class*="bg-emerald-50"],
+span[class*="bg-sky-50"],
+span[class*="bg-orange-50"] {
+  border: 1px solid var(--troco-flow-border);
+  background: rgba(255,255,255,0.78) !important;
+  color: var(--troco-flow-green) !important;
+}
+
+/* images should feel editorial */
+.troco-flow-photo {
+  overflow: hidden;
+  border-radius: 30px;
+  background: #f5f7f4;
+  box-shadow: 0 14px 36px rgba(15,23,42,0.06);
+}
+
+/* bottom nav quieter if present */
+.troco-bottom-nav,
+.bottom-nav,
+nav[aria-label="Navigation principale"] {
+  filter: saturate(0.9);
+}

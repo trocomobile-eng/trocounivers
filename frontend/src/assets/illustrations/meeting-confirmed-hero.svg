@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360" viewBox="0 0 760 360" fill="none">
+<defs>
+  <linearGradient id="a" x1="0" y1="0" x2="760" y2="360" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFFEFA"/>
+    <stop offset="1" stop-color="#ECF8EF"/>
+  </linearGradient>
+  <radialGradient id="b" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(382 180) rotate(90) scale(150 250)">
+    <stop stop-color="#BCEACD" stop-opacity=".85"/>
+    <stop offset="1" stop-color="#BCEACD" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="760" height="360" rx="40" fill="url(#a)"/>
+<rect width="760" height="360" rx="40" fill="url(#b)"/>
+<circle cx="206" cy="155" r="54" fill="#F1C7A9"/>
+<path d="M151 316C162 243 180 215 210 215C242 215 263 248 274 316H151Z" fill="#6FC78F"/>
+<path d="M162 148C153 111 181 85 216 91C247 96 264 124 256 151C239 138 205 135 162 148Z" fill="#7B5039"/>
+<path d="M260 214C299 228 325 252 352 279" stroke="#6FC78F" stroke-width="18" stroke-linecap="round"/>
+<circle cx="554" cy="155" r="54" fill="#F5C9A8"/>
+<path d="M499 316C510 243 528 215 558 215C590 215 611 248 622 316H499Z" fill="#FBF4E9"/>
+<path d="M511 142C518 101 557 88 590 107C615 121 626 150 613 174C592 149 558 137 511 142Z" fill="#593927"/>
+<path d="M501 214C462 228 436 252 409 279" stroke="#FBF4E9" stroke-width="18" stroke-linecap="round"/>
+<ellipse cx="381" cy="257" rx="102" ry="24" fill="#E3C29D"/>
+<rect x="309" y="255" width="144" height="48" rx="24" fill="#C99A68"/>
+<path d="M372 282V330" stroke="#A97845" stroke-width="14" stroke-linecap="round"/>
+<path d="M335 337H410" stroke="#A97845" stroke-width="14" stroke-linecap="round"/>
+<circle cx="349" cy="228" r="25" fill="#F6E8D4"/>
+<circle cx="414" cy="228" r="25" fill="#F6E8D4"/>
+<path d="M636 304V174" stroke="#75BE8D" stroke-width="10" stroke-linecap="round"/>
+<path d="M636 225C662 199 689 204 697 207C689 231 667 249 636 251V225Z" fill="#BDE8C9"/>
+<path d="M636 195C610 169 582 173 574 176C582 201 604 217 636 220V195Z" fill="#BDE8C9"/>
+<path d="M356 89H407" stroke="#E6C58E" stroke-width="8" stroke-linecap="round"/>
+<path d="M382 89V45" stroke="#E6C58E" stroke-width="8" stroke-linecap="round"/>
+<path d="M362 102H401L391 131H372L362 102Z" fill="#E9BB67"/>
+<path d="M83 190L93 197L106 174" stroke="#63B96E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M671 120L678 127L691 104" stroke="#63B96E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
