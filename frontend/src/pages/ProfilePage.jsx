@@ -8,12 +8,12 @@ import {
   ChevronRight,
   Edit3,
   Heart,
+  LogOut,
   Home,
   Image as ImageIcon,
   Mail,
   MapPin,
   MessageCircle,
-  MoreHorizontal,
   Music,
   Package,
   Phone,
@@ -21,7 +21,6 @@ import {
   Search,
   Settings,
   Share2,
-  SlidersHorizontal,
   Sparkles,
   Tag,
   UserRound,
@@ -40,15 +39,16 @@ import {
   where,
 } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoButton, TrocoInput } from "../components/ui";
 import { getDisplayItemType, getItemImage } from "../utils/format";
 import { getTradePreferences } from "../components/profile/profileUtils";
+import PreferenceModal from "../components/profile/PreferenceModal";
 
 const PREFERENCE_CARDS = [
   { id: "vintage", label: "Vintage", image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=700&q=80", icon: Tag },
@@ -159,16 +159,21 @@ function relativeDate(value) {
   return `il y a ${Math.floor(days / 7)} sem.`;
 }
 
-function PageShell({ children, className = "" }) {
+function PageShell({ children, className = "", user = null, showBrandHeader = true }) {
   return (
-    <main
-      className={[
-        "min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.04),transparent_30%),radial-gradient(circle_at_top_right,rgba(34,211,238,0.03),transparent_35%),linear-gradient(to_bottom,#fcfffe_0%,#ffffff_100%)] pb-32 text-[#081225] lg:troco-desktop-page lg:pb-04",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </main>
+    <div className={["w-full", className].join(" ")}>
+      <div className="mx-auto w-full max-w-[1180px] px-4 pt-[max(6px,env(safe-area-inset-top))] lg:px-10 xl:px-0">
+        {showBrandHeader && (
+          <TrocoPageHeader
+            variant="brand"
+            user={user}
+            className="mb-2 px-1 lg:hidden"
+          />
+        )}
+
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -269,7 +274,7 @@ function ObjectCard({ item, profile }) {
 
   return (
     <Link
-      to={`/items/${item.id}`}
+      to={`/items/${item.id}/edit`}
       className="group relative block w-[168px] shrink-0 overflow-hidden rounded-[22px] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.085)] transition active:scale-[0.985] sm:w-[268px] sm:rounded-[30px]"
     >
       <div className="relative aspect-[0.82/1] bg-[#F4F8F6] sm:aspect-[1.18/1]">
@@ -483,8 +488,8 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
   }
 
   return (
-    <PageShell>
-      <div className="mx-auto w-full max-w-[840px] px-6 pt-[max(12px,env(safe-area-inset-top))] lg:px-0">
+    <PageShell user={user}>
+      <div className="mx-auto w-full max-w-[980px] px-6 pt-[max(12px,env(safe-area-inset-top))] lg:px-10 xl:px-0">
         {screen === "menu" && (
           <>
             <MobileTopBar title="Modifier mon profil" onBack={onClose} centered />
@@ -495,7 +500,7 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
                     Ton profil, ton univers.
                   </h1>
                   <p className="mt-4 max-w-[230px] text-[14px] font-medium leading-relaxed text-slate-500">
-                    Partage ce qui te définit avec ta communauté.
+                    Modifie tes informations personnelles. Tes préférences se règlent directement sur ton profil.
                   </p>
                 </div>
                 <Avatar user={user} profile={{ ...profile, photoURL: form.photoURL, displayName: form.displayName }} onEdit={() => setScreen("identity")} />
@@ -504,8 +509,6 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
               <div className="mt-10 overflow-hidden rounded-[28px] border border-[#E8F1ED] bg-white/92 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
                 <MenuRow icon={UserRound} title="Photo & identité" subtitle="Nom, pseudo, bio..." onClick={() => setScreen("identity")} />
                 <MenuRow icon={MapPin} title="Localisation" subtitle={`${form.arrondissement || form.city || "Paris"}`} onClick={() => setScreen("identity")} />
-                <MenuRow icon={Sparkles} title="Mes univers" subtitle="Vintage, musique, photo..." onClick={() => setScreen("preferences")} />
-                <MenuRow icon={Tag} title="Mes envies d’échange" subtitle="Voiture, maison, électronique..." onClick={() => setScreen("preferences")} />
                 <MenuRow icon={Settings} title="Notifications & confidentialité" subtitle="Notifications push, réglages et préférences" onClick={onOpenSettings} />
               </div>
             </section>
@@ -584,334 +587,6 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
   );
 }
 
-function PreferencesScreen({ user, profile, open, onClose, onSaved, onOpenDetail }) {
-  const [mode, setMode] = useState("looking");
-  const [lookingFor, setLookingFor] = useState([]);
-  const [notLookingFor, setNotLookingFor] = useState([]);
-  const [universe, setUniverse] = useState([]);
-  const [customLooking, setCustomLooking] = useState("");
-  const [customNotLooking, setCustomNotLooking] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    // Lire depuis getTradePreferences pour être cohérent avec l'affichage
-    const prefs = getTradePreferences(profile || {});
-    setLookingFor(prefs.lookingFor.length
-      ? prefs.lookingFor
-      : pref(profile, ["lookingFor", "wantedItems", "searchingFor", "tradeWants"]));
-    setNotLookingFor(prefs.notLookingFor.length
-      ? prefs.notLookingFor
-      : pref(profile, ["notLookingFor", "avoidItems", "notInterestedIn"]));
-    setUniverse(pref(profile, ["universe", "interests", "tags", "lifestyleTags"]));
-    setCustomLooking("");
-    setCustomNotLooking("");
-    setMode("looking");
-  }, [open, profile]);
-
-  if (!open) return null;
-
-  function toggleIn(list, setList, label, max = 8) {
-    setList((current) =>
-      current.includes(label)
-        ? current.filter((item) => item !== label)
-        : current.length >= max
-          ? current
-          : [...current, label]
-    );
-  }
-
-  function addCustom(type) {
-    const value = type === "looking" ? customLooking.trim() : customNotLooking.trim();
-    if (!value) return;
-
-    if (type === "looking") {
-      setLookingFor((current) => unique([...current, value]).slice(0, 12));
-      setCustomLooking("");
-    } else {
-      setNotLookingFor((current) => unique([...current, value]).slice(0, 12));
-      setCustomNotLooking("");
-    }
-  }
-
-  async function save() {
-    if (!user?.uid) return;
-    setSaving(true);
-    try {
-      const payload = {
-        // Champs à plat (compatibilité ProfilePage)
-        lookingFor,
-        wantedItems: lookingFor,
-        searchingFor: lookingFor,
-        tradeWants: lookingFor,
-        notLookingFor,
-        avoidItems: notLookingFor,
-        notInterestedIn: notLookingFor,
-        universe,
-        interests: universe,
-        tags: universe,
-        // Champ imbriqué (compatibilité ProfilePreferenceSection / getTradePreferences)
-        tradePreferences: {
-          lookingFor,
-          notLookingFor,
-          universe,
-          note: "",
-        },
-        updatedAt: serverTimestamp(),
-      };
-      await setDoc(doc(db, "users", user.uid), payload, { merge: true });
-      onSaved(payload);
-      onClose();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <PageShell>
-      <div className="mx-auto w-full max-w-[840px] px-6 pt-[max(12px,env(safe-area-inset-top))] lg:px-0">
-        <MobileTopBar
-          title="Modifier mes préférences"
-          onBack={onClose}
-          right={
-            <button type="button" onClick={save} className="text-[13px] font-black text-[#08755C]">
-              {saving ? "..." : "Terminé"}
-            </button>
-          }
-        />
-
-        <section>
-          <h1 className="max-w-[340px] text-[30px] font-black leading-[1.02] tracking-[-0.06em] text-[#081225]">
-            Ce que tu aimes chercher, dénicher et échanger.
-          </h1>
-          <p className="mt-3 max-w-[310px] text-[14px] font-medium leading-relaxed text-slate-500">
-            Sélectionne ce qui t’inspire le plus pour personnaliser ton expérience Troco.
-          </p>
-
-          <div className="mt-6 flex gap-2 overflow-x-auto pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {[
-              ["looking", "Je recherche"],
-              ["not", "Je ne recherche pas"],
-              ["universe", "Mon univers"],
-            ].map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setMode(id)}
-                className={[
-                  "h-10 shrink-0 rounded-full px-4 text-[13px] font-black transition",
-                  mode === id
-                    ? "bg-[#08755C] text-white shadow-[0_10px_22px_rgba(8,117,92,0.16)]"
-                    : "border border-[#E8F1ED] bg-white text-[#40545B]",
-                ].join(" ")}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {mode === "looking" && (
-            <div className="mt-5">
-              <div className="mb-4 rounded-[24px] border border-[#E8F1ED] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
-                <p className="text-[14px] font-black text-[#081225]">Ce que tu aimerais recevoir</p>
-                <p className="mt-1 text-[12.5px] font-medium leading-relaxed text-slate-500">
-                  Ces préférences seront visibles sur ton profil et aideront les autres à proposer de meilleurs trocs.
-                </p>
-
-                <div className="mt-3 flex gap-2">
-                  <input
-                    value={customLooking}
-                    onChange={(event) => setCustomLooking(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        addCustom("looking");
-                      }
-                    }}
-                    placeholder="Ex : vinyles, lampe, vélo..."
-                    className="min-w-0 flex-1 rounded-[16px] border border-[#E6EFEB] bg-white px-3 text-[14px] font-medium outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => addCustom("looking")}
-                    className="h-11 rounded-[16px] bg-[#08755C] px-4 text-[13px] font-black text-white"
-                  >
-                    Ajouter
-                  </button>
-                </div>
-
-                {lookingFor.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {lookingFor.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => setLookingFor((current) => current.filter((value) => value !== item))}
-                        className="rounded-full border border-[#BFE8DA] bg-[#EAF8F4] px-3 py-2 text-[12.5px] font-black text-[#08755C]"
-                      >
-                        {item} ×
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {PREFERENCE_CARDS.map((card) => (
-                  <PreferenceCard
-                    key={card.id}
-                    card={card}
-                    selected={lookingFor.includes(card.label)}
-                    onClick={() => toggleIn(lookingFor, setLookingFor, card.label, 12)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {mode === "not" && (
-            <div className="mt-5">
-              <div className="mb-4 rounded-[24px] border border-[#E8F1ED] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
-                <p className="text-[14px] font-black text-[#081225]">Ce que tu ne recherches pas</p>
-                <p className="mt-1 text-[12.5px] font-medium leading-relaxed text-slate-500">
-                  Ça évite les propositions inutiles et rend les échanges plus simples.
-                </p>
-
-                <div className="mt-3 flex gap-2">
-                  <input
-                    value={customNotLooking}
-                    onChange={(event) => setCustomNotLooking(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        addCustom("not");
-                      }
-                    }}
-                    placeholder="Ex : meubles lourds, vêtements..."
-                    className="min-w-0 flex-1 rounded-[16px] border border-[#E6EFEB] bg-white px-3 text-[14px] font-medium outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => addCustom("not")}
-                    className="h-11 rounded-[16px] bg-[#40545B] px-4 text-[13px] font-black text-white"
-                  >
-                    Ajouter
-                  </button>
-                </div>
-
-                {notLookingFor.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {notLookingFor.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => setNotLookingFor((current) => current.filter((value) => value !== item))}
-                        className="rounded-full border border-[#E4EAEA] bg-[#F5F7F6] px-3 py-2 text-[12.5px] font-black text-[#40545B]"
-                      >
-                        {item} ×
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-[13px] font-medium text-slate-400">Rien exclu pour l’instant.</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {mode === "universe" && (
-            <div className="mt-5">
-              <div className="grid grid-cols-2 gap-3">
-                {PREFERENCE_CARDS.map((card) => (
-                  <PreferenceCard
-                    key={card.id}
-                    card={card}
-                    selected={universe.includes(card.label)}
-                    onClick={() => toggleIn(universe, setUniverse, card.label, 8)}
-                  />
-                ))}
-              </div>
-
-              {universe.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onOpenDetail(universe[0])}
-                  className="mt-5 flex w-full items-center justify-between rounded-[22px] border border-[#E8F1ED] bg-white p-4 text-left shadow-[0_10px_28px_rgba(15,23,42,0.04)]"
-                >
-                  <span>
-                    <span className="block text-[14px] font-black">Voir ton univers</span>
-                    <span className="mt-1 block text-[12px] font-medium text-slate-500">{universe.join(", ")}</span>
-                  </span>
-                  <ChevronRight size={18} className="text-slate-400" />
-                </button>
-              )}
-            </div>
-          )}
-        </section>
-      </div>
-      <BottomNav />
-    </PageShell>
-  );
-}
-
-function PreferenceDetailScreen({ label, items, profile, onBack, onEdit }) {
-  const relatedItems = items.slice(0, 6);
-
-  return (
-    <PageShell>
-      <div className="mx-auto w-full max-w-[840px] px-6 pt-[max(12px,env(safe-area-inset-top))] lg:px-0">
-        <MobileTopBar
-          title={label}
-          onBack={onBack}
-          right={<MoreHorizontal size={20} />}
-        />
-
-        <section>
-          <div className="relative overflow-hidden rounded-[28px] bg-slate-900 shadow-[0_16px_42px_rgba(15,23,42,0.14)]">
-            <img src={PREFERENCE_CARDS.find((card) => card.label === label)?.image || PREFERENCE_CARDS[0].image} alt="" className="h-[210px] w-full object-cover opacity-82" />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/76 via-slate-950/18 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-              <h1 className="text-[26px] font-black tracking-[-0.055em]">Tu aimes le {label.toLowerCase()}</h1>
-              <p className="mt-2 max-w-[280px] text-[14px] font-medium leading-relaxed text-white/86">
-                Objets avec histoire, matières nobles et design intemporel.
-              </p>
-              <button type="button" onClick={onEdit} className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-white px-4 text-[13px] font-black text-[#081225]">
-                <Edit3 size={15} />
-                Modifier mes préférences
-              </button>
-            </div>
-          </div>
-
-          <section className="mt-8">
-            <SectionTitle title="Inspirations" />
-            <div className="-mx-6 flex gap-3 overflow-x-auto px-6 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {PREFERENCE_CARDS.slice(0, 5).map((card) => (
-                <div key={card.id} className="h-[120px] min-w-[132px] overflow-hidden rounded-[22px]">
-                  <img src={card.image} alt="" className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-8">
-            <SectionTitle title="Objets correspondants" action={<Link to="/feed" className="text-[13px] font-black text-[#08755C]">Voir tout</Link>} />
-            {relatedItems.length ? (
-              <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {relatedItems.map((item) => (
-                  <ObjectCard key={item.id} item={item} profile={profile} />
-                ))}
-              </div>
-            ) : (
-              <EmptyBlock title="Aucun objet pour l’instant" text="Les objets liés à tes envies apparaîtront ici." />
-            )}
-          </section>
-        </section>
-      </div>
-      <BottomNav />
-    </PageShell>
-  );
-}
-
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -923,7 +598,7 @@ export default function ProfilePage() {
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editInitialScreen, setEditInitialScreen] = useState("menu");
   const [preferencesOpen, setPreferencesOpen] = useState(false);
-  const [detailPreference, setDetailPreference] = useState("");
+  const [preferenceMode, setPreferenceMode] = useState("looking");
 
   useEffect(() => {
     let mounted = true;
@@ -941,9 +616,21 @@ export default function ProfilePage() {
         setProfile(profileData);
 
         const loadedItems = [];
+        const normalizedEmail = String(user.email || "").toLowerCase();
+
         const itemQueries = [
           query(collection(db, "items"), where("ownerId", "==", user.uid), limit(24)),
           query(collection(db, "items"), where("userId", "==", user.uid), limit(24)),
+          query(collection(db, "items"), where("ownerUid", "==", user.uid), limit(24)),
+          query(collection(db, "items"), where("createdBy", "==", user.uid), limit(24)),
+          query(collection(db, "items"), where("uid", "==", user.uid), limit(24)),
+          ...(normalizedEmail
+            ? [
+                query(collection(db, "items"), where("ownerEmail", "==", normalizedEmail), limit(24)),
+                query(collection(db, "items"), where("userEmail", "==", normalizedEmail), limit(24)),
+                query(collection(db, "items"), where("createdByEmail", "==", normalizedEmail), limit(24)),
+              ]
+            : []),
         ];
 
         for (const itemQuery of itemQueries) {
@@ -951,11 +638,37 @@ export default function ProfilePage() {
             const itemSnapshot = await getDocs(itemQuery);
             itemSnapshot.docs.forEach((document) => loadedItems.push({ id: document.id, ...document.data() }));
           } catch (error) {
-            console.warn("Impossible de charger les objets :", error);
+            console.warn("Impossible de charger certains objets :", error);
           }
         }
 
-        const uniqueItems = Object.values(loadedItems.reduce((acc, item) => ({ ...acc, [item.id]: item }), {}));
+        try {
+          const allItemsSnapshot = await getDocs(query(collection(db, "items"), limit(150)));
+          allItemsSnapshot.docs.forEach((document) => {
+            const item = { id: document.id, ...document.data() };
+
+            const belongsToMe =
+              String(item.ownerId || "") === String(user.uid) ||
+              String(item.userId || "") === String(user.uid) ||
+              String(item.ownerUid || "") === String(user.uid) ||
+              String(item.createdBy || "") === String(user.uid) ||
+              String(item.uid || "") === String(user.uid) ||
+              (normalizedEmail && String(item.ownerEmail || "").toLowerCase() === normalizedEmail) ||
+              (normalizedEmail && String(item.userEmail || "").toLowerCase() === normalizedEmail) ||
+              (normalizedEmail && String(item.createdByEmail || "").toLowerCase() === normalizedEmail);
+
+            if (belongsToMe) loadedItems.push(item);
+          });
+        } catch (error) {
+          console.warn("Fallback objets profil indisponible :", error);
+        }
+
+        const uniqueItems = Object.values(
+          loadedItems
+            .filter((item) => item.status !== "deleted")
+            .reduce((acc, item) => ({ ...acc, [item.id]: item }), {})
+        );
+
         if (mounted) setItems(uniqueItems);
 
         const favoriteIds = unique([
@@ -1015,9 +728,8 @@ export default function ProfilePage() {
 
   if (authLoading || loadingProfile) {
     return (
-      <PageShell>
+      <PageShell user={user}>
         <div className="px-6 pt-8 text-center text-sm font-bold text-slate-500">Chargement du profil...</div>
-        <BottomNav />
       </PageShell>
     );
   }
@@ -1039,61 +751,22 @@ export default function ProfilePage() {
     );
   }
 
-  if (preferencesOpen) {
-    return (
-      <PreferencesScreen
-        user={user}
-        profile={profile}
-        open={preferencesOpen}
-        onClose={() => setPreferencesOpen(false)}
-        onOpenDetail={(label) => {
-          setPreferencesOpen(false);
-          setDetailPreference(label);
-        }}
-        onSaved={(payload) => setProfile((current) => ({ ...(current || {}), ...payload }))}
-      />
-    );
-  }
 
-  if (detailPreference) {
-    return (
-      <PreferenceDetailScreen
-        label={detailPreference}
-        items={items}
-        profile={profile}
-        onBack={() => setDetailPreference("")}
-        onEdit={() => {
-          setDetailPreference("");
-          setPreferencesOpen(true);
-        }}
-      />
-    );
-  }
 
   return (
-    <PageShell>
-      <div className="mx-auto w-full max-w-[840px] px-6 pt-[max(24px,env(safe-area-inset-top))] lg:px-0 lg:pt-0">
+    <PageShell user={user}>
+      <div className="mx-auto w-full max-w-[1180px] px-6 pt-[max(8px,env(safe-area-inset-top))] lg:px-10 lg:pt-0 xl:px-0">
         <div className="hidden lg:block">
-          <TrocoPageHeader user={user} showLogo={false} showNotifications showAvatar eyebrow="Profil" title="Mon profil" subtitle="Ton univers Troco, tes objets et tes envies d’échange." compact />
+          <TrocoPageHeader user={user} showLogo={false} showNotifications={false} showAvatar={false} eyebrow="Profil" title="Mon profil" subtitle="Ton univers Troco, tes objets et tes envies d’échange." compact />
         </div>
 
-        <section className="relative pt-4 lg:pt-0">
-          <div className="absolute right-0 top-4 flex gap-3">
-            <button type="button" className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E5F1EC] bg-white/88 text-[#081225] shadow-[0_10px_24px_rgba(15,23,42,0.04)]" aria-label="Partager">
-              <Share2 size={18} />
-            </button>
-            <button type="button" onClick={() => navigate("/profile/edit")} className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E5F1EC] bg-white/88 text-[#081225] shadow-[0_10px_24px_rgba(15,23,42,0.04)]" aria-label="Réglages">
-              <Settings size={18} />
-            </button>
-          </div>
-
-          <div className="mt-12 grid gap-5 sm:grid-cols-[140px_1fr] sm:items-center">
+        <section className=" sm:grid-cols-[140px_1fr] sm:items-center">
             <div className="flex justify-start">
-              <Avatar user={user} profile={profile} onEdit={() => openEdit("identity")} />
-            </div>
+              <Avatar user={user} profile={profile} onEdit={() => navigate("/profile/edit")} />
+            
 
             <div className="text-left">
-              <h1 className="text-[44px] font-black leading-[0.95] tracking-[-0.065em] text-[#081225] sm:text-[44px]">
+              <h1 className="text-[44px] font-black leading-[0.95] tracking-[-0.065em] text-[#081225] sm:text-[58px]">
                 {displayName(user, profile)}
               </h1>
               <p className="mt-3 text-[16px] font-black tracking-[-0.025em] text-[#0f9f9a]">{handleName(user, profile)}</p>
@@ -1113,17 +786,24 @@ export default function ProfilePage() {
             <StatCapsule icon={Heart} number={favoriteItems.length} label="favoris" />
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-3">
-            <ActionButton icon={Edit3} onClick={() => openEdit("menu")}>Modifier</ActionButton>
-            <ActionButton icon={SlidersHorizontal} onClick={() => setPreferencesOpen(true)}>Préférences</ActionButton>
-            <ActionButton icon={Settings} onClick={() => navigate("/profile/edit")}>Réglages</ActionButton>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:max-w-[420px]">
+            <ActionButton icon={Edit3} onClick={() => navigate("/profile/edit")}>Modifier</ActionButton>
+            <ActionButton
+              icon={LogOut}
+              onClick={async () => {
+                await signOut(auth);
+                navigate("/login", { replace: true });
+              }}
+            >
+              Déconnexion
+            </ActionButton>
           </div>
         </section>
 
         <section className="mt-9">
           <SectionTitle title="Ses objets" action={items.length > 0 ? <Link to="/library" className="flex items-center gap-1 text-[13px] font-black text-[#08755C]">Voir tout <ChevronRight size={16} /></Link> : null} />
           {items.length ? (
-            <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {items.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}
             </div>
           ) : (
@@ -1132,36 +812,69 @@ export default function ProfilePage() {
         </section>
 
         <section className="mt-9">
-          <SectionTitle title="Ses envies d’échange" action={<button type="button" onClick={() => setPreferencesOpen(true)} className="text-[13px] font-black text-[#08755C]">Modifier</button>} />
-          {lookingFor.length ? (
-            <div className="flex flex-wrap gap-2.5">
-              {lookingFor.map((item, index) => {
-                const icons = [Car, Zap, Home, Tag, Music, Sparkles];
-                return <Chip key={item} icon={icons[index % icons.length]}>{item}</Chip>;
-              })}
-            </div>
-          ) : (
-            <EmptyBlock icon={Search} title="Aucune envie renseignée" text="Ajoute ce que tu aimerais recevoir en échange." />
-          )}
-        </section>
+          <SectionTitle title="Mes préférences d’échange" />
 
-        {notLookingFor.length > 0 && (
-          <section className="mt-7">
-            <SectionTitle title="Ne recherche pas" />
-            <div className="flex flex-wrap gap-2.5">
-              {notLookingFor.map((item) => (
-                <Chip key={item}>{item}</Chip>
-              ))}
-            </div>
-          </section>
-        )}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[28px] border border-[#E8F1ED] bg-white/88 p-5 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#08755C]">
+                  Je recherche
+                </p>
 
-        <section className="mt-9">
-          <SectionTitle title="Son univers" />
-          <div className="-mx-6 flex gap-3 overflow-x-auto px-6 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {universe.map((item, index) => (
-              <UniverseCard key={`${item}-${index}`} label={item} index={index} onClick={() => setDetailPreference(item)} />
-            ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreferenceMode("looking");
+                    setPreferencesOpen(true);
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#16C7C1] to-[#31D67B] text-white shadow-[0_10px_22px_rgba(20,184,166,0.16)] transition active:scale-95"
+                  aria-label="Modifier ce que je recherche"
+                >
+                  +
+                </button>
+              </div>
+
+              {lookingFor.length ? (
+                <div className="mt-4 flex flex-wrap gap-2.5">
+                  {lookingFor.map((item, index) => {
+                    const icons = [Car, Zap, Home, Tag, Music, Sparkles];
+                    return <Chip key={item} icon={icons[index % icons.length]} active>{item}</Chip>;
+                  })}
+                </div>
+              ) : (
+                <EmptyBlock icon={Search} title="Aucune envie renseignée" text="Ajoute ce que tu aimerais recevoir en échange." />
+              )}
+            </div>
+
+            <div className="rounded-[28px] border border-[#E8F1ED] bg-white/88 p-5 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#40545B]">
+                  Je ne recherche pas
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreferenceMode("not");
+                    setPreferencesOpen(true);
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E4EAEA] bg-white text-[#40545B] shadow-[0_10px_22px_rgba(15,23,42,0.055)] transition active:scale-95"
+                  aria-label="Modifier ce que je ne recherche pas"
+                >
+                  +
+                </button>
+              </div>
+
+              {notLookingFor.length ? (
+                <div className="mt-4 flex flex-wrap gap-2.5">
+                  {notLookingFor.map((item) => (
+                    <Chip key={item}>{item}</Chip>
+                  ))}
+                </div>
+              ) : (
+                <EmptyBlock icon={X} title="Aucune exclusion renseignée" text="Ajoute ce que tu préfères ne pas recevoir." />
+              )}
+            </div>
           </div>
         </section>
 
@@ -1177,14 +890,21 @@ export default function ProfilePage() {
         {favoriteItems.length > 0 && (
           <section className="mt-9">
             <SectionTitle title="Favoris" />
-            <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {favoriteItems.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}
             </div>
           </section>
         )}
       </div>
 
-      <BottomNav />
+      <PreferenceModal
+        open={preferencesOpen}
+        mode={preferenceMode}
+        profile={profile}
+        user={user}
+        onClose={() => setPreferencesOpen(false)}
+        onSaved={(payload) => setProfile((current) => ({ ...(current || {}), ...payload }))}
+      />
     </PageShell>
   );
 }

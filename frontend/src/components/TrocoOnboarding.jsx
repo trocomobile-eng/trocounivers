@@ -40,7 +40,7 @@ function LanguageSwitcher() {
           "rounded-full px-3 py-1.5 text-[12px] font-black uppercase transition",
           currentLanguage === "fr"
             ? "bg-[#0f9f9a] text-white shadow-[0_8px_20px_rgba(15,159,154,0.18)]"
-            : "bg-white/80 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.04)]",
+            : "bg-white/82 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.04)]",
         ].join(" ")}
       >
         FR
@@ -53,7 +53,7 @@ function LanguageSwitcher() {
           "rounded-full px-3 py-1.5 text-[12px] font-black uppercase transition",
           currentLanguage === "en"
             ? "bg-[#0f9f9a] text-white shadow-[0_8px_20px_rgba(15,159,154,0.18)]"
-            : "bg-white/80 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.04)]",
+            : "bg-white/82 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.04)]",
         ].join(" ")}
       >
         EN
@@ -64,7 +64,7 @@ function LanguageSwitcher() {
 
 function Pill({ children }) {
   return (
-    <span className="rounded-full border border-white/80 bg-white/70 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.045)] backdrop-blur-xl">
+    <span className="rounded-full border border-[#E4ECE8] bg-white/82 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.045)] backdrop-blur-xl">
       {children}
     </span>
   );
@@ -148,13 +148,13 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_18%_10%,rgba(125,211,252,0.18),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(134,239,172,0.16),transparent_34%),radial-gradient(circle_at_50%_92%,rgba(16,185,129,0.08),transparent_40%),linear-gradient(180deg,#f9fffd_0%,#f3fcf8_52%,#ffffff_100%)] px-5 pb-7 pt-[max(22px,env(safe-area-inset-top))] text-[#081225]">
+    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_18%_10%,rgba(125,211,252,0.10),transparent_35%),radial-gradient(circle_at_82%_18%,rgba(134,239,172,0.10),transparent_38%),radial-gradient(circle_at_50%_92%,rgba(16,185,129,0.06),transparent_42%),linear-gradient(180deg,#F5FAF8_0%,#F4FAF8_100%)] px-5 pb-7 pt-[max(22px,env(safe-area-inset-top))] text-[#081225]">
       <div className="mx-auto flex min-h-[calc(100vh-30px)] max-w-[450px] flex-col lg:max-w-6xl">
         <header className="flex items-center justify-between">
           <img
             src="/logo.png"
             alt="Troco"
-            className="h-auto w-[136px] max-w-[42vw] object-contain drop-shadow-[0_7px_16px_rgba(46,204,138,0.10)] lg:w-[170px]"
+            className="h-auto w-[110px] max-w-[38vw] object-contain drop-shadow-[0_7px_16px_rgba(46,204,138,0.10)] lg:w-[135px]"
           />
 
           <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
             <button
               type="button"
               onClick={onSkip}
-              className="rounded-full border border-white/80 bg-white/80 px-4 py-2 text-sm font-black text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.05)] backdrop-blur-[14px] transition active:scale-95"
+              className="rounded-full border border-[#E4ECE8] bg-white/82 px-4 py-2 text-sm font-black text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.05)] backdrop-blur-[14px] transition active:scale-95"
             >
               {t("onboarding.skip")}
             </button>
@@ -174,15 +174,15 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
           <div className="relative mb-6 lg:mb-0">
             <div className="absolute -inset-3 rounded-[46px] bg-white/35 blur-2xl" />
 
-            <div className="relative mx-auto max-w-[330px] overflow-hidden rounded-[38px] border border-white/85 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.13)] lg:max-w-[430px] lg:rounded-[46px]">
+            <div className="relative mx-auto max-w-[330px] overflow-hidden rounded-[28px] border border-[#E4ECE8] bg-white shadow-[0_32px_90px_rgba(15,23,42,0.16)] lg:max-w-[560px] lg:rounded-[46px]">
               <img
                 src={slide.image}
                 alt=""
-                className="aspect-[9/16] w-full object-cover"
+                className="aspect-[4/3] w-full object-cover"
                 draggable="false"
               />
 
-              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-3 py-2 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-[#E4ECE8] bg-white/82 px-3 py-2 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur-xl">
                 <Icon size={17} className="text-[#159b6b]" strokeWidth={2.5} />
                 <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-700">
                   {slide.eyebrow}
@@ -190,31 +190,21 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
               </div>
 
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/52 via-black/14 to-transparent p-5 pt-20 text-white">
-                <div className="flex flex-wrap gap-1.5">
-                  {slide.chips.map((chip) => (
-                    <span
-                      key={chip}
-                      className="rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-black text-[#0f513f] backdrop-blur"
-                    >
-                      {chip}
-                    </span>
-                  ))}
-                </div>
-              </div>
+                             </div>
             </div>
           </div>
 
-          <div className="rounded-[34px] border border-white/80 bg-white/74 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.055)] backdrop-blur-xl lg:rounded-[42px] lg:p-10">
+          <div className="rounded-[34px] border border-[#E4ECE8] bg-white/88 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.055)] backdrop-blur-xl lg:rounded-[42px] lg:p-10">
             <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#E8F7EF] px-3 py-1.5 text-[12px] font-black uppercase tracking-[0.14em] text-[#22a06b]">
               <ImageIcon size={14} />
               {slide.eyebrow}
             </p>
 
-            <h1 className="max-w-[360px] text-[36px] font-black leading-[0.96] tracking-[-0.055em] lg:max-w-[620px] lg:text-[64px]">
+            <h1 className="max-w-[360px] text-[24px] font-black leading-[0.96] tracking-[-0.055em] lg:max-w-[620px] lg:text-[64px]">
               {slide.title}
             </h1>
 
-            <p className="mt-4 max-w-[335px] text-[15px] font-medium leading-[1.58] text-slate-600 lg:max-w-[580px] lg:text-[19px]">
+            <p className="mt-4 max-w-[335px] text-[13px] font-medium leading-[1.58] text-slate-600 lg:max-w-[380px] lg:text-[19px]">
               {slide.text}
             </p>
 
@@ -226,7 +216,7 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
 
             <div className="mt-7 h-2 overflow-hidden rounded-full bg-slate-200/70">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#2ECC8A] to-cyan-400 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-[#22C7B8] to-[#36C982] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -256,24 +246,24 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
               <button
                 type="button"
                 onClick={next}
-                className="flex w-full items-center justify-center gap-2 rounded-[24px] bg-gradient-to-br from-[#2ECC8A] to-cyan-400 px-5 py-4 text-base font-black text-white shadow-[0_12px_24px_rgba(46,204,138,0.18)] transition active:scale-95"
+                className="flex w-full items-center justify-center gap-2 rounded-[24px] bg-gradient-to-br from-[#22C7B8] to-[#36C982] px-5 py-4 text-base font-black text-white shadow-[0_12px_24px_rgba(46,204,138,0.18)] transition active:scale-95"
               >
                 {isLast ? t("onboarding.start") : t("onboarding.continue")}
                 <ArrowRight size={20} strokeWidth={2.4} />
               </button>
 
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-[20px] bg-white/65 px-2 py-3 text-[11px] font-black text-slate-500">
+                <div className="rounded-[20px] bg-white/82 px-2 py-3 text-[11px] font-black text-slate-500">
                   <UsersRound size={17} className="mx-auto mb-1 text-[#22a06b]" />
                   {t("onboarding.values.local")}
                 </div>
 
-                <div className="rounded-[20px] bg-white/65 px-2 py-3 text-[11px] font-black text-slate-500">
+                <div className="rounded-[20px] bg-white/82 px-2 py-3 text-[11px] font-black text-slate-500">
                   <Sparkles size={17} className="mx-auto mb-1 text-[#22a06b]" />
                   {t("onboarding.values.surprise")}
                 </div>
 
-                <div className="rounded-[20px] bg-white/65 px-2 py-3 text-[11px] font-black text-slate-500">
+                <div className="rounded-[20px] bg-white/82 px-2 py-3 text-[11px] font-black text-slate-500">
                   <Coffee size={17} className="mx-auto mb-1 text-[#22a06b]" />
                   {t("onboarding.values.human")}
                 </div>

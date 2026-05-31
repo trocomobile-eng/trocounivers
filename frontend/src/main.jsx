@@ -5,6 +5,8 @@ import "./i18n";
 
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
+import { FavoritesProvider } from "./context/FavoritesContext";
+import { ToastProvider } from "./context/ToastContext";
 
 import "./index.css";
 import "leaflet/dist/leaflet.css";

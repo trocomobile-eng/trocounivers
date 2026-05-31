@@ -13,7 +13,7 @@ export default function TrocoFooter({ mobile = false, className = "" }) {
     <footer
       className={[
         "troco-footer",
-        mobile ? "block" : "hidden lg:block",
+        
         "border-t border-white/60 bg-white/42 px-8 py-10 backdrop-blur-xl",
         className,
       ].join(" ")}

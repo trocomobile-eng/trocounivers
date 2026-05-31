@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import "./i18n";
 
 import SplashScreen from "./components/SplashScreen";
-import AppShell from "./layouts/AppShell";
+import PageLayout from "./layouts/PageLayout";
 
 import LandingPage from "./pages/LandingPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -12,7 +12,6 @@ import SignupPage from "./pages/SignupPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 import FeedPage from "./pages/FeedPage";
-import DesktopFeedPage from "./pages/feed/DesktopFeedPage";
 
 import UniversPage from "./pages/UniversPage";
 import UniversDetailPage from "./pages/UniversDetailPage";
@@ -30,6 +29,7 @@ import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import UserProfilePage from "./pages/UserProfilePage";
 import UserItemsPage from "./pages/UserItemsPage";
+import LibraryPage from "./pages/LibraryPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import InfoPage from "./pages/InfoPage";
 import TrocoDossierPage from "./pages/TrocoDossierPage";
@@ -51,7 +51,7 @@ function PrivateRoute({ children }) {
 
   if (loading) return null;
 
-  return user ? <AppShell>{children}</AppShell> : <Navigate to="/login" replace />;
+  return user ? <PageLayout>{children}</PageLayout> : <Navigate to="/login" replace />;
 }
 
 function PublicRoute({ children }) {
@@ -62,22 +62,7 @@ function PublicRoute({ children }) {
   return !user ? children : <Navigate to="/feed" replace />;
 }
 
-function ResponsiveFeedRoute() {
-  const [isDesktop, setIsDesktop] = useState(false);
 
-  useEffect(() => {
-    function update() {
-      setIsDesktop(window.innerWidth >= 1024);
-    }
-
-    update();
-    window.addEventListener("resize", update);
-
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  return isDesktop ? <DesktopFeedPage /> : <FeedPage />;
-}
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -131,7 +116,7 @@ export default function App() {
         path="/feed"
         element={
           <PrivateRoute>
-            <ResponsiveFeedRoute />
+            <FeedPage />
           </PrivateRoute>
         }
       />
@@ -140,7 +125,7 @@ export default function App() {
         path="/feed/all"
         element={
           <PrivateRoute>
-            <ResponsiveFeedRoute />
+            <FeedPage />
           </PrivateRoute>
         }
       />
@@ -165,8 +150,8 @@ export default function App() {
         }
       />
 
-      <Route path="/items/:id" element={<ItemDetailPage />} />
-      <Route path="/items/:itemId" element={<ItemDetailPage />} />
+      <Route path="/items/:id" element={<PageLayout><ItemDetailPage /></PageLayout>} />
+      <Route path="/items/:itemId" element={<PageLayout><ItemDetailPage /></PageLayout>} />
 
       <Route
         path="/items/:id/edit"
@@ -201,7 +186,7 @@ export default function App() {
         path="/library"
         element={
           <PrivateRoute>
-            <UserItemsPage />
+            <LibraryPage />
           </PrivateRoute>
         }
       />

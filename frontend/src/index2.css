@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+
+  --troco-title: #0b1324;
+  --troco-text: #64748b;
+  --troco-muted: #94a3b8;
+
+  --troco-accent: #2ecc8a;
+  --troco-teal: #0f9f9a;
+  --troco-cyan: #22d3ee;
+
+--troco-bg: #EAF7F3;
+
+  --troco-card: rgba(255, 255, 255, 0.84);
+  --troco-card-strong: rgba(255, 255, 255, 0.92);
+  --troco-border: rgba(255, 255, 255, 0.82);
+
+  --troco-universe-bg: var(--troco-bg);
+  --troco-universe-card: rgba(255, 255, 255, 0.9);
+  --troco-universe-card-soft: rgba(255, 255, 255, 0.74);
+  --troco-universe-overlay: rgba(8, 18, 37, 0.14);
+  --troco-universe-title: #0b1324;
+  --troco-universe-text: #64748b;
+  --troco-universe-muted: #94a3b8;
+
+  --troco-shadow-soft: 0 12px 34px rgba(15, 23, 42, 0.05);
+  --troco-shadow-card: 0 16px 44px rgba(15, 23, 42, 0.055);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  background: var(--troco-bg);
+} 	
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: var(--troco-title);
+  background: var(--troco-bg);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* .troco-page-bg, .page etc. supprimés — le body gère le fond via var(--troco-bg) */
+/* Les pages utilisent PageLayout qui fournit bg-[#FAFAF7] */
+
+.troco-scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.troco-scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@layer components {
+  .card,
+  .troco-card {
+    @apply rounded-[20px] bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)];
+  }
+
+  .troco-card-strong {
+    @apply rounded-[20px] bg-white shadow-[0_8px_32px_rgba(15,23,42,0.10)];
+  }
+
+  .troco-glass {
+    @apply rounded-[20px] border border-[#E4ECE8] bg-white/80;
+  }
+
+  .troco-section-title {
+    @apply font-extrabold tracking-[-0.045em] text-[#081225];
+  }
+
+  .troco-caption {
+    @apply text-[11px] font-black uppercase tracking-[0.18em] text-[#1ABEA3];
+  }
+
+  .troco-body {
+    @apply font-medium leading-relaxed text-[#64748b];
+  }
+
+  .troco-search {
+    @apply flex items-center rounded-full border border-white/90 backdrop-blur-xl;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow:
+      0 8px 24px rgba(15, 23, 42, 0.028),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  }
+
+  /* ── Bouton primaire — source unique ── */
+  .btn-primary,
+  .troco-primary-button,
+  .troco-primary-btn {
+    @apply rounded-[20px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-4 py-3 font-black text-white shadow-[0_12px_28px_rgba(26,190,163,0.18)] transition active:scale-[0.98] disabled:opacity-50 disabled:shadow-none;
+  }
+
+  /* ── Bouton secondaire ── */
+  .btn-secondary,
+  .troco-secondary-button,
+  .troco-secondary-btn {
+    @apply rounded-[20px] border border-[#E4ECE8] bg-white px-4 py-3 font-black text-[#102033] shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition active:scale-[0.98];
+  }
+
+  .tag,
+  .troco-badge {
+    @apply inline-flex items-center rounded-full bg-[#F0FAF7] px-2.5 py-0.5 text-[11px] font-bold text-[#1ABEA3];
+  }
+
+  .troco-shell {
+    @apply mx-auto w-full max-w-7xl px-5 pb-28 pt-[max(18px,env(safe-area-inset-top))] lg:px-8 lg:pb-20 lg:pt-8;
+  }
+
+  .troco-soft-pill {
+    @apply inline-flex items-center justify-center rounded-full bg-[#F0FAF7] px-3.5 py-1.5 text-[12px] font-bold text-[#1ABEA3];
+  }
+
+  .troco-floating-action {
+    @apply rounded-full border border-[#E4ECE8] bg-white shadow-[0_4px_16px_rgba(15,23,42,0.07)] transition active:scale-[0.98];
+  }
+
+  .troco-universe-page {
+    min-height: 100vh;
+    background: var(--troco-universe-bg);
+    color: var(--troco-universe-title);
+  }
+
+  .troco-universe-card {
+    @apply rounded-[28px] border border-white/80 shadow-[0_16px_44px_rgba(15,23,42,0.055)] backdrop-blur-xl;
+    background: var(--troco-universe-card);
+  }
+
+  .troco-universe-card-soft {
+    @apply rounded-[24px] border border-white/70 shadow-[0_10px_28px_rgba(15,23,42,0.04)] backdrop-blur-xl;
+    background: var(--troco-universe-card-soft);
+  }
+
+  .troco-universe-image-overlay {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 18, 37, 0.02) 0%,
+        rgba(8, 18, 37, 0.08) 48%,
+        rgba(8, 18, 37, 0.34) 100%
+      );
+  }
+
+  .troco-universe-image-overlay-side {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(8, 18, 37, 0.56) 0%,
+        rgba(8, 18, 37, 0.22) 48%,
+        rgba(8, 18, 37, 0.04) 100%
+      );
+  }
+
+  .troco-universe-title {
+    color: var(--troco-universe-title);
+  }
+
+  .troco-universe-text {
+    color: var(--troco-universe-text);
+  }
+
+  .troco-universe-muted {
+    color: var(--troco-universe-muted);
+  }
+}
+

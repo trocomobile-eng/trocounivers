@@ -14,6 +14,19 @@ import { useAuth } from "../context/AuthContext";
 
 const ADMIN_UID = "wXeLxwSQaqPjvyzsWTjvftYvt972";
 
+const SURVEY_LABELS = {
+  after_add_item: {
+    ease: { 1: "😤 Difficile", 2: "😕 Compliqué", 3: "😐 Correct", 4: "😊 Facile", 5: "🤩 Très facile" },
+    blocker: {
+      photos: "📸 Photos",
+      title: "✏️ Titre",
+      category: "🏷️ Catégorie",
+      condition: "⭐ État",
+      nothing: "✅ Rien",
+    },
+  },
+};
+
 const ANSWER_LABELS = {
   overall: {
     excellent: "🤩 Excellente",
@@ -83,6 +96,7 @@ export default function AdminPage() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [tab, setTab] = useState("post_meeting");
 
   useEffect(() => {
     if (authLoading) return;
@@ -167,8 +181,19 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, [authLoading, user?.uid, navigate]);
 
+  const postMeetingFeedbacks = useMemo(() =>
+    feedbacks.filter((fb) => !fb.surveyId || fb.surveyId === "post_meeting"),
+    [feedbacks]
+  );
+
+  const addItemFeedbacks = useMemo(() =>
+    feedbacks.filter((fb) => fb.surveyId === "after_add_item"),
+    [feedbacks]
+  );
+
   const filtered = useMemo(() => {
-    return feedbacks.filter((fb) => {
+    const base = tab === "add_item" ? addItemFeedbacks : postMeetingFeedbacks;
+    return base.filter((fb) => {
       if (filter === "positive") {
         return fb.answers?.overall === "excellent" || fb.answers?.overall === "good";
       }
@@ -187,7 +212,7 @@ export default function AdminPage() {
 
       return true;
     });
-  }, [feedbacks, filter]);
+  }, [feedbacks, filter, tab, postMeetingFeedbacks, addItemFeedbacks]);
 
   const stats = useMemo(() => {
     const total = feedbacks.length;
@@ -252,6 +277,26 @@ export default function AdminPage() {
           </button>
         </div>
 
+        {/* Onglets */}
+        <div className="mb-6 flex gap-2">
+          {[
+            { id: "post_meeting", label: `🤝 Post-meeting (${postMeetingFeedbacks.length})` },
+            { id: "add_item",     label: `📦 Ajout objet (${addItemFeedbacks.length})` },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={[
+                "rounded-full px-4 py-2 text-[13px] font-black transition",
+                tab === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-600 shadow-sm",
+              ].join(" ")}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <StatCard title="Total" value={stats.total} color="slate" />
           <StatCard title="Satisfaction" value={`${stats.positiveRate} %`} sub={`${stats.positive} positifs`} color="emerald" />
@@ -287,6 +332,37 @@ export default function AdminPage() {
         {filtered.length === 0 ? (
           <div className="rounded-[20px] bg-white p-8 text-center text-sm font-bold text-slate-400">
             Aucun feedback pour ce filtre.
+          </div>
+        ) : tab === "add_item" ? (
+          <div className="overflow-hidden rounded-[20px] bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] text-left text-[13px]">
+                <thead className="border-b border-slate-100 bg-slate-50 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
+                  <tr>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Utilisateur</th>
+                    <th className="px-4 py-3">Facilité</th>
+                    <th className="px-4 py-3">Bloqueur</th>
+                    <th className="px-4 py-3">Objet</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filtered.map((fb) => (
+                    <tr key={fb.id} className="hover:bg-slate-50/60">
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-400">{formatDate(fb.createdAt)}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-700">{fb.userName}</td>
+                      <td className="px-4 py-3">{SURVEY_LABELS.after_add_item.ease[fb.answers?.ease] || fb.answers?.ease || "—"}</td>
+                      <td className="px-4 py-3">{SURVEY_LABELS.after_add_item.blocker[fb.answers?.blocker] || fb.answers?.blocker || "—"}</td>
+                      <td className="px-4 py-3">
+                        {fb.metadata?.itemId ? (
+                          <a href={`/items/${fb.metadata.itemId}`} className="font-black text-emerald-600 hover:underline">Voir →</a>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <div className="overflow-hidden rounded-[20px] bg-white shadow-sm">

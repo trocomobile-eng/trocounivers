@@ -14,7 +14,7 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
+import { useFavorites } from "../context/FavoritesContext";
 
 import {
   formatLocation,
@@ -22,7 +22,6 @@ import {
   getDisplayItemType,
   getItemImage,
 } from "../utils/format";
-import { getTradePreferences, normalizePreferenceLabel } from "../components/profile/profileUtils";
 
 function clean(value = "") {
   return String(value).trim().replace(/\s+/g, " ");
@@ -208,6 +207,8 @@ export default function ItemDetailPage() {
   const ownerName = getOwnerName(item, ownerProfile);
   const ownerAvatar = getOwnerAvatar(item, ownerProfile);
   const isOwner = isOwnItem(item, user);
+  const { favoriteIds, toggle: toggleFavorite } = useFavorites();
+  const isFavorite = favoriteIds.includes(item?.id);
 
   const title = getDisplayItemType(item) || item?.title || item?.itemType || item?.type || "Objet";
   const details = getDisplayItemDetails(item) || item?.category || "";
@@ -244,55 +245,30 @@ export default function ItemDetailPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="page">
-        <main className="px-5 pb-32 pt-5">
-          <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 text-center text-sm font-bold text-slate-500 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-            Chargement de l’objet...
-          </div>
-        </main>
-
-        <BottomNav />
+      <div className="flex min-h-[60vh] items-center justify-center text-sm font-medium text-slate-400">
+        Chargement de l'objet...
       </div>
     );
   }
 
   if (!item) {
     return (
-      <div className="page">
-        <main className="px-5 pb-32 pt-5">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/82 text-slate-700 shadow-[0_8px_22px_rgba(15,23,42,0.04)]"
-            aria-label="Retour"
-          >
-            <ArrowLeft size={21} strokeWidth={2.3} />
-          </button>
-
-          <div className="rounded-[28px] border border-white/80 bg-white/82 p-7 text-center shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-            <p className="text-lg font-black text-[#081225]">Objet introuvable</p>
-            <p className="mt-2 text-sm font-medium text-slate-500">
-              Cet objet n’existe plus ou n’est pas disponible.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => navigate("/feed")}
-              className="mt-5 rounded-[20px] bg-gradient-to-r from-[#2ECC8A] to-cyan-400 px-5 py-3 text-sm font-black text-white"
-            >
-              Retour au feed
-            </button>
-          </div>
-        </main>
-
-        <BottomNav />
-      </div>
+      <>
+        <button type="button" onClick={() => navigate(-1)} className="mb-5 flex h-10 w-10 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.07)]" aria-label="Retour">
+          <ArrowLeft size={18} strokeWidth={2.3} className="text-[#0d1b2a]" />
+        </button>
+        <div className="rounded-[20px] bg-white p-8 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+          <p className="text-[17px] font-extrabold text-[#0d1b2a]">Objet introuvable</p>
+          <p className="mt-2 text-[14px] font-medium text-slate-500">Cet objet n'existe plus ou n'est pas disponible.</p>
+          <button type="button" onClick={() => navigate("/feed")} className="troco-primary-btn mt-5 rounded-full">Retour au feed</button>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="page">
-      <main className="mx-auto max-w-[760px] px-5 pb-36 pt-4">
+    <>
+      <main className="mx-auto w-full max-w-[760px] pb-10">
         <section className="relative">
           <div className="overflow-hidden rounded-[32px] bg-slate-100 shadow-[0_12px_34px_rgba(15,23,42,0.07)]">
             <div className="aspect-[1.3/1] w-full">
@@ -313,7 +289,7 @@ export default function ItemDetailPage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/86 text-[#081225] shadow-[0_8px_22px_rgba(15,23,42,0.08)] backdrop-blur-xl"
+            className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0d1b2a] shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
             aria-label="Retour"
           >
             <ArrowLeft size={22} strokeWidth={2.4} />
@@ -321,14 +297,14 @@ export default function ItemDetailPage() {
 
           <button
             type="button"
-            onClick={isOwner ? goToEdit : undefined}
-            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/86 text-[#081225] shadow-[0_8px_22px_rgba(15,23,42,0.08)] backdrop-blur-xl"
+            onClick={isOwner ? goToEdit : () => toggleFavorite(item?.id)}
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0d1b2a] shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
             aria-label={isOwner ? "Modifier l’objet" : "Ajouter aux favoris"}
           >
             {isOwner ? (
               <PenLine size={20} strokeWidth={2.25} />
             ) : (
-              <Heart size={21} strokeWidth={2.2} />
+              <Heart size={21} strokeWidth={2.2} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "text-[#1ABEA3]" : ""} />
             )}
           </button>
 
@@ -356,10 +332,10 @@ export default function ItemDetailPage() {
           )}
         </section>
 
-        <section className="mt-5 rounded-[30px] border border-white/90 bg-white/92 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+        <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#0f9f9a]">
+              <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
                 {isOwner ? "Ton objet" : "Objet proposé"}
               </p>
 
@@ -371,7 +347,7 @@ export default function ItemDetailPage() {
             <button
               type="button"
               onClick={isOwner ? goToEdit : undefined}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#0f9f9a] shadow-[0_8px_22px_rgba(15,23,42,0.05)]"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#1ABEA3] shadow-[0_8px_22px_rgba(15,23,42,0.05)]"
               aria-label={isOwner ? "Modifier l’objet" : "Partager"}
             >
               {isOwner ? (
@@ -404,7 +380,7 @@ export default function ItemDetailPage() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-[14px] bg-[#E8F7EF] px-3 py-1.5 text-[14px] font-black text-[#0f9f9a]">
+            <span className="rounded-[14px] bg-[#F0FAF7] px-3 py-1.5 text-[14px] font-black text-[#1ABEA3]">
               {condition}
             </span>
 
@@ -422,14 +398,14 @@ export default function ItemDetailPage() {
           </div>
 
           <p className="mt-5 flex items-center gap-3 text-[17px] font-semibold text-slate-500">
-            <MapPin size={21} className="text-[#0f9f9a]" strokeWidth={2.25} />
+            <MapPin size={21} className="text-[#1ABEA3]" strokeWidth={2.25} />
             {itemLocation}
           </p>
 
           <div className="mt-6 h-px bg-slate-100" />
 
           <div className="mt-5">
-            <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#0f9f9a]">
+            <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
               Description
             </p>
 
@@ -439,7 +415,7 @@ export default function ItemDetailPage() {
           </div>
         </section>
 
-        <section className="mt-5 rounded-[30px] border border-white/90 bg-white/92 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+        <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
           {isOwner ? (
             <>
               <p className="text-[17px] font-semibold leading-relaxed text-[#081225]">
@@ -449,7 +425,7 @@ export default function ItemDetailPage() {
               <button
                 type="button"
                 onClick={goToEdit}
-                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-[#2ECC8A] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
+                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
               >
                 <PenLine size={20} strokeWidth={2.4} />
                 Modifier mon objet
@@ -464,7 +440,7 @@ export default function ItemDetailPage() {
               <button
                 type="button"
                 onClick={proposeExchange}
-                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-[#2ECC8A] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
+                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
               >
                 <Repeat2 size={20} strokeWidth={2.4} />
                 Proposer un troc
@@ -473,7 +449,7 @@ export default function ItemDetailPage() {
               <button
                 type="button"
                 onClick={() => navigate("/messages")}
-                className="mt-4 flex w-full items-center justify-center gap-2 text-[16px] font-black text-[#0f766e]"
+                className="mt-4 flex w-full items-center justify-center gap-2 text-[16px] font-black text-[#1ABEA3]"
               >
                 <MessageCircle size={20} strokeWidth={2.3} />
                 Ou envoyer un message
@@ -482,97 +458,44 @@ export default function ItemDetailPage() {
           )}
         </section>
 
-        {!isOwner && (() => {
-          const ownerPrefs = getTradePreferences(ownerProfile || {});
-          const hasLooking = ownerPrefs.lookingFor.length > 0;
-          const hasNotLooking = ownerPrefs.notLookingFor.length > 0;
-
-          return (
-            <section className="mt-5 rounded-[30px] border border-white/90 bg-white/92 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                  <Gift size={22} strokeWidth={2.25} />
-                </div>
-                <div>
-                  <p className="text-[12px] font-black uppercase tracking-[0.22em] text-emerald-700">
-                    Ses envies
-                  </p>
-                  <h3 className="mt-1 text-[24px] font-black leading-[1] tracking-[-0.04em] text-[#081225]">
-                    Ce qu'il recherche
-                  </h3>
-                </div>
+        {!isOwner && (
+          <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F0FAF7] text-[#1ABEA3]">
+                <Gift size={22} strokeWidth={2.25} />
               </div>
 
-              {hasLooking ? (
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {ownerPrefs.lookingFor.map((tag) => (
-                    <PreferenceChip key={tag}>{normalizePreferenceLabel(tag)}</PreferenceChip>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-5 rounded-[20px] bg-slate-50 p-4 text-[15px] font-medium leading-relaxed text-slate-500">
-                  {shortName(ownerName)} n'a pas encore précisé ses envies.{" "}
-                  <span className="font-bold text-emerald-700">Tu peux quand même proposer un troc.</span>
-                </div>
-              )}
-
-              {ownerPrefs.note ? (
-                <p className="mt-4 text-[15px] font-medium leading-relaxed text-slate-500">
-                  {ownerPrefs.note}
+              <div>
+                <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
+                  Ses envies
                 </p>
-              ) : hasLooking ? (
-                <p className="mt-4 text-[14px] font-medium leading-relaxed text-slate-400">
-                  Ces indices t'aident à proposer un objet qui pourrait vraiment lui plaire.
-                </p>
-              ) : null}
 
-              {hasNotLooking && (
-                <div className="mt-5">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-                    Il n'est pas intéressé par
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {ownerPrefs.notLookingFor.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-[14px] bg-slate-100 px-4 py-2 text-[13px] font-bold text-slate-500"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+                <h3 className="mt-1 text-[24px] font-black leading-[1] tracking-[-0.04em] text-[#081225]">
+                  Ce qu’il recherche
+                </h3>
+              </div>
+            </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  const ownerId = getOwnerId(item);
-                  if (ownerId) navigate("/users/" + ownerId);
-                }}
-                className="mt-5 text-[13px] font-black text-[#0f9f9a]"
-              >
-                Voir le profil complet de {shortName(ownerName)} →
-              </button>
-            </section>
-          );
-        })()}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <PreferenceChip>🎸 Instruments</PreferenceChip>
+              <PreferenceChip>📚 Livres</PreferenceChip>
+              <PreferenceChip>☕ Café / déco</PreferenceChip>
+            </div>
+
+            <p className="mt-4 text-[15px] font-medium leading-relaxed text-slate-500">
+              Ces indices t’aident à proposer un objet qui pourrait vraiment lui plaire.
+            </p>
+
+            <div className="mt-5 rounded-[20px] bg-[#F0FAF7]/60 p-4 text-[15px] font-medium leading-relaxed text-slate-700">
+              {shortName(ownerName)} n’a pas encore précisé ses envies.
+              <span className="font-bold text-[#1ABEA3]">
+                {" "}Tu peux quand même proposer un troc.
+              </span>
+            </div>
+          </section>
+        )}
       </main>
 
-      {!isOwner && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/60 bg-white/92 px-4 pb-[calc(72px+env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-xl lg:hidden">
-          <button
-            type="button"
-            onClick={proposeExchange}
-            className="flex h-[54px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-[#2ECC8A] text-[16px] font-black text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition active:scale-[0.98]"
-          >
-            <Repeat2 size={19} strokeWidth={2.4} />
-            Proposer un troc avec {shortName(ownerName)}
-          </button>
-        </div>
-      )}
-
-      <BottomNav />
-    </div>
+    </>
   );
 }

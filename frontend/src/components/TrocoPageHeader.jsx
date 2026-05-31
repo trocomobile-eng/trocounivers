@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import NotificationButton from "./NotificationButton";
@@ -12,7 +12,7 @@ function getPhoto(user) {
   return user?.photoURL || user?.photoUrl || user?.avatarUrl || user?.avatar || "";
 }
 
-function AvatarButton({ user: userProp }) {
+function AvatarButton({ user: userProp, compact = false }) {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const resolvedUser = userProp || authUser;
@@ -22,7 +22,10 @@ function AvatarButton({ user: userProp }) {
     <button
       type="button"
       onClick={() => navigate("/profile")}
-      className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-[2px] border-white bg-white shadow-[0_8px_22px_rgba(15,23,42,0.07)] transition active:scale-95"
+      className={[
+        "shrink-0 overflow-hidden rounded-full border-[2px] border-white bg-white shadow-[0_8px_22px_rgba(15,23,42,0.07)] transition active:scale-95",
+        compact ? "h-10 w-10" : "h-12 w-12",
+      ].join(" ")}
       aria-label="Profil"
     >
       {photo ? (
@@ -33,7 +36,7 @@ function AvatarButton({ user: userProp }) {
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-[15px] font-black text-white">
+        <div className="flex h-full w-full items-center justify-center bg-[#176B3A] text-[14px] font-black text-white">
           {getInitial(resolvedUser)}
         </div>
       )}
@@ -54,6 +57,7 @@ export default function TrocoPageHeader({
   actions,
   user,
   onBack,
+  variant = "page",
 }) {
   const navigate = useNavigate();
 
@@ -67,9 +71,40 @@ export default function TrocoPageHeader({
     else navigate("/feed");
   }
 
+  if (variant === "brand") {
+    return (
+      <header
+        className={[
+          "Mb-2 flex items-center justify-between pt-[max(2px,env(safe-area-inset-top))]",
+          className,
+        ].join(" ")}
+      >
+        <Link to="/feed" className="flex items-center pl-1" aria-label="Troco">
+          <img
+            src="/logo.png"
+            alt="Troco"
+            className="h-auto w-[102px] object-contain"
+          />
+        </Link>
+
+        <div className="flex shrink-0 items-center gap-2 pr-1">
+          {actions}
+
+          {showNotifications && (
+            <div className="[&_button]:h-10 [&_button]:w-10 [&_button]:rounded-full [&_button]:border-[#ECE4D8] [&_button]:bg-white/92 [&_button]:text-[#16A085] [&_button]:shadow-[0_6px_16px_rgba(15,23,42,0.035)]">
+              <NotificationButton />
+            </div>
+          )}
+
+          {showAvatar && <AvatarButton user={user} compact />}
+        </div>
+      </header>
+    );
+  }
+
   return (
-    <header className={["troco-page-header", compact ? "mb-5" : "mb-7", className].join(" ")}>
-      <div className="flex min-h-[52px] items-start justify-between gap-5">
+    <header className={["troco-page-header", compact ? "mb-3" : "mb-5", className].join(" ")}>
+      <div className="flex min-h-[44px] items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-start gap-3">
             {showBack && (
@@ -85,19 +120,19 @@ export default function TrocoPageHeader({
 
             <div className="min-w-0">
               {eyebrow && (
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#18A98E]">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#16A085]">
                   {eyebrow}
                 </p>
               )}
 
               {title && (
-                <h1 className="troco-soft-title mt-1 text-[34px] font-extrabold leading-[0.96] tracking-[-0.045em] text-[#102033] md:text-[38px]">
+                <h1 className="troco-soft-title mt-0.5 text-[28px] font-extrabold leading-[0.94] tracking-[-0.055em] text-[#102033] md:text-[31px]">
                   {title}
                 </h1>
               )}
 
               {subtitle && (
-                <p className="troco-soft-muted mt-2 max-w-[680px] text-[14.5px] font-medium leading-relaxed text-[#66758A]">
+                <p className="troco-soft-muted mt-1 max-w-[620px] text-[13px] font-medium leading-relaxed text-[#66758A]">
                   {subtitle}
                 </p>
               )}
@@ -105,18 +140,18 @@ export default function TrocoPageHeader({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2.5 pt-1">
+        <div className="flex shrink-0 items-center gap-2.5 pt-0.5">
           {right || (
             <>
               {actions}
 
               {showNotifications && (
-                <div className="[&_button]:h-12 [&_button]:w-12 [&_button]:rounded-full [&_button]:border-white/85 [&_button]:bg-white/92 [&_button]:text-[#18A98E] [&_button]:shadow-[0_8px_22px_rgba(15,23,42,0.06)]">
+                <div className="[&_button]:h-10 [&_button]:w-10 [&_button]:rounded-full [&_button]:border-white/85 [&_button]:bg-white/92 [&_button]:text-[#16A085] [&_button]:shadow-[0_8px_22px_rgba(15,23,42,0.06)]">
                   <NotificationButton />
                 </div>
               )}
 
-              {showAvatar && <AvatarButton user={user} />}
+              {showAvatar && <AvatarButton user={user} compact />}
             </>
           )}
         </div>

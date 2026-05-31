@@ -25,17 +25,13 @@ import {
 } from "lucide-react";
 
 import { db, storage } from "../firebase";
+import SurveyModal from "../components/SurveyModal";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import TradePreferencesForm from "../components/TradePreferencesForm";
-import TradePreferencesPreview from "../components/TradePreferencesPreview";
 import {
   buildCleanItemFromSuggestion,
   getItemSuggestions,
 } from "../utils/itemSuggestions";
-
-const BACKGROUND =
-  "radial-gradient(circle at 18% 8%, rgba(186,230,253,0.10), transparent 26%), radial-gradient(circle at 82% 12%, rgba(187,247,208,0.07), transparent 28%), linear-gradient(180deg,#ffffff 0%,#fbfffd 48%,#ffffff 100%)";
 
 const CONDITION_OPTIONS = [
   "Comme neuf",
@@ -57,66 +53,6 @@ const CATEGORY_OPTIONS = [
 ];
 
 
-
-// Compression image via canvas — réduit de 5-10x sans perte visible
-// Max 1200px de large, qualité JPEG 0.82, max 400 KB
-async function compressImage(file, { maxWidth = 1200, maxSizeKB = 400, quality = 0.82 } = {}) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      const scale = Math.min(1, maxWidth / img.width);
-      const width = Math.round(img.width * scale);
-      const height = Math.round(img.height * scale);
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Essayer avec la qualité demandée, réduire si trop gros
-      function tryQuality(q) {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              resolve(file); // fallback sur l'original si canvas échoue
-              return;
-            }
-
-            if (blob.size / 1024 > maxSizeKB && q > 0.5) {
-              tryQuality(Math.round((q - 0.08) * 100) / 100);
-              return;
-            }
-
-            const compressed = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            });
-
-            resolve(compressed);
-          },
-          "image/jpeg",
-          q
-        );
-      }
-
-      tryQuality(quality);
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(file); // fallback
-    };
-
-    img.src = objectUrl;
-  });
-}
-
 function getGeoPoint(value) {
   if (!value) return null;
 
@@ -135,7 +71,7 @@ function SectionCard({ children, className = "" }) {
   return (
     <section
       className={[
-        "rounded-[28px] border border-white/80 bg-white/92 p-5 shadow-[0_10px_28px_rgba(15,23,42,0.045)] backdrop-blur-xl",
+        "rounded-[28px] border border-white/80 bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]",
         className,
       ].join(" ")}
     >
@@ -192,6 +128,8 @@ function SuggestionChip({ suggestion, active, onClick }) {
 
 export default function AddItemPage() {
   const navigate = useNavigate();
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [publishedItemId, setPublishedItemId] = useState(null);
   const { user } = useAuth();
   const fileInputRef = useRef(null);
 
@@ -229,36 +167,37 @@ export default function AddItemPage() {
   }
 
   function applySuggestion(suggestion) {
-    const cleanItem = buildCleanItemFromSuggestion(rawTitle, suggestion);
+  const cleanItem = buildCleanItemFromSuggestion(rawTitle, suggestion);
 
-    if (!cleanItem) return;
+  if (!cleanItem) return;
 
-    setSelectedSuggestionKey(suggestion.id || suggestion.label);
+  setSelectedSuggestionKey(suggestion.id || suggestion.label);
+
+  if (!title) {
     setTitle(cleanItem.itemType || suggestion.label || rawTitle);
-    setItemDetails(cleanItem.itemDetails || "");
-    setCategory(cleanItem.category || "");
   }
 
+  if (cleanItem.itemDetails) {
+    setItemDetails(cleanItem.itemDetails);
+  }
+
+  if (cleanItem.category) {
+    setCategory(cleanItem.category);
+  }
+}
   function handleCategoryClick(nextCategory) {
     setCategory(nextCategory);
   }
 
-  async function handlePhotoSelection(event) {
+  function handlePhotoSelection(event) {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
 
-    const filesToProcess = files.slice(0, 6 - photos.length);
-
-    const nextPhotos = await Promise.all(
-      filesToProcess.map(async (file) => {
-        const compressed = await compressImage(file);
-        return {
-          file: compressed,
-          previewUrl: URL.createObjectURL(compressed),
-          id: `${file.name}-${file.lastModified}-${crypto.randomUUID?.() || Date.now()}`,
-        };
-      })
-    );
+    const nextPhotos = files.slice(0, 6 - photos.length).map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      id: `${file.name}-${file.lastModified}-${crypto.randomUUID?.() || Date.now()}`,
+    }));
 
     setPhotos((current) => [...current, ...nextPhotos].slice(0, 6));
     event.target.value = "";
@@ -357,7 +296,8 @@ export default function AddItemPage() {
         });
       }
 
-      navigate(`/items/${draftRef.id}`, { replace: true });
+      setPublishedItemId(draftRef.id);
+      setShowSurvey(true);
     } catch (error) {
       console.error("Erreur publication objet :", error);
       alert(
@@ -369,16 +309,13 @@ export default function AddItemPage() {
   }
 
   return (
-    <div
-      className="min-h-screen pb-32 text-[#081225]"
-      style={{ background: BACKGROUND }}
-    >
+    <>
       <main className="mx-auto w-full max-w-[430px] px-4 pt-[max(14px,env(safe-area-inset-top))] lg:max-w-4xl lg:px-8 lg:pt-10">
         <header className="mb-5">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/88 text-[#081225] shadow-[0_8px_22px_rgba(15,23,42,0.045)] backdrop-blur-lg transition active:scale-95"
+            className="mb-5 flex h-11 w-11 items-center justify-center rounded-full border border-[#E4ECE8] bg-white text-[#0d1b2a] shadow-[0_2px_8px_rgba(15,23,42,0.07)] transition active:scale-95"
             aria-label="Retour"
           >
             <ArrowLeft size={21} strokeWidth={2.4} />
@@ -403,7 +340,7 @@ export default function AddItemPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className={[
-                "relative flex min-h-[190px] w-full flex-col items-center justify-center overflow-hidden rounded-[26px] border border-dashed transition active:scale-[0.99]",
+                "relative flex min-h-[118px] w-full flex-col items-center justify-center overflow-hidden rounded-[26px] border border-dashed transition active:scale-[0.99]",
                 previewUrls.length
                   ? "border-transparent bg-slate-100"
                   : "border-emerald-200 bg-emerald-50/35 text-[#0f9f9a]",
@@ -496,22 +433,13 @@ export default function AddItemPage() {
                 </p>
 
                 <h2 className="text-[24px] font-black leading-tight tracking-[-0.05em] text-[#081225]">
-                  Titre intelligent
+                 Qu'as-tu à proposer ?
                 </h2>
               </div>
             </div>
 
             <div className="mt-5 space-y-4">
-              <Field
-                label="Décris rapidement ton objet"
-                hint="Ex : guitare folk Yamaha, lampe de bureau, jean Levi’s..."
-              >
-                <TextInput
-                  value={rawTitle}
-                  onChange={(event) => handleRawTitleChange(event.target.value)}
-                  placeholder="Ex : guitare folk Yamaha"
-                />
-              </Field>
+              
 
               {suggestions.length > 0 && (
                 <div>
@@ -536,11 +464,12 @@ export default function AddItemPage() {
               )}
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Titre affiché">
+                <Field label={`Titre affiché ${title.length > 0 ? `(${title.length}/15)` : ""}`} hint={title.length > 45 ? "Trop long, raccourcis pour un meilleur affichage." : ""}>
                   <TextInput
                     value={title}
-                    onChange={(event) => setTitle(event.target.value)}
+                    onChange={(event) => setTitle(event.target.value.slice(0, 15))}
                     placeholder="Ex : Guitare folk"
+                    maxLength={15}
                   />
                 </Field>
 
@@ -661,16 +590,8 @@ export default function AddItemPage() {
             onChange={setTradePreferences}
           />
 
-          <TradePreferencesPreview
-            title={title || rawTitle}
-            imageUrls={previewUrls}
-            category={category}
-            condition={condition}
-            location={location}
-            tradePreferences={tradePreferences}
-          />
-
-          <div className="sticky bottom-[88px] z-30 -mx-1 rounded-[26px] border border-white/80 bg-white/86 p-3 shadow-[0_14px_34px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+         
+          <div className="sticky bottom-6 z-30 -mx-1 rounded-[24px] border border-[#E4ECE8] bg-white p-3 shadow-[0_4px_20px_rgba(15,23,42,0.10)]">
             <button
               type="submit"
               disabled={saving}
@@ -689,7 +610,16 @@ export default function AddItemPage() {
         </form>
       </main>
 
-      <BottomNav />
-    </div>
+      {showSurvey && (
+        <SurveyModal
+          surveyId="after_add_item"
+          metadata={{ itemId: publishedItemId }}
+          onDone={() => {
+            setShowSurvey(false);
+            navigate(`/items/${publishedItemId}`, { replace: true });
+          }}
+        />
+      )}
+    </>
   );
 }

@@ -1,99 +1,116 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import { Heart } from "lucide-react";
+import TrocoPageHeader from "../components/TrocoPageHeader";
+import { SkeletonGrid } from "../components/SkeletonCard";
 import { useNavigate } from "react-router-dom";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import ItemCard from "../components/ItemCard";
 
 export default function FavoritesPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
-  const [favoriteItems, setFavoriteItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [favoriteItems, setFavoriteItems]   = useState([]);
+  const [favoriteItemIds, setFavoriteItemIds] = useState([]);
+  const [loading, setLoading]               = useState(true);
 
+  // 1. Écoute les favoriteItemIds dans le doc user
   useEffect(() => {
     if (authLoading) return;
+    if (!user?.uid) { navigate("/login", { replace: true }); return; }
 
-    if (!user?.uid) {
-      navigate("/login", { replace: true });
+    const unsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
+      const ids = snap.data()?.favoriteItemIds || [];
+      setFavoriteItemIds(Array.isArray(ids) ? ids : []);
+    });
+
+    return () => unsub();
+  }, [authLoading, navigate, user?.uid]);
+
+  // 2. Charge les items correspondants
+  useEffect(() => {
+    if (!favoriteItemIds.length) {
+      setFavoriteItems([]);
+      setLoading(false);
       return;
     }
 
-    const q = query(collection(db, "users", user.uid, "favorites"), orderBy("createdAt", "desc"));
+    setLoading(true);
 
-    const unsubscribe = onSnapshot(
+    // Firestore limite "in" à 30 éléments — on prend les 30 premiers
+    const ids = favoriteItemIds.slice(0, 30);
+
+    const q = query(
+      collection(db, "items"),
+      where("__name__", "in", ids)
+    );
+
+    const unsub = onSnapshot(
       q,
-      (snapshot) => {
-        setFavoriteItems(
-          snapshot.docs.map((document) => ({
-            id: document.data().itemId || document.id,
-            title: document.data().title,
-            imageUrl: document.data().imageUrl,
-            location: document.data().location,
-            condition: document.data().condition,
-            category: document.data().category,
-          }))
-        );
+      (snap) => {
+        const itemsMap = {};
+        snap.docs.forEach((d) => { itemsMap[d.id] = { id: d.id, ...d.data() }; });
+        // Conserver l'ordre des favoris
+        setFavoriteItems(ids.map((id) => itemsMap[id]).filter(Boolean));
         setLoading(false);
       },
-      (error) => {
-        console.error("Erreur favoris :", error);
+      (err) => {
+        console.error("Erreur chargement favoris :", err);
         setLoading(false);
       }
     );
 
-    return () => unsubscribe();
-  }, [authLoading, navigate, user?.uid]);
+    return () => unsub();
+  }, [favoriteItemIds]);
 
   return (
-    <div className="troco-page-bg min-h-screen pb-28 text-[#102033] lg:pb-16">
-      <main className="mx-auto w-full max-w-[430px] px-5 pt-[max(14px,env(safe-area-inset-top))] lg:max-w-7xl lg:px-8 lg:pt-8">
-        <header className="mb-6">
-          <p className="text-[12px] font-extrabold uppercase tracking-[0.22em] text-[#0f9f9a]">
-            Favoris
-          </p>
-
-          <h1 className="mt-2 text-[42px] font-extrabold leading-[0.95] tracking-[-0.055em] text-[#102033] lg:text-[56px]">
-            Objets favoris
-          </h1>
-
-          <p className="mt-3 max-w-xl text-[15px] font-medium leading-relaxed text-[#64748B] lg:text-lg">
-            Tes coups de cœur sauvegardés.
-          </p>
-        </header>
+    <>
+      <main>
+        <TrocoPageHeader
+          eyebrow="Favoris"
+          title="Objets favoris"
+          subtitle="Tes coups de cœur sauvegardés."
+          showNotifications={false}
+          showAvatar={false}
+          compact
+        />
 
         {loading ? (
-          <div className="rounded-[30px] border border-white/85 bg-white/[0.965] p-8 text-center text-sm font-bold text-slate-500 shadow-[0_10px_28px_rgba(15,23,42,0.045)]">
-            Chargement des favoris...
-          </div>
+          <SkeletonGrid count={4} />
         ) : favoriteItems.length === 0 ? (
-          <div className="rounded-[30px] border border-white/85 bg-white/[0.965] p-8 text-center shadow-[0_10px_28px_rgba(15,23,42,0.045)]">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E8F7EF] text-[#0f9f9a]">
-              <Heart size={26} />
+          <div className="rounded-[20px] bg-white p-10 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#F0FAF7] text-[#1ABEA3]">
+              <Heart size={26} strokeWidth={2} />
             </div>
-
-            <p className="text-lg font-extrabold text-[#102033]">
-              Aucun favori pour l’instant.
+            <p className="text-[17px] font-extrabold text-[#0d1b2a]">
+              Aucun favori pour l'instant.
             </p>
-
-            <p className="mt-2 text-sm font-medium text-slate-500">
+            <p className="mt-2 text-[14px] font-medium text-slate-500">
               Clique sur les cœurs des objets pour les retrouver ici.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-5">
             {favoriteItems.map((item) => (
-              <ItemCard key={item.id} item={item} compact />
+              <ItemCard
+                key={item.id}
+                item={item}
+                defaultFavorite
+              />
             ))}
           </div>
         )}
       </main>
-
-      <BottomNav />
-    </div>
+    </>
   );
 }

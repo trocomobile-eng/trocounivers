@@ -167,7 +167,7 @@ function sortItems(items, mode) {
 
 function UniverseHero({ config, onAdd }) {
   return (
-    <section className="troco-universe-card-strong relative mb-5 min-h-[214px]">
+    <section className="troco-universe-card-strong relative mb-5 min-h-[238px] overflow-hidden rounded-[32px]">
       {config.img ? (
         <img src={config.img} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "center", opacity: 0.9 }} />
       ) : (
@@ -176,7 +176,7 @@ function UniverseHero({ config, onAdd }) {
       <div className="absolute inset-0" style={{ background: "var(--troco-universe-overlay-bottom)" }} />
       <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 20% 10%, ${config.accent}38, transparent 36%)` }} />
 
-      <div className="relative z-10 flex min-h-[214px] flex-col justify-end p-5 text-white">
+      <div className="relative z-10 flex min-h-[238px] flex-col justify-end p-6 text-white lg:p-7">
         <div className="mb-3 flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/18 backdrop-blur-xl">
             <span className="text-[18px] font-black">{config.icon}</span>
@@ -186,16 +186,16 @@ function UniverseHero({ config, onAdd }) {
           </span>
         </div>
 
-        <h1 className="max-w-[320px] text-[34px] font-black leading-[0.92] tracking-[-0.065em] drop-shadow-sm">
+        <h1 className="max-w-[360px] text-[42px] font-black leading-[0.92] tracking-[-0.065em] drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)] lg:text-[48px]">
           {config.label}
         </h1>
-        <p className="mt-3 max-w-[290px] text-[13px] font-semibold leading-relaxed text-white/84 drop-shadow-sm">
+        <p className="mt-3 max-w-[360px] text-[15px] font-semibold leading-relaxed text-white/90 drop-shadow-sm">
           {config.tagline}
         </p>
         <button
           type="button"
           onClick={onAdd}
-          className="mt-5 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-white px-4 text-[13px] font-black text-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.18)] active:scale-95"
+          className="mt-5 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-white px-5 text-[13px] font-black text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.20)] transition hover:-translate-y-0.5 active:scale-95"
         >
           <Plus size={15} /> Ajouter un objet {config.label.toLowerCase()}
         </button>
@@ -212,7 +212,7 @@ function ItemCard({ item, accent, onFavorite }) {
 
   return (
     <Link to={`/items/${item.id}`} className="block">
-      <article className="troco-universe-card bg-white/90">
+      <article className="troco-universe-card overflow-hidden bg-white/94 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
         <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           {img ? (
             <img src={img} alt={title} className="h-full w-full object-cover" />
@@ -264,16 +264,82 @@ function ItemCard({ item, accent, onFavorite }) {
   );
 }
 
-function PassionRow({ items, accent }) {
+function PassionRow({ items, accent, compact = false }) {
   const people = Array.from(
     new Map(
       items
         .filter((item) => item.ownerName || item.ownerDisplayName || item.userName || item.ownerEmail)
         .map((item) => [item.ownerId || item.userId || item.ownerEmail || item.id, item])
     ).values()
-  ).slice(0, 8);
+  ).slice(0, compact ? 5 : 8);
 
   if (!people.length) return null;
+
+  if (compact) {
+    return (
+      <section className="rounded-[28px] border border-white/85 bg-white/86 p-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="troco-caption">Couche humaine</p>
+            <h2 className="mt-1 text-[22px] font-black leading-tight tracking-[-0.045em] text-slate-950">
+              Passionnés près de toi
+            </h2>
+          </div>
+
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-400">
+            <UsersRound size={18} />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {people.map((person) => {
+            const name = getItemOwner(person) || "Troco";
+            const avatar = person.ownerPhotoURL || person.ownerAvatar || person.userPhotoURL || null;
+            const profileId = person.ownerId || person.userId || person.ownerUid;
+
+            return (
+              <Link
+                key={person.id}
+                to={profileId ? `/users/${profileId}` : "#"}
+                className="flex items-center gap-3 rounded-[20px] border border-white/70 bg-white/72 p-3 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition hover:-translate-y-0.5 active:scale-95"
+              >
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full" style={{ background: `${accent}22` }}>
+                  {avatar ? (
+                    <img src={avatar} alt={name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[15px] font-black" style={{ color: accent }}>
+                      {name.charAt(0)}
+                    </div>
+                  )}
+
+                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: accent }} />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-black text-slate-900">{name}</p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
+                    {person.distanceLabel || "local"} · passionné
+                  </p>
+                </div>
+
+                <span className="rounded-full px-2.5 py-1 text-[10px] font-black" style={{ background: `${accent}18`, color: accent }}>
+                  Troco
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white text-[13px] font-black text-slate-800 transition hover:bg-slate-50 active:scale-95"
+        >
+          Explorer plus de passionnés
+          <span>→</span>
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="mb-6">
@@ -307,6 +373,32 @@ function PassionRow({ items, accent }) {
             </Link>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+function PopularCategoriesPanel({ config }) {
+  return (
+    <section className="mt-5 rounded-[28px] border border-white/85 bg-white/82 p-5 shadow-[0_16px_42px_rgba(15,23,42,0.05)] backdrop-blur-xl">
+      <h3 className="text-[16px] font-black tracking-[-0.035em] text-slate-950">
+        Catégories populaires
+      </h3>
+
+      <div className="mt-4 grid grid-cols-4 gap-3">
+        {config.subcats.slice(0, 4).map((label) => (
+          <div key={label} className="text-center">
+            <div
+              className="mx-auto flex h-12 w-12 items-center justify-center rounded-full text-[16px] font-black"
+              style={{ background: `${config.accent}20`, color: config.accent }}
+            >
+              {label.charAt(0)}
+            </div>
+            <p className="mt-2 line-clamp-1 text-[11px] font-bold text-slate-500">
+              {label}
+            </p>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -399,12 +491,12 @@ export default function UniversDetailPage() {
         <UniverseHero config={config} onAdd={() => navigate("/add-item", { state: { universe: id, category: config.label } })} />
 
         <section className="mb-4">
-          <div className="troco-search h-12 px-4">
+          <div className="troco-search h-[54px] border-white/95 bg-white/95 px-4 shadow-[0_14px_34px_rgba(15,23,42,0.055)]">
             <Search size={17} className="mr-2 text-slate-400" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder={`Rechercher dans ${config.label}`}
+              placeholder={`Rechercher dans ${config.label}...`}
               className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-800 outline-none placeholder:text-slate-400"
             />
           </div>
@@ -419,7 +511,7 @@ export default function UniversDetailPage() {
                   key={label}
                   type="button"
                   onClick={() => setSubcat(label)}
-                  className="shrink-0 rounded-full border px-4 py-2 text-[12px] font-black transition active:scale-95"
+                  className="shrink-0 rounded-full border px-4.5 py-2.5 text-[12px] font-black transition hover:-translate-y-0.5 active:scale-95"
                   style={{
                     background: active ? config.accent : "rgba(255,255,255,0.86)",
                     borderColor: active ? config.accent : "rgba(255,255,255,0.9)",
@@ -434,7 +526,7 @@ export default function UniversDetailPage() {
           </div>
         </section>
 
-        <section className="mb-6 rounded-[24px] border border-white/80 bg-white/76 p-2 shadow-[0_10px_24px_rgba(15,23,42,0.035)] backdrop-blur-xl">
+        <section className="mb-6 rounded-[24px] border border-white/85 bg-white/86 p-2 shadow-[0_12px_30px_rgba(15,23,42,0.045)] backdrop-blur-xl">
           <div className="grid grid-cols-3 gap-2">
             {[
               ["near", "Plus proches"],
@@ -445,7 +537,7 @@ export default function UniversDetailPage() {
                 key={value}
                 type="button"
                 onClick={() => setSort(value)}
-                className="rounded-[18px] px-2 py-2.5 text-[11px] font-black transition active:scale-95"
+                className="rounded-[18px] px-2 py-3 text-[12px] font-black transition hover:bg-white/60 active:scale-95"
                 style={{ background: sort === value ? `${config.accent}20` : "transparent", color: sort === value ? config.accent : "#64748b" }}
               >
                 {label}
@@ -454,16 +546,34 @@ export default function UniversDetailPage() {
           </div>
         </section>
 
-        <div className="lg:grid lg:grid-cols-[1fr_260px] lg:gap-8 lg:items-start">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_330px] lg:gap-8 lg:items-start xl:grid-cols-[minmax(0,1fr)_360px]">
 
         {/* col objets */}
         <section>
-          <div className="mb-3 flex items-end justify-between gap-3">
+          <div className="mb-4 flex items-end justify-between gap-3">
             <div>
               <p className="troco-caption" style={{ color: config.accent }}>{config.heroTitle}</p>
-              <h2 className="text-[22px] font-black leading-tight tracking-[-0.05em] text-slate-950">
+              <h2 className="text-[25px] font-black leading-tight tracking-[-0.055em] text-slate-950">
                 {visibleItems.length ? `${visibleItems.length} objets trouvés` : "Objets autour de toi"}
               </h2>
+            </div>
+
+            <div className="hidden items-center gap-2 lg:flex">
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+                style={{ background: `${config.accent}18`, color: config.accent }}
+                aria-label="Vue grille"
+              >
+                ⊞
+              </button>
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/80 text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
+                aria-label="Vue liste"
+              >
+                ☰
+              </button>
             </div>
           </div>
 
@@ -472,7 +582,7 @@ export default function UniversDetailPage() {
               Chargement des objets…
             </div>
           ) : visibleItems.length ? (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
               {visibleItems.map((item) => (
                 <ItemCard key={item.id} item={item} accent={config.accent} onFavorite={() => user?.uid && trackInterest(user.uid, id, "favorite_item")} />
               ))}
@@ -500,7 +610,8 @@ export default function UniversDetailPage() {
         {/* Passionnés desktop — sidebar droite sticky */}
         <aside className="hidden lg:block">
           <div className="sticky top-8">
-            <PassionRow items={featuredItems} accent={config.accent} />
+            <PassionRow items={featuredItems} accent={config.accent} compact />
+            <PopularCategoriesPanel config={config} />
           </div>
         </aside>
 

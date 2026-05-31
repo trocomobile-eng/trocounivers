@@ -17,7 +17,6 @@ import {
 import { db, storage } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
-import BottomNav from "../components/BottomNav";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import ItemPhotoManager from "../components/ItemPhotoManager";
 import ItemConditionSelector from "../components/ItemConditionSelector";
@@ -153,12 +152,23 @@ export default function EditItemPage() {
           ...itemSnapshot.data(),
         };
 
-        const ownerId = itemData.ownerId || itemData.userId || itemData.ownerUid;
+        const userId = String(user.uid);
+const userEmail = String(user.email || "").toLowerCase();
 
-        if (ownerId !== user.uid) {
-          navigate("/profile", { replace: true });
-          return;
-        }
+const isOwner =
+  String(itemData.ownerId || "") === userId ||
+  String(itemData.userId || "") === userId ||
+  String(itemData.ownerUid || "") === userId ||
+  String(itemData.createdBy || "") === userId ||
+  String(itemData.uid || "") === userId ||
+  (userEmail && String(itemData.ownerEmail || "").toLowerCase() === userEmail) ||
+  (userEmail && String(itemData.userEmail || "").toLowerCase() === userEmail) ||
+  (userEmail && String(itemData.createdByEmail || "").toLowerCase() === userEmail);
+
+if (!isOwner) {
+  navigate("/profile", { replace: true });
+  return;
+}
 
         setItem(itemData);
         setTitle(itemData.title || itemData.type || itemData.itemType || "");
@@ -344,7 +354,7 @@ export default function EditItemPage() {
   if (authLoading || loading) {
     return (
       <div className="page">
-        <TrocoPageHeader compact />
+        <TrocoPageHeader compact showNotifications={false} showAvatar={false} />
         <div className="px-5 pt-8 text-center text-sm font-bold text-slate-500">
           Chargement...
         </div>
@@ -355,7 +365,7 @@ export default function EditItemPage() {
   if (!item) {
     return (
       <div className="page">
-        <TrocoPageHeader compact />
+        <TrocoPageHeader compact showNotifications={false} showAvatar={false} />
         <div className="px-5 pt-8 text-center text-sm font-bold text-slate-500">
           Objet introuvable.
         </div>
@@ -365,7 +375,7 @@ export default function EditItemPage() {
 
   return (
     <div className="page">
-      <TrocoPageHeader showBack compact />
+      <TrocoPageHeader showBack compact showNotifications={false} showAvatar={false} />
 
       <main className="mx-auto max-w-[760px] px-5 pb-36 pt-5">
         <section className="mb-6">
@@ -488,7 +498,6 @@ export default function EditItemPage() {
         </div>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

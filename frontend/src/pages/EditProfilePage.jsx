@@ -1,24 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft,
   Camera,
   Check,
   Mail,
   MapPin,
   Phone,
-  Plus,
   Save,
+  Search,
   UserRound,
+  X,
 } from "lucide-react";
 import { updateProfile } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 
-import TrocoPage from "../components/TrocoPage";
 import { auth, db, storage } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import MobileLayout from "../layouts/MobileLayout";
+import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoButton, TrocoCard } from "../components/UI";
+import PreferenceModal from "../components/profile/PreferenceModal";
+import { getTradePreferences } from "../components/profile/profileUtils";
 
 const CITY_OPTIONS = [
   "Paris",
@@ -37,86 +40,8 @@ const CITY_OPTIONS = [
   "Bruxelles",
 ];
 
-function cleanTag(value = "") {
-  return String(value).trim().replace(/\s+/g, " ");
-}
-
-function uniqueTags(values = []) {
-  return [...new Set(values.map(cleanTag).filter(Boolean))];
-}
-
 function getInitial(value = "") {
   return String(value || "T").trim().charAt(0).toUpperCase() || "T";
-}
-
-function TagEditor({
-  title,
-  description,
-  tags,
-  input,
-  setInput,
-  onAdd,
-  onRemove,
-  tone = "emerald",
-}) {
-  const pillClass =
-    tone === "rose"
-      ? "bg-rose-50 text-rose-600"
-      : "bg-[#E8F7EF] text-[#0f9f9a]";
-
-  return (
-    <TrocoCard
-      variant="plain"
-      className="rounded-[28px] border border-white/75 bg-white/80 p-5 shadow-[0_12px_30px_rgba(20,184,166,0.045)] backdrop-blur-sm"
-    >
-      <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
-        {title}
-      </p>
-
-      <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-500">
-        {description}
-      </p>
-
-      <div className="mt-4 flex gap-2">
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              onAdd();
-            }
-          }}
-          placeholder="Ajouter une préférence"
-          className="h-11 min-w-0 flex-1 rounded-[18px] border border-teal-100 bg-white/90 px-4 text-[14px] font-semibold text-slate-700 outline-none placeholder:text-slate-400"
-        />
-
-        <button
-          type="button"
-          onClick={onAdd}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-white shadow-[0_10px_24px_rgba(20,184,166,0.14)]"
-          aria-label="Ajouter"
-        >
-          <Plus size={18} strokeWidth={2.4} />
-        </button>
-      </div>
-
-      {tags.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => onRemove(tag)}
-              className={["rounded-full px-3 py-1.5 text-[12px] font-black", pillClass].join(" ")}
-            >
-              {tag} ×
-            </button>
-          ))}
-        </div>
-      )}
-    </TrocoCard>
-  );
 }
 
 export default function EditProfilePage() {
@@ -132,12 +57,9 @@ export default function EditProfilePage() {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("Paris");
   const [customCity, setCustomCity] = useState("");
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [preferenceMode, setPreferenceMode] = useState("looking");
 
-  const [lookingFor, setLookingFor] = useState([]);
-  const [notLookingFor, setNotLookingFor] = useState([]);
-  const [note, setNote] = useState("");
-  const [lookingInput, setLookingInput] = useState("");
-  const [notLookingInput, setNotLookingInput] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -149,6 +71,10 @@ export default function EditProfilePage() {
     return city.trim();
   }, [city, customCity]);
 
+  const tradePrefs = useMemo(() => getTradePreferences(profile || {}), [profile]);
+  const lookingFor = tradePrefs.lookingFor || [];
+  const notLookingFor = tradePrefs.notLookingFor || [];
+
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -156,7 +82,6 @@ export default function EditProfilePage() {
       try {
         const snapshot = await getDoc(doc(db, "users", user.uid));
         const data = snapshot.exists() ? snapshot.data() : {};
-        const preferences = data.tradePreferences || {};
         const loadedCity = data.city || data.locationCity || data.location || "Paris";
         const isKnownCity = CITY_OPTIONS.includes(loadedCity);
 
@@ -168,10 +93,6 @@ export default function EditProfilePage() {
         setPhone(data.phone || data.phoneNumber || "");
         setCity(isKnownCity ? loadedCity : "__custom__");
         setCustomCity(isKnownCity ? "" : loadedCity);
-
-        setLookingFor(uniqueTags(preferences.lookingFor || data.lookingFor || []));
-        setNotLookingFor(uniqueTags(preferences.notLookingFor || data.notLookingFor || []));
-        setNote(preferences.note || data.tradePreferencesNote || "");
       } catch (error) {
         console.error("Erreur chargement profil :", error);
       }
@@ -184,23 +105,6 @@ export default function EditProfilePage() {
     setSaved(false);
   }
 
-  function addLookingFor() {
-    const tag = cleanTag(lookingInput);
-    if (!tag) return;
-
-    setLookingFor((current) => uniqueTags([...current, tag]));
-    setLookingInput("");
-    markDirty();
-  }
-
-  function addNotLookingFor() {
-    const tag = cleanTag(notLookingInput);
-    if (!tag) return;
-
-    setNotLookingFor((current) => uniqueTags([...current, tag]));
-    setNotLookingInput("");
-    markDirty();
-  }
 
   async function handlePhotoFile(event) {
     const file = event.target.files?.[0];
@@ -225,11 +129,7 @@ export default function EditProfilePage() {
 
       await setDoc(
         doc(db, "users", user.uid),
-        {
-          photoURL: downloadURL,
-          photoUrl: downloadURL,
-          updatedAt: serverTimestamp(),
-        },
+        { photoURL: downloadURL, photoUrl: downloadURL, updatedAt: serverTimestamp() },
         { merge: true }
       );
 
@@ -287,15 +187,6 @@ export default function EditProfilePage() {
           locationCity: cleanCity,
           photoURL: photoURL || user?.photoURL || "",
           photoUrl: photoURL || user?.photoURL || "",
-          tradePreferences: {
-            lookingFor,
-            notLookingFor,
-            note,
-            updatedAt: serverTimestamp(),
-          },
-          lookingFor,
-          notLookingFor,
-          tradePreferencesNote: note,
           onboardingCompleted: true,
           profileCompleted: true,
           updatedAt: serverTimestamp(),
@@ -304,38 +195,31 @@ export default function EditProfilePage() {
       );
 
       setSaved(true);
-      setTimeout(() => setSaved(false), 2200);
-    } catch (error) {
+
+setTimeout(() => {
+  navigate("/feed");
+}, 500);    } catch (error) {
       console.error("Erreur sauvegarde profil :", error);
-      alert("Impossible d’enregistrer les modifications.");
+      alert("Impossible d'enregistrer les modifications.");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <TrocoPage>
-      <main className="mx-auto max-w-4xl space-y-5">
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/85 text-[#081225] shadow-[0_8px_22px_rgba(15,23,42,0.04)]"
-            aria-label="Retour"
-          >
-            <ArrowLeft size={20} strokeWidth={2.25} />
-          </button>
+    <MobileLayout withBottomNav={false}>
+      <TrocoPageHeader
+  showBack
+  onBack={() => navigate(-1)}
+  eyebrow="Profil"
+  title="Modifier mon profil"
+  showNotifications={false}
+  showAvatar={false}
+  compact
+/>
 
-          <TrocoButton
-            onClick={saveProfile}
-            disabled={saving}
-            className="flex h-11 items-center justify-center gap-2 rounded-[18px] px-5 text-[14px] font-black disabled:opacity-50"
-          >
-            {saved ? <Check size={18} /> : <Save size={17} />}
-            {saving ? "Sauvegarde..." : saved ? "Enregistré" : "Enregistrer"}
-          </TrocoButton>
-        </div>
-
+      <main className="mx-auto max-w-4xl space-y-5 px-4 pb-10">
+        {/* Photo de profil */}
         <TrocoCard
           variant="plain"
           className="overflow-hidden rounded-[34px] border border-white/75 bg-white/80 shadow-[0_18px_48px_rgba(15,23,42,0.05)] backdrop-blur-sm"
@@ -366,13 +250,10 @@ export default function EditProfilePage() {
 
               <div className="pb-0">
                 <p className="text-[12px] font-black uppercase tracking-[0.20em] text-[#0f9f9a]">
-                  Modifier mon profil
+                  Photo de profil
                 </p>
-                <h1 className="mt-0.5 text-[30px] font-black leading-[0.96] tracking-[-0.055em] text-[#081225]">
-                  Modifier mon profil
-                </h1>
-                <p className="mt-1.5 max-w-xl text-[15px] font-medium leading-relaxed text-slate-500">
-                  Mets à jour ta photo, ta ville, tes informations et tes préférences d’échange.
+                <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-500">
+                  {uploading ? "Upload en cours..." : "Clique sur la photo pour modifier."}
                 </p>
               </div>
             </div>
@@ -387,6 +268,7 @@ export default function EditProfilePage() {
           </div>
         </TrocoCard>
 
+        {/* Informations */}
         <TrocoCard
           variant="plain"
           className="rounded-[28px] border border-white/75 bg-white/80 p-5 shadow-[0_12px_30px_rgba(20,184,166,0.045)] backdrop-blur-sm"
@@ -402,10 +284,7 @@ export default function EditProfilePage() {
                 <UserRound size={17} className="text-[#0f9f9a]" />
                 <input
                   value={displayName}
-                  onChange={(event) => {
-                    setDisplayName(event.target.value);
-                    markDirty();
-                  }}
+                  onChange={(event) => { setDisplayName(event.target.value); markDirty(); }}
                   placeholder="Ton nom ou pseudo"
                   className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-700 outline-none"
                 />
@@ -418,10 +297,7 @@ export default function EditProfilePage() {
                 <UserRound size={17} className="text-[#0f9f9a]" />
                 <input
                   value={username}
-                  onChange={(event) => {
-                    setUsername(event.target.value);
-                    markDirty();
-                  }}
+                  onChange={(event) => { setUsername(event.target.value); markDirty(); }}
                   placeholder="Ex : alex.t"
                   className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-700 outline-none"
                 />
@@ -434,10 +310,7 @@ export default function EditProfilePage() {
                 <Mail size={17} className="text-[#0f9f9a]" />
                 <input
                   value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    markDirty();
-                  }}
+                  onChange={(event) => { setEmail(event.target.value); markDirty(); }}
                   placeholder="ton@email.com"
                   className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-700 outline-none"
                 />
@@ -450,10 +323,7 @@ export default function EditProfilePage() {
                 <Phone size={17} className="text-[#0f9f9a]" />
                 <input
                   value={phone}
-                  onChange={(event) => {
-                    setPhone(event.target.value);
-                    markDirty();
-                  }}
+                  onChange={(event) => { setPhone(event.target.value); markDirty(); }}
                   placeholder="06 12 34 56 78"
                   className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-700 outline-none"
                 />
@@ -467,16 +337,11 @@ export default function EditProfilePage() {
                   <MapPin size={17} className="text-[#0f9f9a]" />
                   <select
                     value={city}
-                    onChange={(event) => {
-                      setCity(event.target.value);
-                      markDirty();
-                    }}
+                    onChange={(event) => { setCity(event.target.value); markDirty(); }}
                     className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-700 outline-none"
                   >
                     {CITY_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
+                      <option key={option} value={option}>{option}</option>
                     ))}
                     <option value="__custom__">Autre ville…</option>
                   </select>
@@ -485,10 +350,7 @@ export default function EditProfilePage() {
                 {city === "__custom__" && (
                   <input
                     value={customCity}
-                    onChange={(event) => {
-                      setCustomCity(event.target.value);
-                      markDirty();
-                    }}
+                    onChange={(event) => { setCustomCity(event.target.value); markDirty(); }}
                     placeholder="Ex : Marseille, Bruxelles, Montréal..."
                     className="h-12 rounded-[18px] border border-teal-100 bg-white/90 px-4 text-[14px] font-semibold text-slate-700 outline-none placeholder:text-slate-400"
                   />
@@ -498,52 +360,103 @@ export default function EditProfilePage() {
           </div>
         </TrocoCard>
 
-        <TagEditor
-          title="Je recherche"
-          description="Les objets, univers ou catégories que tu aimerais recevoir."
-          tags={lookingFor}
-          input={lookingInput}
-          setInput={setLookingInput}
-          onAdd={addLookingFor}
-          onRemove={(tag) => {
-            setLookingFor((current) => current.filter((item) => item !== tag));
-            markDirty();
-          }}
-        />
 
-        <TagEditor
-          title="Je ne recherche pas"
-          description="Ce que tu préfères éviter dans les propositions."
-          tags={notLookingFor}
-          input={notLookingInput}
-          setInput={setNotLookingInput}
-          onAdd={addNotLookingFor}
-          onRemove={(tag) => {
-            setNotLookingFor((current) => current.filter((item) => item !== tag));
-            markDirty();
-          }}
-          tone="rose"
-        />
-
+        {/* Préférences d'échange */}
         <TrocoCard
           variant="plain"
           className="rounded-[28px] border border-white/75 bg-white/80 p-5 shadow-[0_12px_30px_rgba(20,184,166,0.045)] backdrop-blur-sm"
         >
-          <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
-            Note personnelle
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
+                Préférences d'échange
+              </p>
+              <p className="mt-1 text-[14px] font-medium leading-relaxed text-slate-500">
+                Ajoute ce que tu aimerais recevoir et ce que tu préfères éviter.
+              </p>
+            </div>
+          </div>
 
-          <textarea
-            value={note}
-            onChange={(event) => {
-              setNote(event.target.value);
-              markDirty();
-            }}
-            placeholder="Ex : j’aime les beaux livres, la déco vintage, les objets musicaux..."
-            className="mt-4 min-h-[120px] w-full resize-none rounded-[22px] border border-teal-100 bg-white/90 p-4 text-[14px] font-medium leading-relaxed text-slate-700 outline-none placeholder:text-slate-400"
-          />
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <div className="rounded-[24px] border border-[#E4ECE8] bg-white/86 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#08755C]">
+                  Je recherche
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreferenceMode("looking");
+                    setPreferencesOpen(true);
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#16C7C1] to-[#31D67B] text-white shadow-[0_10px_22px_rgba(20,184,166,0.16)] transition active:scale-95"
+                  aria-label="Ajouter ce que je recherche"
+                >
+                  +
+                </button>
+              </div>
+
+              {lookingFor.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {lookingFor.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-[#BFE8DA] bg-[#EAF8F4] px-3 py-1.5 text-[12px] font-black text-[#08755C]"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 flex items-center gap-2 rounded-[18px] border border-dashed border-[#DDEBE5] bg-[#F8FCFA] p-3 text-[13px] font-semibold text-slate-400">
+                  <Search size={16} />
+                  Aucune envie renseignée
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[24px] border border-[#E4ECE8] bg-white/86 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#40545B]">
+                  Je ne recherche pas
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreferenceMode("not");
+                    setPreferencesOpen(true);
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E4EAEA] bg-white text-[#40545B] shadow-[0_10px_22px_rgba(15,23,42,0.055)] transition active:scale-95"
+                  aria-label="Ajouter ce que je ne recherche pas"
+                >
+                  +
+                </button>
+              </div>
+
+              {notLookingFor.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {notLookingFor.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-[#E4EAEA] bg-[#F5F7F6] px-3 py-1.5 text-[12px] font-black text-[#40545B]"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 flex items-center gap-2 rounded-[18px] border border-dashed border-[#DDEBE5] bg-[#F8FCFA] p-3 text-[13px] font-semibold text-slate-400">
+                  <X size={16} />
+                  Aucune exclusion renseignée
+                </div>
+              )}
+            </div>
+          </div>
         </TrocoCard>
 
+        {/* Bouton sauvegarde bas de page */}
         <TrocoButton
           onClick={saveProfile}
           disabled={saving}
@@ -553,6 +466,15 @@ export default function EditProfilePage() {
           {saving ? "Sauvegarde..." : saved ? "Profil sauvegardé" : "Enregistrer les modifications"}
         </TrocoButton>
       </main>
-    </TrocoPage>
+
+      <PreferenceModal
+        open={preferencesOpen}
+        mode={preferenceMode}
+        profile={profile}
+        user={user}
+        onClose={() => setPreferencesOpen(false)}
+        onSaved={(payload) => setProfile((current) => ({ ...(current || {}), ...payload }))}
+      />
+    </MobileLayout>
   );
 }

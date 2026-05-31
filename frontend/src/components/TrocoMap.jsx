@@ -103,9 +103,9 @@ function createTrocoIcon(item) {
   return L.divIcon({
     html,
     className: "troco-map-object-wrapper",
-    iconSize: [62, 72],
-    iconAnchor: [31, 58],
-    popupAnchor: [0, -54],
+    iconSize: [72, 84],
+    iconAnchor: [36, 68],
+    popupAnchor: [0, -64],
   });
 }
 
@@ -164,7 +164,7 @@ function PopupCard({ item }) {
             <button
               type="button"
               onClick={() => navigate(`/items/${item.id}`)}
-              className="mt-3 rounded-full bg-emerald-50 px-3.5 py-2 text-[11.5px] font-black text-emerald-700 transition active:scale-95"
+              className="mt-3 rounded-full bg-[#F0FAF7] px-3.5 py-2 text-[11.5px] font-black text-[#1ABEA3] transition active:scale-95"
             >
               Voir l’objet
             </button>
@@ -175,37 +175,44 @@ function PopupCard({ item }) {
   );
 }
 
-function MapOverlay({ count }) {
+function MapOverlay({ count, onBackToList }) {
   return (
     <>
-      <div className="pointer-events-none absolute left-4 right-4 top-4 z-[3] flex items-start justify-between gap-3">
-        <div className="rounded-[26px] border border-white/75 bg-white/82 px-4 py-3 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-600">
+      {/* Badge compteur + bouton retour */}
+      <div className="absolute left-4 right-4 top-4 z-[400] flex items-center justify-between gap-3">
+        <div className="rounded-[20px] border border-white/80 bg-white/90 px-4 py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.10)] backdrop-blur-xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1ABEA3]">
             Autour de toi
           </p>
-          <p className="mt-1 text-[15px] font-black tracking-[-0.025em] text-slate-950">
-{count} objet{count > 1 ? "s" : ""} autour de toi
+          <p className="text-[15px] font-extrabold tracking-[-0.02em] text-[#0d1b2a]">
+            {count} objet{count > 1 ? "s" : ""}
           </p>
         </div>
 
-        <div className="rounded-full border border-white/75 bg-white/82 px-3.5 py-2 text-[12px] font-black text-slate-500 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl">
-          Carte douce
-        </div>
+        {onBackToList && (
+          <button
+            type="button"
+            onClick={onBackToList}
+            className="rounded-full border border-white/80 bg-white/90 px-4 py-2.5 text-[13px] font-bold text-[#0d1b2a] shadow-[0_4px_16px_rgba(15,23,42,0.10)] backdrop-blur-xl transition active:scale-95"
+          >
+            ☰ Liste
+          </button>
+        )}
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-28 bg-gradient-to-b from-white/72 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-32 bg-gradient-to-t from-white/82 to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-14 bg-gradient-to-r from-white/70 to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-14 bg-gradient-to-l from-white/70 to-transparent" />
+      {/* Gradients bords */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-20 bg-gradient-to-b from-white/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-20 bg-gradient-to-t from-white/40 to-transparent" />
 
-      <div className="pointer-events-none absolute bottom-4 left-1/2 z-[3] -translate-x-1/2 rounded-full border border-white/75 bg-white/84 px-4 py-2 text-[12px] font-black text-slate-600 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl">
-        Touchez un objet pour le voir
+      {/* Hint bas */}
+      <div className="pointer-events-none absolute bottom-4 left-1/2 z-[400] -translate-x-1/2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-[11px] font-bold text-slate-500 shadow-[0_4px_16px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+        Clique sur un objet pour le voir
       </div>
     </>
   );
 }
 
-export default function TrocoMap({ items = [], className = "" }) {
+export default function TrocoMap({ items = [], className = "", onBackToList }) {
   const visibleItems = useMemo(() => items.filter((item) => item?.id), [items]);
 
   return (
@@ -245,7 +252,7 @@ export default function TrocoMap({ items = [], className = "" }) {
           ))}
         </MapContainer>
 
-        <MapOverlay count={visibleItems.length} />
+        <MapOverlay count={visibleItems.length} onBackToList={onBackToList} />
       </div>
 
       <style>{`
@@ -256,11 +263,11 @@ export default function TrocoMap({ items = [], className = "" }) {
 
         .leaflet-tile {
           filter:
-            saturate(0.42)
-            contrast(0.86)
-            brightness(1.12)
-            sepia(0.06)
-            hue-rotate(12deg);
+            saturate(0.55)
+            contrast(0.90)
+            brightness(1.08)
+            sepia(0.08)
+            hue-rotate(8deg);
         }
 
         .leaflet-control-container {
@@ -283,8 +290,8 @@ export default function TrocoMap({ items = [], className = "" }) {
         }
 
         .troco-map-object-photo {
-          width: 54px;
-          height: 54px;
+          width: 64px;
+          height: 64px;
           border-radius: 999px;
           overflow: hidden;
           background: rgba(255, 255, 255, 0.92);
@@ -327,7 +334,7 @@ export default function TrocoMap({ items = [], className = "" }) {
           height: 13px;
           transform: translateX(-50%);
           border-radius: 999px;
-          background: linear-gradient(135deg, #22c55e, #06b6d4);
+          background: linear-gradient(135deg, #1ABEA3, #36C982);
           border: 2px solid rgba(255, 255, 255, 0.95);
           box-shadow: 0 8px 16px rgba(16, 185, 129, 0.24);
         }

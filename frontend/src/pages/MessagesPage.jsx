@@ -23,7 +23,6 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoInput } from "../components/ui";
 import { formatShortDate, getDisplayItemType, getItemImage } from "../utils/format";
@@ -257,7 +256,7 @@ function ConversationCard({ exchange, itemMap, currentUserId, selected }) {
 function ConversationPreview({ exchange, itemMap, currentUserId }) {
   if (!exchange) {
     return (
-      <section className="troco-panel hidden min-h-[560px] p-8 text-center lg:flex lg:flex-col lg:items-center lg:justify-center">
+      <section className="hidden min-h-[560px] flex-1 rounded-[20px] bg-white p-8 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)] lg:flex lg:flex-col lg:items-center lg:justify-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#EEF7F2] text-4xl">
           💬
         </div>
@@ -282,7 +281,7 @@ function ConversationPreview({ exchange, itemMap, currentUserId }) {
   const second = items[1];
 
   return (
-    <section className="troco-panel hidden min-h-[560px] p-6 lg:block">
+    <section className="hidden min-h-[560px] flex-1 rounded-[20px] bg-white p-6 shadow-[0_2px_12px_rgba(15,23,42,0.07)] lg:block">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="troco-page-eyebrow">Discussion</p>
@@ -459,35 +458,36 @@ export default function MessagesPage() {
     null;
 
   return (
-    <main className="troco-desktop-page">
+    <>
       <TrocoPageHeader
         user={user}
-        
         eyebrow="Messages"
         title="Messages"
         subtitle="Tes discussions liées aux trocs en cours."
         compact
+        showNotifications={false}
+        showAvatar={false}
       />
 
-      <section className="troco-desktop-split messages">
-        <div>
+      <section className="flex gap-6">
+        <div className="w-full max-w-sm shrink-0">
           <div className="mb-4">
             <TrocoInput
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Rechercher une discussion..."
               icon={<Search size={18} strokeWidth={2.2} />}
-              className="troco-desktop-search px-4"
+              className="w-full"
               inputClassName="text-[15px] font-medium text-slate-700 placeholder:text-slate-400"
             />
           </div>
 
           {loading ? (
-            <div className="troco-panel p-6 text-center text-sm font-bold text-slate-500">
+            <div className="rounded-[20px] bg-white p-6 text-center text-sm font-medium text-slate-400 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
               Chargement des messages...
             </div>
           ) : filteredExchanges.length === 0 ? (
-            <div className="troco-panel p-7 text-center">
+            <div className="rounded-[20px] bg-white p-7 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
               <div className="mb-3 text-4xl">💬</div>
 
               <p className="text-lg font-extrabold text-[#102033]">
@@ -519,8 +519,6 @@ export default function MessagesPage() {
           currentUserId={user?.uid}
         />
       </section>
-
-      <BottomNav />
-    </main>
+    </>
   );
 }

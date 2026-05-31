@@ -14,7 +14,6 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
-import BottomNav from "../components/BottomNav";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 
 const PLACE_OPTIONS = [
@@ -68,7 +67,7 @@ function PlaceButton({ place, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-[24px] border border-[#E4EFEA] bg-white/92 p-4 text-left shadow-[0_8px_28px_rgba(15,23,42,0.055)] transition active:scale-[0.985]"
+      className="rounded-[24px] border border-[#E4ECE8] bg-white/92 p-4 text-left shadow-[0_8px_28px_rgba(15,23,42,0.055)] transition active:scale-[0.985]"
     >
       <p className="text-[15px] font-black text-slate-950">
         {place.emoji} Valider {place.title}
@@ -224,15 +223,15 @@ export default function ChatPage() {
 
   if (authLoading || !exchange) {
     return (
-      <div className="page flex items-center justify-center">
-        <p className="text-sm font-bold text-slate-500">Chargement...</p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-sm font-medium text-slate-400">Chargement...</p>
       </div>
     );
   }
 
   if (!canUseChat(exchange)) {
     return (
-      <div className="page">
+      <>
         <TrocoPageHeader
           title="Messagerie"
           subtitle="La discussion libre n’est pas encore disponible."
@@ -240,7 +239,7 @@ export default function ChatPage() {
         />
 
         <div className="px-5 pb-36">
-          <div className="card p-6 text-center">
+          <div className="rounded-[20px] bg-white p-6 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
             <div className="mb-3 text-4xl">🧭</div>
 
             <p className="text-lg font-black text-slate-950">
@@ -261,13 +260,12 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <BottomNav />
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="page">
+    <>
       <TrocoPageHeader
         title="Messagerie"
         subtitle="Une courte discussion pour finaliser les derniers détails."
@@ -296,7 +294,7 @@ export default function ChatPage() {
         </div>
 
         {messages.length === 0 ? (
-          <div className="card p-6 text-center">
+          <div className="rounded-[20px] bg-white p-6 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
             <div className="mb-3 text-4xl">💬</div>
 
             <p className="font-black text-slate-950">
@@ -317,7 +315,7 @@ export default function ChatPage() {
                   <div
                     className={`max-w-[82%] rounded-[24px] px-4 py-3 ${
                       mine
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[#1ABEA3] text-white"
                         : "border border-white/80 bg-white text-slate-800"
                     } shadow-[0_8px_28px_rgba(15,23,42,0.055)]`}
                   >
@@ -337,8 +335,8 @@ export default function ChatPage() {
 
         <div ref={bottomRef} />
 
-        <div className="fixed inset-x-0 bottom-[92px] z-40 px-4">
-          <div className="mx-auto flex max-w-[620px] gap-2 rounded-[28px] border border-white/80 bg-white/90 p-2 shadow-[0_12px_40px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+        <div className="fixed inset-x-0 bottom-6 z-40 px-4 lg:pl-[264px]">
+          <div className="mx-auto flex max-w-[620px] gap-2 rounded-[28px] border border-[#E4ECE8] bg-white p-2 shadow-[0_4px_20px_rgba(15,23,42,0.10)]">
             <textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
@@ -357,7 +355,7 @@ export default function ChatPage() {
               type="button"
               onClick={send}
               disabled={!message.trim() || sending}
-              className="h-[46px] rounded-[22px] bg-emerald-500 px-5 text-sm font-black text-white transition active:scale-95 disabled:opacity-40"
+              className="h-[46px] rounded-[22px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-5 text-sm font-black text-white transition active:scale-95 disabled:opacity-40"
             >
               Envoyer
             </button>
@@ -365,7 +363,6 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <BottomNav />
-    </div>
+    </>
   );
 }

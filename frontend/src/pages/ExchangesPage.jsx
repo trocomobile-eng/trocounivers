@@ -8,48 +8,21 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import {
-  CalendarDays,
-  ChevronRight,
-  Clock3,
-  Hourglass,
-  LayoutGrid,
-  List,
-  MapPin,
-  MessageCircle,
-} from "lucide-react";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
 import BottomNav from "../components/BottomNav";
 import TrocoPageHeader from "../components/TrocoPageHeader";
-import { TrocoCard, TrocoButton, TrocoPill } from "../components/UI";
 
 import {
   formatDate,
   getDisplayItemType,
   getItemImage,
 } from "../utils/format";
-import { getExchangeStage, exchangeNeedsAttention, getExchangePriority } from "../exchangeUtils";
 
 function unique(values = []) {
   return [...new Set(values.filter(Boolean).map(String))];
-}
-
-function clean(value = "") {
-  return String(value).trim().replace(/\s+/g, " ");
-}
-
-function shortName(name = "") {
-  const cleaned = clean(name);
-  if (!cleaned) return "Utilisateur";
-  if (cleaned.includes("@")) return cleaned.split("@")[0];
-
-  const parts = cleaned.split(" ");
-  if (parts.length <= 1) return cleaned;
-
-  return `${parts[0]} ${parts[1]?.charAt(0) || ""}.`.trim();
 }
 
 function getOtherName(exchange, uid) {
@@ -126,14 +99,77 @@ function formatAvailability(option) {
   return option.label || [option.day, option.time].filter(Boolean).join(" · ");
 }
 
+function getExchangeStage(exchange, currentUserId) {
+  if (!exchange) return "loading";
+
+  const status = exchange.status || "pending";
+
+  const hasTimeOptions =
+    Array.isArray(exchange.availabilityOptions) &&
+    exchange.availabilityOptions.length > 0 &&
+    !exchange.selectedAvailability;
+
+  const hasPlaceOptions =
+    Array.isArray(exchange.placeOptions) &&
+    exchange.placeOptions.length > 0 &&
+    !exchange.selectedPlace;
+
+  if (status === "completed") return "completed";
+  if (status === "declined") return "declined";
+  if (status === "cancelled") return "cancelled";
+
+  if (
+    status === "meeting_confirmed" ||
+    exchange.meetingConfirmed ||
+    (exchange.selectedAvailability && exchange.selectedPlace)
+  ) {
+    return "confirmed";
+  }
+
+  if (status === "chat_open" || exchange.chatOpened || exchange.chatOpen) {
+    return "chat";
+  }
+
+  if (hasPlaceOptions && exchange.placeProposedBy !== currentUserId) {
+    return "respond_place";
+  }
+
+  if (hasPlaceOptions && exchange.placeProposedBy === currentUserId) {
+    return "waiting_place";
+  }
+
+  if (exchange.selectedAvailability && !exchange.selectedPlace) {
+    return "start_place";
+  }
+
+  if (hasTimeOptions && exchange.availabilityProposedBy !== currentUserId) {
+    return "respond_time";
+  }
+
+  if (hasTimeOptions && exchange.availabilityProposedBy === currentUserId) {
+    return "waiting_time";
+  }
+
+  if (
+    status === "accepted" ||
+    status === "scheduling_time" ||
+    status === "time_confirmed" ||
+    status === "choosing_place"
+  ) {
+    return "start_time";
+  }
+
+  return "pending";
+}
 
 function getStageVisual(stage) {
   switch (stage) {
     case "respond_time":
       return {
-        label: "À répondre",
+        label: "À toi de répondre",
         title: "Disponibilités reçues",
         tone: "bg-sky-50 text-sky-700 border-sky-100",
+        cta: "Répondre aux disponibilités",
       };
 
     case "waiting_time":
@@ -141,20 +177,23 @@ function getStageVisual(stage) {
         label: "En attente",
         title: "Disponibilités envoyées",
         tone: "bg-amber-50 text-amber-700 border-amber-100",
+        cta: "Voir les disponibilités",
       };
 
     case "start_place":
       return {
-        label: "Lieu",
+        label: "Horaire validé",
         title: "Choisir un lieu",
         tone: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        cta: "Choisir un lieu",
       };
 
     case "respond_place":
       return {
-        label: "À répondre",
+        label: "À toi de répondre",
         title: "Lieu reçu",
         tone: "bg-sky-50 text-sky-700 border-sky-100",
+        cta: "Répondre au lieu",
       };
 
     case "waiting_place":
@@ -162,6 +201,7 @@ function getStageVisual(stage) {
         label: "En attente",
         title: "Lieu envoyé",
         tone: "bg-amber-50 text-amber-700 border-amber-100",
+        cta: "Voir le lieu",
       };
 
     case "confirmed":
@@ -169,6 +209,7 @@ function getStageVisual(stage) {
         label: "Confirmé",
         title: "Rencontre confirmée",
         tone: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        cta: "Voir la rencontre",
       };
 
     case "chat":
@@ -176,6 +217,7 @@ function getStageVisual(stage) {
         label: "Message",
         title: "Discussion ouverte",
         tone: "bg-sky-50 text-sky-700 border-sky-100",
+        cta: "Ouvrir la discussion",
       };
 
     case "completed":
@@ -183,6 +225,7 @@ function getStageVisual(stage) {
         label: "Terminé",
         title: "Échange terminé",
         tone: "bg-slate-100 text-slate-600 border-slate-100",
+        cta: "Voir le troc",
       };
 
     case "declined":
@@ -190,6 +233,7 @@ function getStageVisual(stage) {
         label: "Refusé",
         title: "Échange refusé",
         tone: "bg-rose-50 text-rose-700 border-rose-100",
+        cta: "Voir le troc",
       };
 
     case "cancelled":
@@ -197,6 +241,7 @@ function getStageVisual(stage) {
         label: "Annulé",
         title: "Échange annulé",
         tone: "bg-slate-100 text-slate-600 border-slate-100",
+        cta: "Voir le troc",
       };
 
     case "start_time":
@@ -204,6 +249,7 @@ function getStageVisual(stage) {
         label: "Accepté",
         title: "Organiser la rencontre",
         tone: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        cta: "Choisir mes disponibilités",
       };
 
     case "pending":
@@ -212,28 +258,29 @@ function getStageVisual(stage) {
         label: "En attente",
         title: "Proposition en attente",
         tone: "bg-amber-50 text-amber-700 border-amber-100",
+        cta: "Voir le troc",
       };
   }
 }
 
 function getSubtitle(exchange, stage, currentUserId) {
-  const otherName = shortName(getOtherName(exchange, currentUserId));
+  const otherName = getOtherName(exchange, currentUserId);
 
   if (stage === "respond_time") {
     const count = exchange.availabilityOptions?.length || 0;
-    return `${otherName} a proposé ${count} créneau${count > 1 ? "x" : ""}.`;
+    return `${exchange.availabilityProposedByName || otherName} a proposé ${count} créneau${count > 1 ? "x" : ""}.`;
   }
 
   if (stage === "waiting_time") {
-    return `${otherName} doit choisir un créneau.`;
+    return `${otherName} doit choisir un créneau ou proposer une alternative.`;
   }
 
   if (stage === "respond_place") {
-    return `${otherName} propose ${exchange.placeOptions?.[0]?.title || "un lieu"}.`;
+    return `${exchange.placeProposedByName || otherName} propose ${exchange.placeOptions?.[0]?.title || "un lieu"}.`;
   }
 
   if (stage === "waiting_place") {
-    return `${otherName} doit valider le lieu.`;
+    return `${otherName} doit accepter ou proposer l’autre lieu.`;
   }
 
   if (stage === "start_place") {
@@ -245,26 +292,22 @@ function getSubtitle(exchange, stage, currentUserId) {
   }
 
   if (stage === "chat") {
-    return "Discussion ouverte pour finaliser.";
+    return "Une courte discussion est ouverte pour finaliser.";
   }
 
   if (stage === "start_time") {
-    return "Le troc est accepté. Organise la rencontre.";
+    return "Le troc est accepté. Il reste à choisir les disponibilités.";
   }
 
-  return "Appuie pour voir le détail.";
+  return "Consulte le détail du troc.";
 }
 
-function getCompactDate(exchange) {
-  return formatDate(exchange) || "";
-}
-
-function ExchangeCard({ exchange, items, currentUserId, selected = false, onSelect }) {
+function ExchangeCard({ exchange, items, currentUserId }) {
   const navigate = useNavigate();
 
   const stage = getExchangeStage(exchange, currentUserId);
   const visual = getStageVisual(stage);
-  const otherName = shortName(getOtherName(exchange, currentUserId));
+  const otherName = getOtherName(exchange, currentUserId);
 
   const requestedItem = items[getRequestedItemId(exchange)];
   const offeredItems = getOfferedItemIds(exchange)
@@ -282,208 +325,6 @@ function ExchangeCard({ exchange, items, currentUserId, selected = false, onSele
     getDisplayItemType(requestedItem) ||
     exchange.requestedItemTitle ||
     exchange.itemTitle ||
-    "Objet";
-
-  const offeredTitle =
-    offeredItems.map(getDisplayItemType).filter(Boolean).join(" + ") ||
-    exchange.offeredItemTitle ||
-    exchange.proposedItemTitle ||
-    "Objet";
-
-  const needsAttention =
-    exchange.needsAttentionFor === currentUserId ||
-    stage === "respond_time" ||
-    stage === "respond_place";
-
-  const handleClick = () => {
-    if (onSelect) onSelect(exchange.id);
-    else navigate(`/exchanges/${exchange.id}`);
-  };
-
-  return (
-    <TrocoButton variant="plain"
-      onClick={handleClick}
-      className={[
-        "group flex w-full items-center gap-3.5 rounded-[24px] border bg-white/[0.965] p-3 text-left shadow-[0_8px_22px_rgba(15,23,42,0.045)] backdrop-blur-xl transition active:scale-[0.992]",
-        selected ? "border-[#AEE7D8] ring-2 ring-[#DDF6EE]" : "border-[#E4ECE8]",
-      ].join(" ")}
-    >
-      <div className="relative h-[92px] w-[92px] shrink-0 overflow-hidden rounded-[20px] bg-slate-100">
-        {image ? (
-          <img
-            src={image}
-            alt={requestedTitle}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-2xl text-slate-300">
-            ↔️
-          </div>
-        )}
-
-        {needsAttention && (
-          <span className="absolute right-2 top-2 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#0f9f9a]" />
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-[12.5px] font-extrabold text-[#0f9f9a]">
-            Avec {otherName}
-          </p>
-
-          <span
-            className={`shrink-0 rounded-full border px-2.5 py-1 text-[10.5px] font-extrabold ${visual.tone}`}
-          >
-            {visual.label}
-          </span>
-        </div>
-
-        <h3 className="mt-1.5 line-clamp-1 text-[19px] font-extrabold leading-tight tracking-[-0.045em] text-[#102033]">
-          {requestedTitle} ↔ {offeredTitle}
-        </h3>
-
-        <p className="mt-1 line-clamp-1 text-[13px] font-medium text-slate-500">
-          {getSubtitle(exchange, stage, currentUserId)}
-        </p>
-
-        <div className="mt-2.5 flex items-center gap-2 text-[12.5px] font-semibold text-slate-500">
-          <span className="inline-flex items-center gap-1">
-            <MapPin size={13.5} className="text-slate-400" strokeWidth={2.2} />
-            Paris
-          </span>
-
-          <span className="text-slate-300">•</span>
-
-          <span className="inline-flex items-center gap-1">
-            <Clock3 size={13.5} className="text-slate-400" strokeWidth={2.2} />
-            {getCompactDate(exchange)}
-          </span>
-        </div>
-      </div>
-
-      <ChevronRight
-        size={20}
-        className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500"
-        strokeWidth={2.2}
-      />
-    </TrocoButton>
-  );
-}
-
-
-
-function ExchangeCardVertical({ exchange, items, currentUserId }) {
-  const navigate = useNavigate();
-
-  const stage = getExchangeStage(exchange, currentUserId);
-  const visual = getStageVisual(stage);
-  const otherName = shortName(getOtherName(exchange, currentUserId));
-
-  const requestedItem = items[getRequestedItemId(exchange)];
-  const offeredItems = getOfferedItemIds(exchange).map((id) => items[id]).filter(Boolean);
-
-  const requestedImage = getItemImage(requestedItem) || exchange.requestedItemImage || "";
-  const offeredImage = getItemImage(offeredItems[0]) || exchange.offeredItemImage || "";
-
-  const requestedTitle =
-    getDisplayItemType(requestedItem) || exchange.requestedItemTitle || exchange.itemTitle || "Objet";
-
-  const offeredTitle =
-    offeredItems.map(getDisplayItemType).filter(Boolean).join(" + ") ||
-    exchange.offeredItemTitle || exchange.proposedItemTitle || "Objet";
-
-  const needsAttention =
-    exchange.needsAttentionFor === currentUserId ||
-    stage === "respond_time" ||
-    stage === "respond_place";
-
-  return (
-    <TrocoButton
-      variant="plain"
-      onClick={() => navigate(`/exchanges/${exchange.id}`)}
-      className="group flex w-full flex-col overflow-hidden rounded-[24px] border border-[#E4ECE8] bg-white/[0.965] text-left shadow-[0_8px_22px_rgba(15,23,42,0.045)] backdrop-blur-xl transition active:scale-[0.992]"
-    >
-      {/* Images des deux objets */}
-      <div className="relative flex h-[130px] w-full overflow-hidden bg-slate-100">
-        <div className="relative flex-1 overflow-hidden">
-          {requestedImage ? (
-            <img src={requestedImage} alt={requestedTitle} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl text-slate-300">📦</div>
-          )}
-        </div>
-
-        <div className="flex w-8 shrink-0 items-center justify-center bg-white/70 backdrop-blur-sm">
-          <span className="text-[11px] font-extrabold text-slate-500">↔</span>
-        </div>
-
-        <div className="relative flex-1 overflow-hidden">
-          {offeredImage ? (
-            <img src={offeredImage} alt={offeredTitle} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl text-slate-300">📦</div>
-          )}
-        </div>
-
-        {needsAttention && (
-          <span className="absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-white bg-[#0f9f9a]" />
-        )}
-
-        <span className={`absolute left-2 top-2 rounded-full border px-2 py-0.5 text-[10px] font-extrabold backdrop-blur-sm ${visual.tone}`}>
-          {visual.label}
-        </span>
-      </div>
-
-      {/* Infos */}
-      <div className="p-3">
-        <p className="text-[11px] font-extrabold text-[#0f9f9a]">Avec {otherName}</p>
-        <p className="mt-1 line-clamp-1 text-[15px] font-extrabold leading-tight tracking-[-0.03em] text-[#102033]">
-          {requestedTitle}
-        </p>
-        <p className="mt-0.5 line-clamp-1 text-[12px] font-medium text-slate-500">
-          ↔ {offeredTitle}
-        </p>
-        <p className="mt-2 text-[11.5px] font-medium text-slate-400">
-          {getSubtitle(exchange, stage, currentUserId)}
-        </p>
-      </div>
-    </TrocoButton>
-  );
-}
-
-function ExchangeDetailPanel({ exchange, items, currentUserId }) {
-  const navigate = useNavigate();
-
-  if (!exchange) {
-    return (
-      <section className="sticky top-8 hidden min-h-[620px] rounded-[32px] border border-[#E4ECE8] bg-white/88 p-8 text-center shadow-[0_16px_42px_rgba(15,23,42,0.06)] lg:flex lg:flex-col lg:items-center lg:justify-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF7F2] text-3xl">
-          ↔️
-        </div>
-        <p className="text-[24px] font-extrabold tracking-[-0.05em] text-[#102033]">
-          Sélectionne un troc
-        </p>
-        <p className="mt-2 max-w-sm text-sm font-medium leading-relaxed text-slate-500">
-          Clique sur un échange dans la liste pour afficher son détail ici.
-        </p>
-      </section>
-    );
-  }
-
-  const stage = getExchangeStage(exchange, currentUserId);
-  const visual = getStageVisual(stage);
-  const otherName = shortName(getOtherName(exchange, currentUserId));
-
-  const requestedItem = items[getRequestedItemId(exchange)];
-  const offeredItems = getOfferedItemIds(exchange)
-    .map((id) => items[id])
-    .filter(Boolean);
-
-  const requestedTitle =
-    getDisplayItemType(requestedItem) ||
-    exchange.requestedItemTitle ||
-    exchange.itemTitle ||
     "Objet demandé";
 
   const offeredTitle =
@@ -492,149 +333,78 @@ function ExchangeDetailPanel({ exchange, items, currentUserId }) {
     exchange.proposedItemTitle ||
     "Objet proposé";
 
-  const requestedImage =
-    getItemImage(requestedItem) ||
-    exchange.requestedItemImage ||
-    "";
-
-  const offeredImage =
-    getItemImage(offeredItems[0]) ||
-    exchange.offeredItemImage ||
-    "";
-
-  const needsAnswer =
-    exchange.needsAttentionFor === currentUserId ||
-    stage === "respond_time" ||
-    stage === "respond_place" ||
-    (stage === "pending" && exchange.receiverId === currentUserId);
-
-  const showMeeting =
-    stage === "confirmed" ||
-    exchange.meetingConfirmed ||
-    (exchange.selectedAvailability && exchange.selectedPlace);
+  const needsAttention = exchange.needsAttentionFor === currentUserId || stage === "respond_time" || stage === "respond_place";
 
   return (
-    <section className="sticky top-8 hidden min-h-[620px] overflow-hidden rounded-[34px] border border-[#E4ECE8] bg-white/[0.965] shadow-[0_14px_34px_rgba(15,23,42,0.055)] lg:block">
-      <div className="p-6">
-        <div className="flex items-start justify-between gap-5">
-          <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0f9f9a]">
-              Troc avec {otherName}
-            </p>
-            <h2 className="mt-2 text-[32px] font-extrabold leading-none tracking-[-0.06em] text-[#102033]">
-              {visual.title}
-            </h2>
-            <p className="mt-3 max-w-[520px] text-[14px] font-medium leading-relaxed text-slate-500">
-              {getSubtitle(exchange, stage, currentUserId)}
-            </p>
-          </div>
-
-          <span className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-extrabold ${visual.tone}`}>
-            {visual.label}
-          </span>
-        </div>
-
-        {needsAnswer && (
-          <div className="mt-5 rounded-[24px] border border-[#BFE8DA] bg-[#F2FBF8] p-4">
-            <p className="text-[14px] font-extrabold text-[#08755C]">
-              Une réponse est attendue de ta part.
-            </p>
-            <p className="mt-1 text-[13px] font-medium leading-relaxed text-[#40545B]">
-              Ouvre la page complète du troc pour accepter, refuser ou demander une modification.
-            </p>
-            <TrocoButton
-              variant="plain"
-              onClick={() => navigate(`/exchanges/${exchange.id}`)}
-              className="btn-primary mt-4 h-11 px-5"
-            >
-              Répondre maintenant
-            </TrocoButton>
-          </div>
-        )}
-
-        <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-          <div className="overflow-hidden rounded-[26px] bg-[#F4F8F6] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-            <div className="aspect-[1.05/1]">
-              {requestedImage ? (
-                <img src={requestedImage} alt={requestedTitle} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-5xl">📦</div>
-              )}
-            </div>
-            <div className="p-4">
-              <p className="truncate text-[16px] font-extrabold text-[#102033]">{requestedTitle}</p>
-              <p className="mt-1 text-[12px] font-semibold text-slate-500">Objet demandé</p>
-            </div>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EEF7F2] text-[22px] font-extrabold text-[#08755C]">
-            ↔
-          </div>
-
-          <div className="overflow-hidden rounded-[26px] bg-[#F4F8F6] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
-            <div className="aspect-[1.05/1]">
-              {offeredImage ? (
-                <img src={offeredImage} alt={offeredTitle} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-5xl">📦</div>
-              )}
-            </div>
-            <div className="p-4">
-              <p className="truncate text-[16px] font-extrabold text-[#102033]">{offeredTitle}</p>
-              <p className="mt-1 text-[12px] font-semibold text-slate-500">Objet proposé</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 rounded-[26px] border border-[#E8F1ED] bg-[#F8FCFA] p-5">
-          <p className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[#0f9f9a]">
-            {showMeeting ? "Rencontre" : "Prochaine étape"}
-          </p>
-
-          {showMeeting ? (
-            <div className="mt-3 grid gap-3 text-[14px] font-bold text-[#40545B]">
-              <p className="flex items-center gap-2">
-                <CalendarDays size={17} className="text-[#08755C]" />
-                {exchange.selectedAvailability?.label || formatAvailability(exchange.selectedAvailability) || "Horaire validé"}
-              </p>
-              <p className="flex items-center gap-2">
-                <MapPin size={17} className="text-[#08755C]" />
-                {exchange.selectedPlace?.title || exchange.selectedPlace?.name || "Lieu validé"}
-              </p>
-            </div>
+    <button
+      type="button"
+      onClick={() => navigate(`/exchanges/${exchange.id}`)}
+      className="group w-full rounded-[30px] border border-white/90 bg-white/84 p-4 text-left shadow-[0_10px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl transition active:scale-[0.985]"
+    >
+      <div className="flex gap-4">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[24px] bg-slate-50">
+          {image ? (
+            <img
+              src={image}
+              alt={requestedTitle}
+              className="h-full w-full object-cover brightness-[1.02] contrast-[1.02] saturate-[1.02]"
+            />
           ) : (
-            <>
-              <p className="mt-2 text-[15px] font-extrabold text-[#102033]">{visual.title}</p>
-              <p className="mt-1 text-[13px] font-medium leading-relaxed text-slate-500">
-                La rencontre ne sera affichée ici qu’une fois le lieu et l’horaire confirmés.
-              </p>
-            </>
+            <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300">
+              ↔️
+            </div>
+          )}
+
+          {needsAttention && (
+            <span className="absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
           )}
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <TrocoButton
-            variant="plain"
-            onClick={() => navigate(`/exchanges/${exchange.id}`)}
-            className="btn-primary h-12"
-          >
-            Voir / gérer le troc
-          </TrocoButton>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-600">
+                Avec {otherName}
+              </p>
 
-          <TrocoButton
-            variant="plain"
-            onClick={() => navigate(`/exchanges/${exchange.id}/chat`)}
-            className="h-12 rounded-full border border-[#E5F1EC] bg-white text-[#253841]"
-          >
-            <MessageCircle size={17} />
-            Message
-          </TrocoButton>
+              <h3 className="mt-1 line-clamp-1 text-[20px] font-black tracking-[-0.04em] text-slate-950">
+                {visual.title}
+              </h3>
+            </div>
+
+            <span className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-black ${visual.tone}`}>
+              {visual.label}
+            </span>
+          </div>
+
+          <p className="mt-2 line-clamp-2 text-[13px] font-medium leading-relaxed text-slate-500">
+            {getSubtitle(exchange, stage, currentUserId)}
+          </p>
+
+          <div className="mt-3 rounded-[20px] bg-slate-50/80 p-3">
+            <p className="line-clamp-1 text-[12px] font-bold text-slate-500">
+              Demandé : <span className="text-slate-800">{requestedTitle}</span>
+            </p>
+
+            <p className="mt-1 line-clamp-1 text-[12px] font-bold text-slate-500">
+              Proposé : <span className="text-slate-800">{offeredTitle}</span>
+            </p>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold text-slate-500">
+              {formatDate(exchange)}
+            </span>
+
+            <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-black text-emerald-700">
+              {visual.cta} →
+            </span>
+          </div>
         </div>
       </div>
-    </section>
+    </button>
   );
 }
-
 
 export default function ExchangesPage() {
   const navigate = useNavigate();
@@ -643,8 +413,6 @@ export default function ExchangesPage() {
   const [exchanges, setExchanges] = useState([]);
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("list"); // "list" | "grid"
-  const [selectedExchangeId, setSelectedExchangeId] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -667,32 +435,7 @@ export default function ExchangesPage() {
           ...document.data(),
         }));
 
-        // Tri prioritaire : action requise > actifs en attente > chat/confirmé > terminés/refusés
-        // À égalité de priorité : date de mise à jour décroissante
-        function getExchangePriority(exchange) {
-          const stage = getExchangeStage(exchange, user.uid);
-          const needsMe =
-            exchange.needsAttentionFor === user.uid ||
-            stage === "respond_time" ||
-            stage === "respond_place" ||
-            (stage === "pending" && exchange.receiverId === user.uid);
-
-          if (needsMe) return 0;                                    // Action requise de ma part
-          if (["start_time", "start_place"].includes(stage)) return 1; // Je dois initier
-          if (["waiting_time", "waiting_place"].includes(stage)) return 2; // J'attends l'autre
-          if (stage === "pending") return 3;                        // Proposition en attente
-          if (stage === "confirmed") return 4;                      // Rencontre confirmée
-          if (stage === "chat") return 5;                           // Messagerie ouverte
-          if (["completed", "declined", "cancelled"].includes(stage)) return 6; // Terminés
-          return 7;
-        }
-
         list.sort((a, b) => {
-          const prioA = getExchangePriority(a);
-          const prioB = getExchangePriority(b);
-
-          if (prioA !== prioB) return prioA - prioB;
-
           const dateA =
             a.updatedAt?.toDate?.() ||
             a.createdAt?.toDate?.() ||
@@ -707,7 +450,6 @@ export default function ExchangesPage() {
         });
 
         setExchanges(list);
-        setSelectedExchangeId((current) => current || list[0]?.id || "");
 
         const loadedItems = {};
 
@@ -741,22 +483,11 @@ export default function ExchangesPage() {
 
     const attention = exchanges.filter((exchange) => {
       const stage = getExchangeStage(exchange, user?.uid);
-      return (
-        exchange.needsAttentionFor === user?.uid ||
-        ["respond_time", "respond_place"].includes(stage)
-      );
+      return exchange.needsAttentionFor === user?.uid || ["respond_time", "respond_place"].includes(stage);
     }).length;
 
     return { active, attention };
   }, [exchanges, user?.uid]);
-
-  const selectedExchange = useMemo(() => {
-    return (
-      exchanges.find((exchange) => exchange.id === selectedExchangeId) ||
-      exchanges[0] ||
-      null
-    );
-  }, [exchanges, selectedExchangeId]);
 
   if (authLoading || loading) {
     return (
@@ -781,174 +512,59 @@ export default function ExchangesPage() {
         subtitle="Suis tes propositions et organise les rencontres guidées."
       />
 
-      <main className="px-5 pb-36 lg:px-8 lg:pb-12">
-        {/* Toggle vue liste / grille — mobile uniquement */}
-        <div className="mb-4 flex items-center justify-between lg:hidden">
-          <p className="text-[12px] font-bold text-slate-400">
-            {exchanges.length} troc{exchanges.length > 1 ? "s" : ""}
-          </p>
-          <div className="flex rounded-[14px] border border-[#E4ECE8] bg-white/80 p-1 shadow-[0_4px_12px_rgba(15,23,42,0.06)]">
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={[
-                "flex h-8 w-8 items-center justify-center rounded-[10px] transition",
-                viewMode === "list" ? "bg-[#0f9f9a] text-white shadow-sm" : "text-slate-400",
-              ].join(" ")}
-              aria-label="Vue liste"
-            >
-              <List size={16} strokeWidth={2.2} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              className={[
-                "flex h-8 w-8 items-center justify-center rounded-[10px] transition",
-                viewMode === "grid" ? "bg-[#0f9f9a] text-white shadow-sm" : "text-slate-400",
-              ].join(" ")}
-              aria-label="Vue grille"
-            >
-              <LayoutGrid size={16} strokeWidth={2.2} />
-            </button>
-          </div>
-        </div>
-
-        <section className="mb-5 grid grid-cols-2 gap-3 lg:hidden">
-          <div className="rounded-[24px] border border-[#E4ECE8] bg-white/82 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                <CalendarDays size={18} strokeWidth={2.2} />
-              </span>
-              <div>
-                <p className="text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-emerald-600">Actifs</p>
-                <p className="mt-0.5 text-[28px] font-extrabold leading-none text-[#102033]">{counts.active}</p>
-              </div>
-            </div>
+      <main className="px-5 pb-36">
+        <section className="mb-5 grid grid-cols-2 gap-3">
+          <div className="rounded-[26px] border border-white/80 bg-white/80 p-4 shadow-[0_8px_28px_rgba(15,23,42,0.055)] backdrop-blur-xl">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-600">
+              Actifs
+            </p>
+            <p className="mt-2 text-3xl font-black text-slate-950">
+              {counts.active}
+            </p>
           </div>
 
-          <div className="rounded-[24px] border border-[#E4ECE8] bg-white/82 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-700">
-                <Hourglass size={18} strokeWidth={2.2} />
-              </span>
-              <div>
-                <p className="text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-sky-600">À traiter</p>
-                <p className="mt-0.5 text-[28px] font-extrabold leading-none text-[#102033]">{counts.attention}</p>
-              </div>
-            </div>
+          <div className="rounded-[26px] border border-white/80 bg-white/80 p-4 shadow-[0_8px_28px_rgba(15,23,42,0.055)] backdrop-blur-xl">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-sky-600">
+              À traiter
+            </p>
+            <p className="mt-2 text-3xl font-black text-slate-950">
+              {counts.attention}
+            </p>
           </div>
         </section>
 
         {exchanges.length === 0 ? (
           <div className="card p-7 text-center">
             <div className="mb-3 text-4xl">↔️</div>
-            <p className="text-lg font-extrabold text-[#102033]">Aucun troc pour l'instant</p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-500">
-              Quand tu proposes ou reçois un échange, il apparaîra ici.
+
+            <p className="text-lg font-black text-slate-950">
+              Aucun troc pour l’instant
             </p>
-            <TrocoButton variant="plain" onClick={() => navigate("/feed")} className="btn-primary mt-5 w-full">
+
+            <p className="mt-2 text-sm leading-relaxed text-slate-500">
+              Quand tu proposes ou reçois un échange, il apparaîtra ici.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate("/feed")}
+              className="btn-primary mt-5 w-full"
+            >
               Explorer les objets
-            </TrocoButton>
+            </button>
           </div>
-        ) : (() => {
-          const needsAction = exchanges.filter((ex) => {
-            const stage = getExchangeStage(ex, user.uid);
-            return (
-              ex.needsAttentionFor === user.uid ||
-              stage === "respond_time" ||
-              stage === "respond_place" ||
-              (stage === "pending" && ex.receiverId === user.uid)
-            );
-          });
-          const others = exchanges.filter((ex) => !needsAction.includes(ex));
-
-          const renderCard = (exchange) => (
-            <ExchangeCard
-              key={exchange.id}
-              exchange={exchange}
-              items={items}
-              currentUserId={user.uid}
-              selected={selectedExchange?.id === exchange.id}
-              onSelect={setSelectedExchangeId}
-            />
-          );
-
-          const renderMobileCard = (exchange) => (
-            <ExchangeCard
-              key={exchange.id}
-              exchange={exchange}
-              items={items}
-              currentUserId={user.uid}
-            />
-          );
-
-          return (
-            <>
-              <div className="lg:hidden space-y-5">
-                {needsAction.length > 0 && (
-                  <div>
-                    <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0f9f9a]">⚡ Action requise</p>
-                    {viewMode === "grid" ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        {needsAction.map((ex) => <ExchangeCardVertical key={ex.id} exchange={ex} items={items} currentUserId={user.uid} />)}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">{needsAction.map(renderMobileCard)}</div>
-                    )}
-                  </div>
-                )}
-                {others.length > 0 && (
-                  <div>
-                    {needsAction.length > 0 && (
-                      <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Autres trocs</p>
-                    )}
-                    {viewMode === "grid" ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        {others.map((ex) => <ExchangeCardVertical key={ex.id} exchange={ex} items={items} currentUserId={user.uid} />)}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">{others.map(renderMobileCard)}</div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="hidden lg:grid lg:grid-cols-[440px_minmax(0,1fr)] lg:items-start lg:gap-6 xl:grid-cols-[480px_minmax(0,1fr)]">
-                <div className="space-y-5">
-                  <section className="grid grid-cols-2 gap-3">
-                    <div className="rounded-[22px] border border-[#E4ECE8] bg-white/82 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl">
-                      <p className="text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-emerald-600">Actifs</p>
-                      <p className="mt-1 text-[28px] font-extrabold leading-none text-[#102033]">{counts.active}</p>
-                    </div>
-
-                    <div className="rounded-[22px] border border-[#E4ECE8] bg-white/82 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl">
-                      <p className="text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-sky-600">À traiter</p>
-                      <p className="mt-1 text-[28px] font-extrabold leading-none text-[#102033]">{counts.attention}</p>
-                    </div>
-                  </section>
-
-                  {needsAction.length > 0 && (
-                    <div>
-                      <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#0f9f9a]">⚡ Action requise</p>
-                      <div className="space-y-3">{needsAction.map(renderCard)}</div>
-                    </div>
-                  )}
-
-                  {others.length > 0 && (
-                    <div>
-                      {needsAction.length > 0 && (
-                        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Autres trocs</p>
-                      )}
-                      <div className="space-y-3">{others.map(renderCard)}</div>
-                    </div>
-                  )}
-                </div>
-
-                <ExchangeDetailPanel exchange={selectedExchange} items={items} currentUserId={user.uid} />
-              </div>
-            </>
-          );
-        })()}
+        ) : (
+          <div className="space-y-3">
+            {exchanges.map((exchange) => (
+              <ExchangeCard
+                key={exchange.id}
+                exchange={exchange}
+                items={items}
+                currentUserId={user.uid}
+              />
+            ))}
+          </div>
+        )}
       </main>
 
       <BottomNav />

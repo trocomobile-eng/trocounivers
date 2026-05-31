@@ -1,51 +1,39 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import DesktopLayout from "./DesktopLayout";
-import TrocoFooter from "../components/TrocoFooter";
 
-const PUBLIC_PATHS = [
-  "/",
-  "/login",
-  "/signup",
-  "/onboarding",
-  "/verify-email",
-  "/about",
-  "/contact",
-  "/safety",
-  "/privacy",
-  "/terms",
-  "/troco-dossier",
-];
-
-function isPublicPathname(pathname) {
-  return (
-    PUBLIC_PATHS.includes(pathname) ||
-    pathname.startsWith("/about") ||
-    pathname.startsWith("/contact") ||
-    pathname.startsWith("/safety") ||
-    pathname.startsWith("/privacy") ||
-    pathname.startsWith("/terms") ||
-    pathname.startsWith("/troco-dossier")
-  );
-}
+const DESKTOP_BREAKPOINT = 1024;
 
 export default function AppShell({ children }) {
   const location = useLocation();
-  const isPublicPath = isPublicPathname(location.pathname);
+  const [isDesktop, setIsDesktop] = useState(false);
 
-  if (isPublicPath) {
-    return (
-      <>
-        {children}
-        <TrocoFooter />
-      </>
-    );
+  useEffect(() => {
+    function update() {
+      setIsDesktop(window.innerWidth >= DESKTOP_BREAKPOINT);
+    }
+
+    update();
+    window.addEventListener("resize", update);
+
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // mobile = app normale
+  if (!isDesktop) {
+    return children;
   }
 
+  // Feed desktop gère déjà son propre DesktopLayout
+  if (location.pathname === "/feed") {
+    return children;
+  }
+
+  // Sidebar desktop globale partout ailleurs
   return (
-    <>
-      <DesktopLayout>{children}</DesktopLayout>
-      <TrocoFooter />
-    </>
+    <DesktopLayout>
+      {children}
+    </DesktopLayout>
   );
 }

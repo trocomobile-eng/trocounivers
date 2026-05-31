@@ -19,14 +19,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import BottomNav from "../../components/BottomNav";
+import * as categoryConfig from "../../constants/categories";
 
 // ─── assets univers ───────────────────────────────────────────────────────────
 import imgJeux      from "../../assets/univers/univ-jeux.png";
 import imgMusique   from "../../assets/univers/univ-musique.png";
 import imgDeco      from "../../assets/univers/univ-deco_maison.png";
 import imgPhoto     from "../../assets/univers/univ-photo.png";
-import imgSport	    from "../../assets/univers/univ-sport.png";
 
+const CATEGORY_FILTERS = (
+  categoryConfig.CATEGORY_ITEMS ||
+  categoryConfig.CATEGORIES ||
+  categoryConfig.default ||
+  []
+).filter((category) => category?.id && category.id !== "tout");
 
 // ─── config univers ───────────────────────────────────────────────────────────
 const UNIVERS = [
@@ -37,7 +43,7 @@ const UNIVERS = [
   // Vélo, Livres, Sport — assets à brancher plus tard
   { id: "velo",    label: "Vélo",         img: null,       accent: "#8ec99a" },
   { id: "livres",  label: "Livres",       img: null,       accent: "#c9886e" },
-  { id: "sport",   label: "Sport",        img: imgSport,  accent: "#e0a860" },
+  { id: "sport",   label: "Sport",        img: null,       accent: "#e0a860" },
 ];
 
 // ─── helpers géoloc ───────────────────────────────────────────────────────────
@@ -126,19 +132,50 @@ function matchesCategory(item, category) {
   return (
     normalize(item.category).includes(c) ||
     normalize(item.type).includes(c) ||
-    normalize(item.itemType).includes(c)
+    normalize(item.itemType).includes(c) ||
+    normalize(item.title).includes(c) ||
+    normalize(item.description).includes(c)
   );
+}
+
+function matchesFilterCategory(item, categoryId) {
+  if (!categoryId || categoryId === "tout") return true;
+
+  const category = CATEGORY_FILTERS.find((entry) => entry.id === categoryId);
+  if (!category) return true;
+
+  const haystack = [
+    item?.category,
+    item?.subCategory,
+    item?.type,
+    item?.itemType,
+    item?.title,
+    item?.name,
+    item?.description,
+    item?.details,
+  ].map(normalize).join(" ");
+
+  const label = normalize(category.label || "");
+  const id = normalize(category.id || "");
+  const keywordOk = (category.keywords || []).some((keyword) =>
+    haystack.includes(normalize(keyword))
+  );
+
+  return haystack.includes(id) || haystack.includes(label) || keywordOk;
 }
 
 // ─── sous-composants ──────────────────────────────────────────────────────────
 
-function UniversCard({ univers, onClick }) {
+function UniversCard({ univers, active = false, onClick }) {
   const hasImg = Boolean(univers.img);
   return (
     <button
       type="button"
       onClick={onClick}
-      className="relative flex-shrink-0 w-[120px] h-[80px] rounded-[14px] overflow-hidden text-left active:scale-[0.97] transition-transform"
+      className={[
+        "relative flex-shrink-0 w-[120px] h-[80px] rounded-[14px] overflow-hidden text-left active:scale-[0.97] transition-transform border",
+        active ? "border-[#1a7a4a] ring-2 ring-[#1a7a4a]/30" : "border-transparent",
+      ].join(" ")}
       style={{ background: hasImg ? "#1a1a1a" : "#1a1a1a" }}
     >
       {hasImg ? (
@@ -155,6 +192,11 @@ function UniversCard({ univers, onClick }) {
       )}
       {/* gradient overlay bas */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      {active ? (
+        <span className="absolute right-2 top-2 rounded-full bg-white/92 px-2 py-0.5 text-[9px] font-black text-[#1a7a4a]">
+          Actif
+        </span>
+      ) : null}
       <div className="absolute bottom-0 left-0 right-0 p-2.5">
         <p className="text-white text-[13px] font-black leading-tight" style={{ letterSpacing: "-0.02em" }}>
           {univers.label}
@@ -177,7 +219,7 @@ function ItemCard({ item, favorite, onToggleFavorite }) {
         {/* photo */}
         <div className="relative aspect-[4/3] bg-[#f0ebe0] overflow-hidden">
           {img ? (
-            <img src={img} alt={title} className="w-full h-full object-cover" />
+            <img src={img} alt={title} draggable="false" className="pointer-events-none w-full h-full select-none object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-[#ccc]">
               <MapPin size={28} strokeWidth={1.5} />
@@ -243,6 +285,23 @@ export default function MobileFeedPage() {
   const [showFilters, setShowFilters]         = useState(false);
   const [filterRadius, setFilterRadius]       = useState(null); // null = tous
   const [filterSort, setFilterSort]           = useState("distance"); // distance | recent
+  const [categoryFilters, setCategoryFilters]   = useState([]);
+  const [showAllItems, setShowAllItems]         = useState(false);
+
+  useEffect(() => {
+    if (!showFilters) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [showFilters]);
 
   // ── favoris toggle ──────────────────────────────────────────────────────────
   async function toggleFavorite(itemId) {
@@ -285,6 +344,10 @@ export default function MobileFeedPage() {
       .filter((item) => item.status !== "deleted")
       .filter((item) => !belongsToUser(item, user?.uid))
       .filter((item) => matchesCategory(item, activeUnivers))
+      .filter((item) =>
+        categoryFilters.length === 0 ||
+        categoryFilters.some((categoryId) => matchesFilterCategory(item, categoryId))
+      )
       .filter((item) => {
         if (!searchNorm) return true;
         return [item.title, item.name, item.type, item.category, item.description]
@@ -458,10 +521,36 @@ export default function MobileFeedPage() {
               <UniversCard
                 key={u.id}
                 univers={u}
+                active={activeUnivers === u.id}
                 onClick={() => setActiveUnivers(activeUnivers === u.id ? null : u.id)}
               />
             ))}
           </div>
+
+          {activeUnivers ? (
+            <div className="mt-3 rounded-[18px] border border-[#d8eee5] bg-[#eaf7f1] p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1a7a4a]">
+                    Univers actif
+                  </p>
+                  <h3 className="mt-0.5 text-[17px] font-black tracking-[-0.04em] text-[#102033]">
+                    {UNIVERS.find((u) => u.id === activeUnivers)?.label} autour de toi
+                  </h3>
+                  <p className="mt-1 text-[11.5px] font-semibold text-[#5f766d]">
+                    {visibleItems.length} objets · filtres conservés
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveUnivers(null)}
+                  className="rounded-full bg-[#1a7a4a] px-3 py-1.5 text-[11px] font-black text-white"
+                >
+                  Tout
+                </button>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         {/* ── Section : Objets autour de vous ──────────────────────────────── */}
@@ -479,10 +568,10 @@ export default function MobileFeedPage() {
               type="button"
               onClick={() => setShowFilters(true)}
               className="flex items-center gap-1 text-[11px] font-bold bg-white border border-[#e8e4dc] rounded-full px-2.5 py-1"
-              style={{ color: (filterRadius || filterSort !== "distance") ? "#1a7a4a" : "#888" }}
+              style={{ color: (filterRadius || filterSort !== "distance" || categoryFilters.length) ? "#1a7a4a" : "#888" }}
             >
               <SlidersHorizontal size={11} strokeWidth={2.2} />
-              Filtres{(filterRadius || filterSort !== "distance") ? " •" : ""}
+              Filtres{(filterRadius || filterSort !== "distance" || categoryFilters.length) ? " •" : ""}
             </button>
           </div>
 
@@ -491,8 +580,8 @@ export default function MobileFeedPage() {
               Aucun objet trouvé dans cette zone.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {visibleItems.slice(0, 8).map((item) => (
+            <div className="grid grid-cols-3 gap-2.5">
+              {(showAllItems ? visibleItems : visibleItems.slice(0, 8)).map((item) => (
                 <ItemCard
                   key={item.id}
                   item={item}
@@ -506,10 +595,10 @@ export default function MobileFeedPage() {
           {visibleItems.length > 8 && (
             <button
               type="button"
-              onClick={() => navigate("/feed/all")}
+              onClick={() => setShowAllItems(true)}
               className="mt-3 w-full py-3 rounded-[14px] bg-white border border-[#e8e4dc] text-[13px] font-bold text-[#444] flex items-center justify-center gap-1"
             >
-              Voir les {visibleItems.length} objets <ChevronRight size={15} strokeWidth={2.5} />
+              {showAllItems ? "Tous les objets affichés" : `Voir les ${visibleItems.length} objets`} <ChevronRight size={15} strokeWidth={2.5} />
             </button>
           )}
         </section>
@@ -577,14 +666,19 @@ export default function MobileFeedPage() {
 
       {/* ── Bottom sheet Filtres ── */}
       {showFilters && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setShowFilters(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-end overflow-hidden"
+          onClick={() => setShowFilters(false)}
+          onTouchMove={(e) => e.preventDefault()}
+        >
           {/* backdrop */}
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/35 backdrop-blur-sm" />
 
           {/* panel */}
           <div
-            className="relative w-full rounded-t-[28px] bg-white px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-5 shadow-[0_-8px_40px_rgba(15,23,42,0.12)]"
+            className="relative max-h-[82vh] w-full overflow-y-auto overscroll-contain rounded-t-[28px] bg-white px-5 pb-[max(28px,env(safe-area-inset-bottom))] pt-5 shadow-[0_-8px_40px_rgba(15,23,42,0.12)]"
             onClick={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
           >
             {/* handle */}
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
@@ -595,6 +689,52 @@ export default function MobileFeedPage() {
                 className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-100">
                 <X size={15} strokeWidth={2.5} className="text-slate-500" />
               </button>
+            </div>
+
+            {/* Catégories */}
+            <div className="mb-5">
+              <div className="mb-2.5 flex items-center justify-between">
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Catégories précises
+                </p>
+                {categoryFilters.length ? (
+                  <button
+                    type="button"
+                    onClick={() => setCategoryFilters([])}
+                    className="text-[11px] font-black text-[#1a7a4a]"
+                  >
+                    Effacer
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {CATEGORY_FILTERS.map((category) => {
+                  const active = categoryFilters.includes(category.id);
+
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() =>
+                        setCategoryFilters((current) =>
+                          current.includes(category.id)
+                            ? current.filter((id) => id !== category.id)
+                            : [...current, category.id]
+                        )
+                      }
+                      className="rounded-full border px-3 py-2 text-[12px] font-bold transition"
+                      style={{
+                        background: active ? "#1a7a4a" : "white",
+                        color: active ? "white" : "#475569",
+                        borderColor: active ? "#1a7a4a" : "#e2e8f0",
+                      }}
+                    >
+                      {category.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Distance */}
@@ -647,7 +787,7 @@ export default function MobileFeedPage() {
             {/* CTA */}
             <div className="flex gap-3">
               <button type="button"
-                onClick={() => { setFilterRadius(null); setFilterSort("distance"); }}
+                onClick={() => { setFilterRadius(null); setFilterSort("distance"); setCategoryFilters([]); }}
                 className="flex-1 rounded-full border border-slate-200 py-3 text-[14px] font-bold text-slate-500">
                 Réinitialiser
               </button>

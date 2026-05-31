@@ -1,27 +1,67 @@
 import { X } from "lucide-react";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TrocoCard — boîte premium réutilisable
+//
+// variant="default"   → card blanche standard, ombre légère  (la plus utilisée)
+// variant="raised"    → card blanche avec ombre plus marquée (hero, mise en avant)
+// variant="subtle"    → card fond gris très clair            (sections secondaires)
+// variant="outline"   → card blanche avec bordure visible    (formulaires, inputs)
+// variant="ghost"     → fond transparent, juste une bordure  (sections intégrées)
+// variant="plain"     → aucun style                          (composition libre)
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function TrocoCard({
   children,
   className = "",
   as: Component = "div",
   variant = "default",
+  padding = true,
+  hover = false,
   ...props
 }) {
-  const variantClass =
-    variant === "strong"
-      ? "troco-card-strong"
-      : variant === "ghost"
-        ? "rounded-[26px] border border-white/65 bg-white/46 shadow-[0_8px_24px_rgba(15,23,42,0.025)] backdrop-blur-xl"
-        : variant === "plain"
-          ? ""
-          : "troco-card";
+  const base = "rounded-[20px] transition";
+
+  const variants = {
+    default: "bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)]",
+    raised:  "bg-white shadow-[0_8px_32px_rgba(15,23,42,0.10)]",
+    subtle:  "bg-[#F0F0EE]",
+    outline: "bg-white border border-[#E4ECE8]",
+    ghost:   "border border-[#E4ECE8] bg-transparent",
+    plain:   "",
+  };
+
+  const hoverClass = hover
+    ? "cursor-pointer hover:-translate-y-[1px] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)] active:scale-[0.99]"
+    : "";
+
+  const paddingClass = padding && variant !== "plain" ? "p-5" : "";
 
   return (
-    <Component className={[variantClass, className].filter(Boolean).join(" ")} {...props}>
+    <Component
+      className={[
+        base,
+        variants[variant] || variants.default,
+        hoverClass,
+        paddingClass,
+        className,
+      ].filter(Boolean).join(" ")}
+      {...props}
+    >
       {children}
     </Component>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TrocoButton
+//
+// variant="primary"   → gradient vert principal
+// variant="secondary" → blanc avec bordure
+// variant="ghost"     → texte seul
+// variant="danger"    → rouge discret
+// variant="plain"     → aucun style
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function TrocoButton({
   children,
@@ -31,30 +71,28 @@ export function TrocoButton({
   type = "button",
   ...props
 }) {
-  const variantClass =
-    variant === "secondary"
-      ? "troco-secondary-btn"
-      : variant === "ghost"
-        ? "rounded-[18px] font-black text-slate-600 transition active:scale-95"
-        : variant === "pill"
-          ? "rounded-full border border-teal-100/70 bg-white/62 font-black text-slate-600 shadow-[0_6px_18px_rgba(15,23,42,0.025)] backdrop-blur-xl transition active:scale-95"
-          : variant === "plain"
-            ? ""
-            : "troco-primary-btn";
+  const base = "inline-flex items-center justify-center font-bold transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none";
 
-  const sizeClass =
-    variant === "plain"
-      ? ""
-      : size === "sm"
-        ? "px-3 py-1.5 text-[12px]"
-        : size === "lg"
-          ? "px-5 py-3.5 text-[15px]"
-          : "px-4 py-2.5 text-[14px]";
+  const variants = {
+    primary:   "troco-primary-btn",
+    secondary: "rounded-[16px] border border-[#E4ECE8] bg-white text-[#0d1b2a] shadow-[0_2px_8px_rgba(15,23,42,0.06)]",
+    ghost:     "rounded-[16px] text-[#0d1b2a] hover:bg-[#F0F0EE]",
+    danger:    "rounded-[16px] border border-rose-200 bg-rose-50 text-rose-600",
+    plain:     "",
+  };
+
+  const sizes = {
+    sm:      "h-9 gap-1.5 px-3 text-[12px]",
+    default: "h-11 gap-2 px-4 text-[14px]",
+    lg:      "h-13 gap-2.5 px-5 text-[15px]",
+  };
+
+  const sizeClass = variant === "plain" ? "" : (sizes[size] || sizes.default);
 
   return (
     <button
       type={type}
-      className={[variantClass, sizeClass, className].filter(Boolean).join(" ")}
+      className={[base, variants[variant] || variants.primary, sizeClass, className].filter(Boolean).join(" ")}
       {...props}
     >
       {children}
@@ -62,37 +100,9 @@ export function TrocoButton({
   );
 }
 
-export function TrocoBadge({ children, className = "" }) {
-  return <span className={["troco-badge", className].join(" ")}>{children}</span>;
-}
-
-export function TrocoPill({
-  children,
-  active = false,
-  className = "",
-  as: Component = "button",
-  type = "button",
-  ...props
-}) {
-  const base =
-    "inline-flex h-7 items-center justify-center rounded-full px-3 text-[12px] font-bold transition active:scale-[0.98]";
-
-  const state = active
-    ? "troco-active-gradient"
-    : "border border-teal-200/45 bg-white/55 text-[#2f6f68] hover:bg-white/78";
-
-  const componentProps = Component === "button" ? { type } : {};
-
-  return (
-    <Component
-      className={[base, state, className].filter(Boolean).join(" ")}
-      {...componentProps}
-      {...props}
-    >
-      {children}
-    </Component>
-  );
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// TrocoInput
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function TrocoInput({
   icon,
@@ -104,141 +114,153 @@ export function TrocoInput({
   return (
     <label
       className={[
-        "flex h-[46px] items-center rounded-[18px] border border-teal-200/45 bg-white/72 px-3.5 shadow-[0_10px_30px_rgba(20,184,166,0.06)] backdrop-blur-xl",
+        "flex h-[48px] items-center rounded-[14px] bg-white px-4 shadow-[0_1px_4px_rgba(15,23,42,0.08)]",
         className,
       ].filter(Boolean).join(" ")}
     >
-      {icon && <span className="mr-3 shrink-0 text-[#16a39a]">{icon}</span>}
-
+      {icon && <span className="mr-3 shrink-0 text-[#94a3b8]">{icon}</span>}
       <input
         className={[
-          "min-w-0 flex-1 bg-transparent text-[14px] font-medium text-slate-700 outline-none placeholder:text-slate-400",
+          "min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#0d1b2a] outline-none placeholder:text-[#94a3b8]",
           inputClassName,
         ].filter(Boolean).join(" ")}
         {...props}
       />
-
-      {rightIcon && <span className="ml-3 shrink-0 text-[#24746f]">{rightIcon}</span>}
+      {rightIcon && <span className="ml-3 shrink-0 text-[#94a3b8]">{rightIcon}</span>}
     </label>
   );
 }
 
-export function TrocoSheet({
-  open,
-  title,
+// ─────────────────────────────────────────────────────────────────────────────
+// TrocoBadge
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function TrocoBadge({
   children,
-  onClose,
-  footer,
+  variant = "default",
   className = "",
 }) {
+  const variants = {
+    default: "bg-[#F0FAF7] text-[#1ABEA3]",
+    amber:   "bg-amber-50 text-amber-700",
+    rose:    "bg-rose-50 text-rose-600",
+    sky:     "bg-sky-50 text-sky-600",
+    slate:   "bg-slate-100 text-slate-600",
+  };
+
+  return (
+    <span
+      className={[
+        "inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold",
+        variants[variant] || variants.default,
+        className,
+      ].filter(Boolean).join(" ")}
+    >
+      {children}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TrocoPill
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function TrocoPill({
+  children,
+  active = false,
+  className = "",
+  as: Component = "button",
+  type = "button",
+  ...props
+}) {
+  const componentProps = Component === "button" ? { type } : {};
+
+  return (
+    <Component
+      className={[
+        "inline-flex h-8 items-center justify-center rounded-full px-3.5 text-[13px] font-semibold transition active:scale-[0.98]",
+        active
+          ? "bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-white shadow-[0_4px_12px_rgba(26,190,163,0.20)]"
+          : "bg-white border border-[#E4ECE8] text-[#4a5568]",
+        className,
+      ].filter(Boolean).join(" ")}
+      {...componentProps}
+      {...props}
+    >
+      {children}
+    </Component>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TrocoSheet — bottom sheet mobile
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function TrocoSheet({ open, title, children, onClose, footer, className = "" }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/18 px-3 pb-3 backdrop-blur-[2px]">
-      <button
-        type="button"
-        aria-label="Fermer"
-        className="absolute inset-0 cursor-default"
-        onClick={onClose}
-      />
-
-      <TrocoCard
-        as="section"
-        variant="plain"
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 pb-0">
+      <button type="button" aria-label="Fermer" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <section
         className={[
-          "relative z-10 w-full max-w-[520px] rounded-[34px] border border-white/80 bg-white/92 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.16)] backdrop-blur-2xl",
+          "relative z-10 w-full max-w-[520px] rounded-t-[28px] bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 shadow-[0_-8px_40px_rgba(15,23,42,0.12)]",
           className,
         ].filter(Boolean).join(" ")}
       >
-        <div className="mb-4 flex items-center justify-between gap-4">
-          {title && (
-            <h2 className="text-[22px] font-black leading-tight tracking-[-0.04em] text-[#081225]">
-              {title}
-            </h2>
-          )}
-
-          {onClose && (
-            <TrocoButton
-              variant="plain"
-              onClick={onClose}
-              className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
-              aria-label="Fermer"
-            >
-              <X size={18} strokeWidth={2.4} />
-            </TrocoButton>
-          )}
-        </div>
-
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#D1D5DB]" />
+        {(title || onClose) && (
+          <div className="mb-4 flex items-center justify-between gap-4">
+            {title && <h2 className="text-[20px] font-extrabold tracking-[-0.03em] text-[#0d1b2a]">{title}</h2>}
+            {onClose && (
+              <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F0F0EE] text-[#4a5568]" aria-label="Fermer">
+                <X size={16} strokeWidth={2.4} />
+              </button>
+            )}
+          </div>
+        )}
         <div>{children}</div>
-
         {footer && <div className="mt-5">{footer}</div>}
-      </TrocoCard>
+      </section>
     </div>
   );
 }
 
-export function TrocoModal({
-  open,
-  title,
-  description,
-  children,
-  onClose,
-  footer,
-  className = "",
-}) {
+// ─────────────────────────────────────────────────────────────────────────────
+// TrocoModal — modale centrée
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function TrocoModal({ open, title, description, children, onClose, footer, className = "" }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/22 px-4 backdrop-blur-[2px]">
-      <button
-        type="button"
-        aria-label="Fermer"
-        className="absolute inset-0 cursor-default"
-        onClick={onClose}
-      />
-
-      <TrocoCard
-        as="section"
-        variant="plain"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+      <button type="button" aria-label="Fermer" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <section
         className={[
-          "relative z-10 w-full max-w-[420px] rounded-[32px] border border-white/80 bg-white/94 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.16)] backdrop-blur-2xl",
+          "relative z-10 w-full max-w-[400px] rounded-[24px] bg-white p-6 shadow-[0_16px_60px_rgba(15,23,42,0.16)]",
           className,
         ].filter(Boolean).join(" ")}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            {title && (
-              <h2 className="text-[24px] font-black leading-tight tracking-[-0.045em] text-[#081225]">
-                {title}
-              </h2>
-            )}
-
-            {description && (
-              <p className="mt-2 text-[14px] font-medium leading-relaxed text-slate-500">
-                {description}
-              </p>
-            )}
+            {title && <h2 className="text-[22px] font-extrabold tracking-[-0.04em] text-[#0d1b2a]">{title}</h2>}
+            {description && <p className="mt-1.5 text-[14px] font-medium leading-relaxed text-[#64748b]">{description}</p>}
           </div>
-
           {onClose && (
-            <TrocoButton
-              variant="plain"
-              onClick={onClose}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
-              aria-label="Fermer"
-            >
-              <X size={18} strokeWidth={2.4} />
-            </TrocoButton>
+            <button type="button" onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F0F0EE] text-[#4a5568]" aria-label="Fermer">
+              <X size={16} strokeWidth={2.4} />
+            </button>
           )}
         </div>
-
         {children && <div className="mt-5">{children}</div>}
-        {footer && <div className="mt-6">{footer}</div>}
-      </TrocoCard>
+        {footer && <div className="mt-5">{footer}</div>}
+      </section>
     </div>
   );
 }
 
-export const Card = TrocoCard;
+// Alias pour compatibilité
+export const Card   = TrocoCard;
 export const Button = TrocoButton;
-export const Badge = TrocoBadge;
+export const Badge  = TrocoBadge;

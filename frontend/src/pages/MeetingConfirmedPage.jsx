@@ -18,7 +18,6 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import { TrocoButton, TrocoCard, TrocoPill } from "../components/ui";
 
 function clean(value = "") {
@@ -222,19 +221,16 @@ export default function MeetingConfirmedPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white px-5 pb-32 pt-[max(16px,env(safe-area-inset-top))] text-[#081225]">
-        <TrocoCard className="mx-auto max-w-[520px] p-6 text-center text-sm font-bold text-slate-500">
+      <div className="troco-page-narrow">
+        <TrocoCard className="p-6 text-center text-sm font-bold text-slate-500">
           Chargement de la rencontre...
         </TrocoCard>
-
-        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_18%_8%,rgba(186,230,253,0.08),transparent_26%),radial-gradient(circle_at_82%_12%,rgba(187,247,208,0.07),transparent_28%),linear-gradient(180deg,#ffffff_0%,#fbfffd_48%,#ffffff_100%)] px-5 pb-32 pt-[max(16px,env(safe-area-inset-top))] text-[#081225]">
-      <main className="mx-auto max-w-[520px]">
+    <main className="troco-page-narrow">
         <header className="mb-6 flex h-12 items-center justify-between">
           <TrocoButton variant="plain"
             onClick={() => navigate(-1)}
@@ -319,7 +315,7 @@ export default function MeetingConfirmedPage() {
                       className="h-16 w-16 shrink-0 rounded-full object-cover"
                     />
                   ) : (
-                    <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2ECC8A] to-cyan-400 text-xl font-black text-white">
+                    <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-xl font-black text-white">
                       {getInitial(other.name)}
                     </span>
                   )}
@@ -389,9 +385,6 @@ export default function MeetingConfirmedPage() {
           <Navigation size={20} fill="currentColor" strokeWidth={2.2} />
           Ouvrir l’itinéraire
         </TrocoButton>
-      </main>
-
-      <BottomNav />
-    </div>
+    </main>
   );
 }

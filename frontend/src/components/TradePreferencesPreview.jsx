@@ -23,7 +23,7 @@ export default function TradePreferencesPreview({
       </h2>
 
       <div className="mt-5 overflow-hidden rounded-[26px] bg-white/80 shadow-[0_8px_24px_rgba(15,23,42,0.035)]">
-        <div className="aspect-[1.1/1] bg-slate-100">
+       <div className="aspect-[18/7] bg-slate-100">
           {imageUrls[0] ? (
             <img
               src={imageUrls[0]}

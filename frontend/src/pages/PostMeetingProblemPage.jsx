@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 
 import { db } from "../firebase";
-import BottomNav from "../components/BottomNav";
 
 const PROBLEMS = [
   "La personne n’est pas venue",
@@ -61,8 +60,7 @@ export default function PostMeetingProblemPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_18%_8%,rgba(186,230,253,0.10),transparent_26%),radial-gradient(circle_at_82%_12%,rgba(187,247,208,0.07),transparent_28%),linear-gradient(180deg,#ffffff_0%,#fbfffd_48%,#ffffff_100%)] pb-32 text-[#081225]">
-      <main className="mx-auto max-w-[520px] px-5 pt-[max(16px,env(safe-area-inset-top))]">
+    <main className="troco-page-narrow">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -136,9 +134,6 @@ export default function PostMeetingProblemPage() {
             Annuler le troc
           </button>
         </section>
-      </main>
-
-      <BottomNav />
-    </div>
+    </main>
   );
 }

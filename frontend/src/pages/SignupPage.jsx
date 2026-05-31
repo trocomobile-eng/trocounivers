@@ -9,30 +9,10 @@ function normalizePhone(value) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function getFirebaseAuthMessage(error) {
-  const code = error?.code || "";
-
-  if (code === "auth/email-already-in-use") {
-    return "Cet e-mail est déjà utilisé. Essaie de te connecter.";
-  }
-
-  if (code === "auth/invalid-email") {
-    return "L’e-mail n’est pas valide.";
-  }
-
-  if (code === "auth/weak-password") {
-    return "Le mot de passe est trop faible.";
-  }
-
-  if (code === "auth/network-request-failed") {
-    return "Problème de connexion internet.";
-  }
-
-  return "Impossible de créer le compte. Vérifie les informations.";
-}
-
 export default function SignupPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.redirectTo || "/onboarding";
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -72,42 +52,25 @@ export default function SignupPage() {
     try {
       const credential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
 
-      try {
-        await updateProfile(credential.user, {
-          displayName: cleanName,
-        });
-      } catch (profileError) {
-        console.warn("Profil Auth non mis à jour :", profileError);
-      }
+      await updateProfile(credential.user, {
+        displayName: cleanName,
+      });
 
-      try {
-        await setDoc(
-          doc(db, "users", credential.user.uid),
-          {
-            uid: credential.user.uid,
-            displayName: cleanName,
-            name: cleanName,
-            email: cleanEmail,
-            phone: cleanPhone,
-            phoneNumber: cleanPhone,
-            city: "Paris",
-            location: "Paris",
-            locationCity: "Paris",
-            onboardingCompleted: false,
-            profileCompleted: false,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
-      } catch (firestoreError) {
-        console.warn("Compte créé, mais profil Firestore non initialisé :", firestoreError);
-      }
+      await setDoc(doc(db, "users", credential.user.uid), {
+        uid: credential.user.uid,
+        displayName: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        phoneNumber: cleanPhone,
+        city: "Paris",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
 
-      navigate("/profile/edit", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       console.error("Erreur inscription :", error);
-      alert(getFirebaseAuthMessage(error));
+      alert("Impossible de créer le compte. Vérifie les informations.");
     } finally {
       setSaving(false);
     }

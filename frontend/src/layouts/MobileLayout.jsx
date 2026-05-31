@@ -9,15 +9,15 @@ export default function MobileLayout({
   return (
     <div
       className={[
-        "troco-app-bg min-h-screen overflow-x-hidden text-[#081225]",
-        withBottomNav ? "pb-[88px]" : "pb-8",
+        "min-h-screen bg-[var(--troco-bg)]",
+        withBottomNav ? "pb-[84px]" : "pb-6",
         className,
       ].join(" ")}
     >
       <main
         className={[
-          "mx-auto w-full max-w-[640px]",
-          "px-[14px] pt-[max(10px,env(safe-area-inset-top))]",
+          "mx-auto w-full max-w-[520px]",
+          "px-3 pt-[max(10px,env(safe-area-inset-top))]",
           contentClassName,
         ].join(" ")}
       >

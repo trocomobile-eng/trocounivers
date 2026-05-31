@@ -26,7 +26,6 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import MeetingValidationModal from "../components/MeetingValidationModal";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoCard, TrocoButton, TrocoPill } from "../components/UI";
@@ -1590,7 +1589,9 @@ export default function ExchangeDetailPage() {
       }
 
       setShowValidationModal(false);
-      await loadExchange();
+      navigate(`/exchanges/${exchange.id}/post-meeting`, {
+        state: { exchangeId: exchange.id, exchange },
+      });
     } catch (error) {
       console.error("Erreur confirmation troc :", error);
       alert("Impossible de confirmer le troc pour le moment.");
@@ -1613,55 +1614,44 @@ export default function ExchangeDetailPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen pb-28" style={{ background: "#0d0d0d" }}>
-        <div className="flex items-center justify-center pt-32 text-white/30 text-sm font-bold">
-          Chargement…
-        </div>
-        <BottomNav />
+      <div className="flex min-h-[60vh] items-center justify-center text-sm font-bold text-slate-400">
+        Chargement…
       </div>
     );
   }
 
   if (!exchange) {
     return (
-      <div className="min-h-screen pb-28" style={{ background: "#0d0d0d" }}>
-        <div className="px-4 pt-[max(14px,env(safe-area-inset-top))]">
-          <button type="button" onClick={() => navigate(-1)}
-            className="h-9 w-9 flex items-center justify-center rounded-full mb-6"
-            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <ArrowLeft size={16} className="text-white/70" />
+      <div className="troco-page-narrow">
+        <button type="button" onClick={() => navigate(-1)} className="mb-5 flex h-10 w-10 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]" aria-label="Retour">
+          <ArrowLeft size={18} strokeWidth={2.3} className="text-[#102033]" />
+        </button>
+        <div className="rounded-[24px] border border-[#E4ECE8] bg-white p-6 text-center">
+          <p className="font-extrabold text-[#102033]">Impossible de charger cet échange.</p>
+          <button type="button" onClick={() => navigate("/exchanges")} className="troco-primary-btn mt-4 rounded-full">
+            Retour aux trocs
           </button>
-          <div className="rounded-[18px] p-6 text-center" style={{ background: "#141414" }}>
-            <p className="text-white font-black">Impossible de charger cet échange.</p>
-            <button type="button" onClick={() => navigate("/exchanges")}
-              className="mt-4 px-5 py-2.5 rounded-full text-sm font-black text-white"
-              style={{ background: "#1a4d2e" }}>
-              Retour aux trocs
-            </button>
-          </div>
         </div>
-        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-32" style={{ background: "#0d0d0d" }}>
-      <main className="mx-auto max-w-[430px] px-4 pt-[max(14px,env(safe-area-inset-top))]">
+    <main className="mx-auto w-full max-w-[430px] px-4 pb-10 pt-[max(14px,env(safe-area-inset-top))] lg:max-w-3xl lg:px-8 lg:pt-8">
         <header className="mb-5 flex items-center gap-3">
           <button type="button"
             onClick={() => navigate(-1)}
-            className="h-9 w-9 flex items-center justify-center rounded-full shrink-0"
-            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]"
             aria-label="Retour"
           >
-            <ArrowLeft size={16} className="text-white/70" />
+            <ArrowLeft size={18} strokeWidth={2.3} className="text-[#102033]" />
           </button>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "#5dcaa5" }}>
+            <p className="text-[11px] font-bold uppercase tracking-widest" className="troco-caption">
               {isReceiver ? "Demande reçue" : isSender ? "Demande envoyée" : "Échange"}
             </p>
-            <h1 className="text-white font-black leading-tight" style={{ fontSize: 19, letterSpacing: "-0.03em" }}>
+            <h1 className="text-[19px] font-extrabold leading-tight tracking-[-0.03em] text-[#102033]">
               Détail du troc
             </h1>
           </div>
@@ -1696,7 +1686,7 @@ export default function ExchangeDetailPage() {
               <TrocoButton variant="plain"
                 onClick={declineProposal}
                 disabled={saving}
-                className="flex h-12 items-center justify-center gap-2 rounded-[16px] text-sm font-black disabled:opacity-50" style={{ background: "rgba(224,90,90,0.12)", color: "#e05a5a", border: "1px solid rgba(224,90,90,0.2)" }}
+                className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-rose-200 bg-rose-50 text-sm font-black text-rose-600 disabled:opacity-50"
               >
                 <XCircle size={18} />
                 Refuser
@@ -1705,7 +1695,7 @@ export default function ExchangeDetailPage() {
               <TrocoButton variant="plain"
                 onClick={acceptProposal}
                 disabled={saving}
-                className="flex h-12 items-center justify-center gap-2 rounded-[16px] text-sm font-black text-white disabled:opacity-50" style={{ background: "#1a4d2e" }}
+                className="troco-primary-btn flex h-12 items-center justify-center gap-2 rounded-[16px] disabled:opacity-50"
               >
                 <CheckCircle2 size={18} />
                 Accepter
@@ -1714,23 +1704,23 @@ export default function ExchangeDetailPage() {
           )}
 
           {stage === "pending" && isSender && (
-            <section className="rounded-[18px] p-5" style={{ background: "rgba(55,138,221,0.08)", border: "1px solid rgba(55,138,221,0.15)" }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "#85b7eb" }}>
+            <section className="rounded-[20px] border border-sky-100 bg-sky-50/60 p-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-600">
                 Demande envoyée
               </p>
 
-              <h2 className="mt-2 font-black" style={{ fontSize: 20, letterSpacing: "-0.03em", color: "#fff" }}>
+              <h2 className="mt-2 text-[20px] font-extrabold tracking-[-0.03em] text-[#102033]">
                 En attente de réponse
               </h2>
 
-              <p className="mt-2 text-sm font-medium leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">
                 Vous avez envoyé cette proposition. Seule l’autre personne peut l’accepter, la refuser ou demander un objet en plus.
               </p>
 
               <TrocoButton variant="plain"
                 onClick={cancelOwnProposal}
                 disabled={saving}
-                className="mt-4 h-12 w-full rounded-full text-sm font-black disabled:opacity-50" style={{ background: "rgba(224,90,90,0.1)", color: "#e05a5a", border: "1px solid rgba(224,90,90,0.2)" }}
+                className="mt-4 h-12 w-full rounded-full border border-rose-200 bg-rose-50 text-sm font-black text-rose-600 disabled:opacity-50"
               >
                 Annuler ma demande
               </TrocoButton>
@@ -1740,29 +1730,29 @@ export default function ExchangeDetailPage() {
           {stage === "pending" && isReceiver && !isSender && !showExtraPicker && !isOpenExtraRequest && (
             <TrocoButton variant="plain"
               onClick={() => setShowExtraPicker(true)}
-              className="w-full rounded-[16px] px-5 py-4 text-sm font-black" style={{ background: "rgba(239,159,39,0.1)", color: "#fac775", border: "1px solid rgba(239,159,39,0.2)" }}
+              className="w-full rounded-[16px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-black text-amber-700"
             >
               {senderOtherItems.length > 0 ? "Demander un objet en plus" : "Demander un autre objet"}
             </TrocoButton>
           )}
 
           {isSender && isOpenExtraRequest && !showAddExtraPicker && (
-            <section className="rounded-[18px] p-5" style={{ background: "rgba(239,159,39,0.08)", border: "1px solid rgba(239,159,39,0.15)" }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "#fac775" }}>
+            <section className="rounded-[20px] border border-amber-200 bg-amber-50/60 p-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">
                 Objet en plus demandé
               </p>
 
-              <h2 className="mt-2 font-black" style={{ fontSize: 19, letterSpacing: "-0.03em", color: "#fff" }}>
+              <h2 className="mt-2 text-[19px] font-extrabold tracking-[-0.03em] text-[#102033]">
                 L’autre personne vous demande un objet en plus.
               </h2>
 
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
                 Avez-vous quelque chose à rajouter ?
               </p>
 
               <TrocoButton variant="plain"
                 onClick={() => setShowAddExtraPicker(true)}
-                className="mt-4 h-12 w-full rounded-full text-sm font-black text-white" style={{ background: "#1a4d2e" }}
+                className="troco-primary-btn mt-4 h-12 w-full rounded-full"
               >
                 Ajouter un objet
               </TrocoButton>
@@ -1808,14 +1798,12 @@ export default function ExchangeDetailPage() {
           {stage === "start_time" && (
             <TrocoButton variant="plain"
               onClick={goToAvailability}
-              className="flex h-14 w-full items-center justify-center rounded-full text-[15px] font-black text-white" style={{ background: "#1a4d2e" }}
+              className="troco-primary-btn flex h-14 w-full items-center justify-center rounded-full text-[15px]"
             >
               Valider mes disponibilités
             </TrocoButton>
           )}
         </div>
-      </main>
-
       <MeetingValidationModal
         open={showValidationModal}
         saving={saving}
@@ -1823,8 +1811,6 @@ export default function ExchangeDetailPage() {
         onConfirm={markTradeAsCompleted}
         onProblem={reportMeetingProblem}
       />
-
-      <BottomNav />
-    </div>
+    </main>
   );
 }

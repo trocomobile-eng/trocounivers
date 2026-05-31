@@ -1,174 +1,77 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bell, CalendarDays, CheckCircle2, MapPin, MessageCircle, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import { TrocoCard } from "./UI";
 
-function clean(value = "") {
-  return String(value || "").trim();
+function clean(v = "") { return String(v || "").trim(); }
+function shortName(v = "") {
+  const c = clean(v);
+  if (!c) return "quelqu'un";
+  if (c.includes("@")) return c.split("@")[0];
+  const p = c.split(/\s+/);
+  return p.length <= 1 ? c : `${p[0]} ${p[1].charAt(0)}.`;
+}
+function getOtherName(ex, uid) {
+  if (!ex || !uid) return "l'autre personne";
+  return ex.senderId === uid
+    ? ex.receiverName || ex.receiverDisplayName || ex.receiverEmail || "l'autre personne"
+    : ex.senderName  || ex.senderDisplayName  || ex.senderEmail  || "l'autre personne";
+}
+function getExchangeTitle(ex) {
+  return ex?.requestedItemTitle || ex?.itemTitle || ex?.offeredItemTitle || "Troc en cours";
 }
 
-function shortName(value = "") {
-  const cleaned = clean(value);
-  if (!cleaned) return "quelqu’un";
-  if (cleaned.includes("@")) return cleaned.split("@")[0];
+function getPreciseNotification(ex, uid) {
+  const name  = shortName(getOtherName(ex, uid));
+  const title = getExchangeTitle(ex);
 
-  const parts = cleaned.split(/\s+/);
-  if (parts.length <= 1) return cleaned;
+  if (ex?.availabilityOptions?.length > 0 && ex?.availabilityProposedBy !== uid && !ex?.selectedAvailability)
+    return { icon: CalendarDays, title: `${name} propose des horaires`, text: title, to: `/availability/${ex.id}` };
 
-  return `${parts[0]} ${parts[1].charAt(0)}.`;
-}
+  if (ex?.placeOptions?.length > 0 && ex?.placeProposedBy !== uid && !ex?.selectedPlace)
+    return { icon: MapPin, title: `${name} propose un lieu`, text: title, to: "/choose-place", state: { exchangeId: ex.id, exchange: ex } };
 
-function getOtherName(exchange, userId) {
-  if (!exchange || !userId) return "l’autre personne";
+  if (ex?.status === "chat_open" || ex?.chatOpened)
+    return { icon: MessageCircle, title: "Message à finaliser", text: title, to: `/exchanges/${ex.id}/chat` };
 
-  if (exchange.senderId === userId) {
-    return (
-      exchange.receiverName ||
-      exchange.receiverDisplayName ||
-      exchange.receiverEmail ||
-      "l’autre personne"
-    );
-  }
+  if (ex?.status === "meeting_confirmed" || ex?.meetingConfirmed)
+    return { icon: CheckCircle2, title: "Rencontre confirmée ✓", text: title, to: `/exchanges/${ex.id}` };
 
-  return (
-    exchange.senderName ||
-    exchange.senderDisplayName ||
-    exchange.senderEmail ||
-    "l’autre personne"
-  );
-}
+  if (ex?.status === "accepted")
+    return { icon: CheckCircle2, title: `${name} a accepté ton troc !`, text: title, to: `/exchanges/${ex.id}` };
 
-function getExchangeTitle(exchange) {
-  return (
-    exchange?.requestedItemTitle ||
-    exchange?.itemTitle ||
-    exchange?.targetItemTitle ||
-    exchange?.offeredItemTitle ||
-    exchange?.proposedItemTitle ||
-    exchange?.title ||
-    "Troc en cours"
-  );
-}
-
-function getPreciseNotification(exchange, userId) {
-  const otherName = shortName(getOtherName(exchange, userId));
-  const title = getExchangeTitle(exchange);
-
-  if (
-    exchange?.availabilityOptions?.length > 0 &&
-    exchange?.availabilityProposedBy !== userId &&
-    !exchange?.selectedAvailability
-  ) {
-    return {
-      icon: CalendarDays,
-      tone: "cyan",
-      title: `${otherName} propose des horaires`,
-      text: `Réponds pour organiser : ${title}`,
-      to: `/availability/${exchange.id}`,
-    };
-  }
-
-  if (
-    exchange?.placeOptions?.length > 0 &&
-    exchange?.placeProposedBy !== userId &&
-    !exchange?.selectedPlace
-  ) {
-    return {
-      icon: MapPin,
-      tone: "emerald",
-      title: `${otherName} propose un lieu`,
-      text: `Valide ou propose une alternative : ${title}`,
-      to: "/choose-place",
-      state: { exchangeId: exchange.id, exchange },
-    };
-  }
-
-  if (exchange?.status === "chat_open" || exchange?.chatOpened || exchange?.chatOpen) {
-    return {
-      icon: MessageCircle,
-      tone: "sky",
-      title: "Message à finaliser",
-      text: `Continue la discussion pour : ${title}`,
-      to: `/exchanges/${exchange.id}/chat`,
-    };
-  }
-
-  if (
-    exchange?.status === "meeting_confirmed" ||
-    exchange?.meetingConfirmed ||
-    (exchange?.selectedAvailability && exchange?.selectedPlace)
-  ) {
-    return {
-      icon: CheckCircle2,
-      tone: "emerald",
-      title: "Rencontre confirmée",
-      text: `${title} est prêt à être organisé.`,
-      to: `/exchanges/${exchange.id}/meeting`,
-    };
-  }
+  if (ex?.status === "pending" && ex?.receiverId === uid)
+    return { icon: MessageCircle, title: `${name} te propose un troc`, text: title, to: `/exchanges/${ex.id}` };
 
   return null;
 }
 
-function getNeedsAttention(exchange, userId) {
-  if (!exchange || !userId) return false;
-
-  if (
-    exchange?.needsAttentionFor === userId ||
-    (Array.isArray(exchange?.needsAttentionFor) && exchange.needsAttentionFor.includes(userId))
-  ) {
-    return true;
-  }
-
-  if (
-    exchange?.availabilityOptions?.length > 0 &&
-    exchange?.availabilityProposedBy !== userId &&
-    !exchange?.selectedAvailability
-  ) {
-    return true;
-  }
-
-  if (
-    exchange?.placeOptions?.length > 0 &&
-    exchange?.placeProposedBy !== userId &&
-    !exchange?.selectedPlace
-  ) {
-    return true;
-  }
-
+function getNeedsAttention(ex, uid) {
+  if (!ex || !uid) return false;
+  if (ex?.needsAttentionFor === uid) return true;
+  if (Array.isArray(ex?.needsAttentionFor) && ex.needsAttentionFor.includes(uid)) return true;
+  if (ex?.availabilityOptions?.length > 0 && ex?.availabilityProposedBy !== uid && !ex?.selectedAvailability) return true;
+  if (ex?.placeOptions?.length > 0 && ex?.placeProposedBy !== uid && !ex?.selectedPlace) return true;
   return false;
 }
 
 function NotificationRow({ item, onNavigate }) {
   const Icon = item.icon;
-
   return (
     <button
       type="button"
       onClick={onNavigate}
-      className="flex w-full items-start gap-3 rounded-[20px] bg-white/68 p-3 text-left transition hover:bg-white/90 active:scale-[0.99]"
+      className="flex w-full items-start gap-3 rounded-[16px] bg-[#F5F5F3] p-3 text-left transition hover:bg-[#F0FAF7] active:scale-[0.99]"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[#0f9f9a]">
-        <Icon size={18} strokeWidth={2.2} />
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F0FAF7] text-[#1ABEA3]">
+        <Icon size={17} strokeWidth={2.2} />
       </span>
-
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-black leading-tight text-[#081225]">
-          {item.title}
-        </span>
-
-        <span className="mt-1 line-clamp-2 block text-[12.5px] font-medium leading-relaxed text-slate-500">
-          {item.text}
-        </span>
+        <span className="block text-[13px] font-extrabold leading-tight text-[#0d1b2a]">{item.title}</span>
+        <span className="mt-0.5 line-clamp-1 block text-[12px] font-medium text-slate-500">{item.text}</span>
       </span>
     </button>
   );
@@ -176,123 +79,86 @@ function NotificationRow({ item, onNavigate }) {
 
 export default function NotificationButton({ className = "" }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]         = useState(false);
   const [exchanges, setExchanges] = useState([]);
 
+  // ── Temps réel avec onSnapshot ──────────────────────────────────────────
   useEffect(() => {
-    if (!user?.uid) {
-      setExchanges([]);
-      return undefined;
-    }
+    if (!user?.uid) { setExchanges([]); return; }
 
-    let mounted = true;
+    const q = query(
+      collection(db, "exchanges"),
+      where("participants", "array-contains", user.uid)
+    );
 
-    async function load() {
-      try {
-        const q = query(
-          collection(db, "exchanges"),
-          where("participants", "array-contains", user.uid)
-        );
+    const unsub = onSnapshot(q, (snap) => {
+      setExchanges(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    }, (err) => {
+      console.error("Erreur notifications :", err);
+    });
 
-        const snapshot = await getDocs(q);
-
-        if (!mounted) return;
-
-        setExchanges(
-          snapshot.docs.map((document) => ({
-            id: document.id,
-            ...document.data(),
-          }))
-        );
-      } catch (error) {
-        console.error("Erreur notifications :", error);
-        if (mounted) setExchanges([]);
-      }
-    }
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
+    return () => unsub();
   }, [user?.uid]);
 
   const notifications = useMemo(() => {
     return exchanges
-      .filter((exchange) => getNeedsAttention(exchange, user?.uid))
-      .map((exchange) => getPreciseNotification(exchange, user?.uid))
+      .filter((ex) => getNeedsAttention(ex, user?.uid))
+      .map((ex)   => getPreciseNotification(ex, user?.uid))
       .filter(Boolean)
       .slice(0, 6);
   }, [exchanges, user?.uid]);
 
   const count = notifications.length;
 
-  function goToNotification(item) {
+  function goTo(item) {
     setOpen(false);
-
-    if (item.state) {
-      navigate(item.to, { state: item.state });
-      return;
-    }
-
-    navigate(item.to);
+    item.state ? navigate(item.to, { state: item.state }) : navigate(item.to);
   }
 
   return (
     <div className={["relative", className].join(" ")}>
+      {/* Bouton cloche */}
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/75 bg-white/66 text-[#24746f] shadow-[0_8px_20px_rgba(20,184,166,0.055)] backdrop-blur-md transition active:scale-95"
+        onClick={() => setOpen((v) => !v)}
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[#E4ECE8] bg-white text-[#0d1b2a] shadow-[0_2px_8px_rgba(15,23,42,0.07)] transition active:scale-95"
         aria-label="Notifications"
       >
-        <Bell size={18} strokeWidth={2.05} />
-
+        <Bell size={17} strokeWidth={2.1} />
         {count > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black leading-none text-white">
-            {count}
+          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#1ABEA3] px-1 text-[10px] font-black text-white shadow-[0_2px_6px_rgba(26,190,163,0.4)]">
+            {count > 9 ? "9+" : count}
           </span>
         )}
       </button>
 
+      {/* Panneau */}
       {open && (
-        <div className="fixed inset-x-4 top-[72px] z-50 mx-auto max-w-[520px]">
-          <TrocoCard
-            variant="plain"
-            className="rounded-[30px] border border-white/80 bg-white/88 p-3 shadow-[0_22px_60px_rgba(15,23,42,0.12)] backdrop-blur-2xl"
-          >
-            <div className="flex items-center justify-between px-2 py-2">
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-12 z-50 w-[320px] rounded-[20px] border border-[#E4ECE8] bg-white p-3 shadow-[0_8px_32px_rgba(15,23,42,0.12)]">
+            <div className="mb-3 flex items-center justify-between px-1">
               <div>
-                <p className="text-[15px] font-black text-[#081225]">Notifications</p>
-                <p className="mt-0.5 text-[12px] font-medium text-slate-500">
-                  {count > 0 ? "Actions liées à tes trocs" : "Rien à traiter pour l’instant"}
+                <p className="text-[14px] font-extrabold text-[#0d1b2a]">Notifications</p>
+                <p className="text-[11px] font-medium text-slate-400">
+                  {count > 0 ? `${count} action${count > 1 ? "s" : ""} en attente` : "Tout est à jour"}
                 </p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500"
-                aria-label="Fermer"
-              >
-                <X size={17} />
+              <button type="button" onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F3] text-slate-500">
+                <X size={15} />
               </button>
             </div>
 
-            <div className="mt-2 space-y-2">
+            <div className="space-y-1.5">
               {count === 0 ? (
-                <div className="rounded-[22px] bg-emerald-50/70 p-4 text-[13px] font-semibold leading-relaxed text-[#0f766e]">
-                  Tout est calme. Tes prochaines réponses apparaîtront ici.
+                <div className="rounded-[14px] bg-[#F0FAF7] p-4 text-[13px] font-medium text-[#0f9f9a]">
+                  Aucune action en attente. Tes prochains trocs apparaîtront ici.
                 </div>
               ) : (
-                notifications.map((item, index) => (
-                  <NotificationRow
-                    key={`${item.title}-${index}`}
-                    item={item}
-                    onNavigate={() => goToNotification(item)}
-                  />
+                notifications.map((item, i) => (
+                  <NotificationRow key={i} item={item} onNavigate={() => goTo(item)} />
                 ))
               )}
             </div>
@@ -300,12 +166,12 @@ export default function NotificationButton({ className = "" }) {
             <Link
               to="/exchanges"
               onClick={() => setOpen(false)}
-              className="mt-3 flex h-11 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#22c7e8] to-[#35d18f] text-[13px] font-black text-white shadow-[0_8px_18px_rgba(20,184,166,0.14)]"
+              className="troco-primary-btn mt-3 flex h-10 w-full items-center justify-center rounded-full text-[13px]"
             >
               Voir tous les trocs
             </Link>
-          </TrocoCard>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

@@ -9,7 +9,6 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import PlaceCard from "../components/PlaceCard";
 import { MOCK_PLACES, MIDDLE_POINTS, OTHER_PLACE } from "../data/mockPlaces";
 
@@ -283,52 +282,34 @@ export default function ChoosePlacePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="troco-flow-page min-h-screen bg-[#fbfffd] pb-32">
-        <main className="mx-auto max-w-[520px] px-5 pt-8">
-          <div className="rounded-[28px] bg-white p-7 text-center text-sm font-bold text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-            Chargement...
-          </div>
-        </main>
-        <BottomNav />
+      <div className="troco-page-narrow">
+        <div className="rounded-[28px] border border-[#E4ECE8] bg-white p-7 text-center text-sm font-bold text-slate-500">
+          Chargement...
+        </div>
       </div>
     );
   }
 
   if (!exchange) {
     return (
-      <div className="troco-flow-page min-h-screen bg-[#fbfffd] pb-32">
-        <main className="mx-auto max-w-[520px] px-5 pt-8">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_8px_22px_rgba(15,23,42,0.04)]"
-            aria-label="Retour"
-          >
-            ‹
+      <div className="troco-page-narrow">
+        <button type="button" onClick={() => navigate(-1)} className="mb-5 flex h-11 w-11 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]" aria-label="Retour">
+          <span className="text-lg text-[#102033]">‹</span>
+        </button>
+        <div className="rounded-[28px] border border-[#E4ECE8] bg-white p-7 text-center">
+          <p className="text-lg font-extrabold text-[#102033]">Échange introuvable.</p>
+          <button type="button" onClick={() => navigate("/exchanges")} className="troco-primary-btn mt-5 rounded-full">
+            Retour aux trocs
           </button>
-
-          <div className="rounded-[28px] bg-white p-7 text-center shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-            <p className="text-lg font-black text-slate-950">
-              Échange introuvable.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => navigate("/exchanges")}
-              className="mt-5 rounded-full bg-[#18B89D] px-5 py-3 text-sm font-black text-white"
-            >
-              Retour aux trocs
-            </button>
-          </div>
-        </main>
-        <BottomNav />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="troco-flow-page min-h-screen bg-[radial-gradient(circle_at_18%_10%,rgba(125,211,252,0.16),transparent_30%),radial-gradient(circle_at_82%_18%,rgba(134,239,172,0.13),transparent_34%),linear-gradient(180deg,#fffdf7_0%,#f6fbf4_58%,#ffffff_100%)] px-5 pb-32 pt-5">
-      <main className="mx-auto max-w-[520px]">
+    <>
+      {/* ── Mobile ── */}
+      <main className="mx-auto w-full max-w-[520px] px-5 pb-10 pt-[max(14px,env(safe-area-inset-top))] lg:max-w-3xl">
         <header className="mb-6 flex items-center justify-between">
           <button
             type="button"
@@ -346,8 +327,8 @@ export default function ChoosePlacePage() {
         </header>
 
         {isPlaceProposer ? (
-          <section className="rounded-[34px] border border-[#E4EFEA] bg-white/86 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.045)]">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#08755C]">
+          <section className="rounded-[34px] border border-[#E4ECE8] bg-white/86 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.045)]">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
               Lieu envoyé
             </p>
 
@@ -360,7 +341,7 @@ export default function ChoosePlacePage() {
             </p>
 
             <div className="mt-5 rounded-[24px] bg-white/82 p-4">
-              <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#08755C]">
+              <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#0f9f9a]">
                 Lieu de rencontre
               </p>
               <p className="mt-1 text-sm font-bold text-slate-700">
@@ -371,15 +352,15 @@ export default function ChoosePlacePage() {
             <button
               type="button"
               onClick={() => navigate(`/exchanges/${currentExchangeId}`)}
-              className="mt-5 flex h-[50px] w-full items-center justify-center rounded-[20px] border border-[#E4EFEA] bg-white/88 text-[14px] font-black text-[#08755C]"
+              className="mt-5 flex h-[50px] w-full items-center justify-center rounded-[20px] border border-[#E4ECE8] bg-white/88 text-[14px] font-black text-[#0f9f9a]"
             >
               Retour à l'échange
             </button>
           </section>
         ) : userMustRespond ? (
           <>
-            <section className="rounded-[34px] border border-[#E4EFEA] bg-white/90 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.045)] backdrop-blur-sm">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#08755C]">
+            <section className="rounded-[34px] border border-[#E4ECE8] bg-white/90 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.045)] backdrop-blur-sm">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
                 Lieu de rencontre
               </p>
 
@@ -399,7 +380,7 @@ export default function ChoosePlacePage() {
                   type="button"
                   onClick={() => acceptPlace(place)}
                   disabled={saving}
-                  className="w-full rounded-[28px] border border-[#E4EFEA] bg-white/94 p-4 text-left shadow-[0_10px_26px_rgba(15,23,42,0.04)] disabled:opacity-50"
+                  className="w-full rounded-[28px] border border-[#E4ECE8] bg-white/94 p-4 text-left shadow-[0_10px_26px_rgba(15,23,42,0.04)] disabled:opacity-50"
                 >
                   <p className="text-[17px] font-black text-slate-950">
                     {place.title || place.name || "Lieu de rencontre"}
@@ -407,7 +388,7 @@ export default function ChoosePlacePage() {
                   <p className="mt-1 text-sm font-semibold text-slate-500">
                     {place.address || "Adresse à confirmer"}
                   </p>
-                  <p className="mt-3 text-sm font-black text-[#08755C]">
+                  <p className="mt-3 text-sm font-black text-[#0f9f9a]">
                     Accepter ce lieu
                   </p>
                 </button>
@@ -415,8 +396,8 @@ export default function ChoosePlacePage() {
             </div>
 
             {canStillCounterPlace ? (
-              <section className="mt-7 rounded-[28px] border border-[#E4EFEA] bg-white/86 p-4">
-                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#08755C]">
+              <section className="mt-7 rounded-[28px] border border-[#E4ECE8] bg-white/86 p-4">
+                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#0f9f9a]">
                   Proposer une alternative
                 </p>
 
@@ -426,7 +407,7 @@ export default function ChoosePlacePage() {
               </section>
             ) : (
               <section className="mt-7 rounded-[28px] border border-sky-100 bg-sky-50/70 p-4">
-                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#08755C]">
+                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#0f9f9a]">
                   Dernière réponse
                 </p>
 
@@ -438,7 +419,7 @@ export default function ChoosePlacePage() {
                   type="button"
                   onClick={openChatAfterPlaceLimit}
                   disabled={saving}
-                  className="mt-4 h-[50px] w-full rounded-[18px] bg-[#124d32] text-sm font-black text-white disabled:opacity-40"
+                  className="mt-4 h-[50px] w-full rounded-[18px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-sm font-black text-white disabled:opacity-40"
                 >
                   Continuer par message
                 </button>
@@ -446,8 +427,8 @@ export default function ChoosePlacePage() {
             )}
           </>
         ) : (
-          <section className="rounded-[34px] border border-[#E4EFEA] bg-white/90 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.045)] backdrop-blur-sm">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#08755C]">
+          <section className="rounded-[34px] border border-[#E4ECE8] bg-white/90 p-5 shadow-[0_14px_38px_rgba(15,23,42,0.045)] backdrop-blur-sm">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
               Lieu
             </p>
 
@@ -479,7 +460,7 @@ export default function ChoosePlacePage() {
               type="button"
               onClick={openChatAfterPlaceLimit}
               disabled={saving}
-              className="mt-5 h-[52px] w-full rounded-[20px] bg-[#124d32] px-5 py-4 text-sm font-black text-white disabled:opacity-40"
+              className="mt-5 h-[52px] w-full rounded-[20px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-5 py-4 text-sm font-black text-white disabled:opacity-40"
             >
               Ouvrir la messagerie
             </button>
@@ -496,7 +477,7 @@ export default function ChoosePlacePage() {
 
                 <button
                   type="button"
-                  className="text-[12px] font-black text-[#08755C]"
+                  className="text-[12px] font-black text-[#0f9f9a]"
                 >
                   Voir tous
                 </button>
@@ -546,8 +527,8 @@ export default function ChoosePlacePage() {
             </section>
 
             {selectedPlace && (
-              <div className="mt-6 rounded-[24px] border border-[#E4EFEA] bg-white/88 p-4">
-                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#08755C]">
+              <div className="mt-6 rounded-[24px] border border-[#E4ECE8] bg-white/88 p-4">
+                <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#0f9f9a]">
                   Lieu sélectionné
                 </p>
 
@@ -561,7 +542,7 @@ export default function ChoosePlacePage() {
               type="button"
               disabled={!selectedPlace || saving}
               onClick={() => proposePlace(selectedPlace)}
-              className="mt-7 h-14 w-full rounded-[22px] bg-[#124d32] text-[15px] font-black text-white shadow-[0_18px_38px_rgba(18,77,50,0.18)] transition active:scale-[0.985] disabled:opacity-40"
+              className="mt-7 h-14 w-full rounded-[22px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-[15px] font-black text-white shadow-[0_18px_38px_rgba(18,77,50,0.18)] transition active:scale-[0.985] disabled:opacity-40"
             >
               {userMustRespond ? "Proposer ce lieu à la place" : placeCounterCount > 0 ? "Envoyer cette alternative" : "Envoyer ce lieu"}
             </button>
@@ -577,7 +558,7 @@ export default function ChoosePlacePage() {
             <button
               type="button"
               onClick={() => navigate(`/exchanges/${exchange.id}/meeting`)}
-              className="mt-5 rounded-full bg-[#18B89D] px-5 py-3 text-sm font-black text-white"
+              className="mt-5 rounded-full bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-5 py-3 text-sm font-black text-white"
             >
               Voir la rencontre confirmée
             </button>
@@ -585,7 +566,7 @@ export default function ChoosePlacePage() {
         )}
       </main>
 
-      <BottomNav />
-    </div>
+      {/* ── Desktop ── */}
+    </>
   );
 }
