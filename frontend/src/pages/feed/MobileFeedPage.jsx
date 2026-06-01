@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { SkeletonGrid } from "../../components/SkeletonCard";
-import { Heart, Map, Navigation, Search, SlidersHorizontal } from "lucide-react";
+import { Heart, Map, Navigation, Search, SlidersHorizontal, Zap } from "lucide-react";
 import TrocoMap from "../../components/TrocoMap";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -161,6 +161,13 @@ function MobileItemCard({ item, favorite, onToggleFavorite }) {
         >
           <Heart size={15} fill={favorite ? "currentColor" : "none"} strokeWidth={2.1} />
         </button>
+
+        {item.isMatch && (
+          <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-[#1ABEA3] px-2 py-0.5 text-[10px] font-black text-white shadow-sm">
+            <Zap size={9} strokeWidth={2.5} fill="currentColor" />
+            Match
+          </span>
+        )}
       </div>
 
       <div className="p-3">

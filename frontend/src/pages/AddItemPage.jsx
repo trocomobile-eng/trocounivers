@@ -32,6 +32,7 @@ import {
   buildCleanItemFromSuggestion,
   getItemSuggestions,
 } from "../utils/itemSuggestions";
+import { AIVerificationBox } from "../components/AIVerification";
 
 const CONDITION_OPTIONS = [
   "Comme neuf",
@@ -150,6 +151,7 @@ export default function AddItemPage() {
   });
   const [saving, setSaving] = useState(false);
   const [useMyLocation, setUseMyLocation] = useState(true);
+  const [aiVerification, setAiVerification] = useState(null);
 
   const suggestions = useMemo(() => getItemSuggestions(rawTitle), [rawTitle]);
 
@@ -280,6 +282,7 @@ export default function AddItemPage() {
         ownerName: user.displayName || user.email || "Utilisateur Troco",
         ownerPhotoURL: user.photoURL || "",
         status: "available",
+        aiVerification: aiVerification || null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -420,6 +423,18 @@ export default function AddItemPage() {
               </div>
             )}
           </SectionCard>
+
+          {/* Section de vérification IA */}
+          {photos.length > 0 && category && (
+            <SectionCard>
+              <AIVerificationBox
+                imageFile={photos[0]?.file}
+                category={category.toLowerCase()}
+                type={title.toLowerCase()}
+                onVerificationComplete={setAiVerification}
+              />
+            </SectionCard>
+          )}
 
           <SectionCard>
             <div className="flex items-center gap-3">

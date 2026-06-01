@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   arrayRemove,
   arrayUnion,
@@ -9,6 +9,7 @@ import {
   query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -174,6 +175,7 @@ export default function useFeedItems() {
   const { user } = useAuth();
 
   const [items, setItems] = useState([]);
+  const [myItems, setMyItems] = useState([]);
   const [favoriteItemIds, setFavoriteItemIds] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -200,6 +202,18 @@ export default function useFeedItems() {
     return () => unsub();
   }, [user?.uid]);
 
+  // Écoute mes propres items (pour le matching)
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(collection(db, "items"), where("ownerId", "==", user.uid));
+    const unsub = onSnapshot(
+      q,
+      (snap) => setMyItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => console.error("Erreur mes items :", err)
+    );
+    return () => unsub();
+  }, [user?.uid]);
+
   // Écoute collection items
   useEffect(() => {
     const q = query(collection(db, "items"), orderBy("createdAt", "desc"));
@@ -210,6 +224,15 @@ export default function useFeedItems() {
     );
     return () => unsub();
   }, []);
+
+  const myCategories = useMemo(
+    () => {
+      const cats = new Set(myItems.map((i) => normalize(i.category || "")).filter(Boolean));
+      console.log("[Match] mes items:", myItems.length, "| mes catégories:", [...cats]);
+      return cats;
+    },
+    [myItems]
+  );
 
   // Items visibles filtrés + enrichis
   const visibleItems = useMemo(() => {
@@ -227,11 +250,24 @@ export default function useFeedItems() {
         if (a.distanceMeters === null) return 1;
         if (b.distanceMeters === null) return -1;
         return a.distanceMeters - b.distanceMeters;
+      })
+      .map((item) => {
+        const prefs = item.tradePreferences;
+        let isMatch = false;
+        if (prefs && myCategories.size > 0) {
+          const wantedCats = Array.isArray(prefs.categories) ? prefs.categories : [];
+          if (wantedCats.length === 0 && prefs.openToSurprises) {
+            isMatch = true;
+          } else {
+            isMatch = wantedCats.some((cat) => myCategories.has(normalize(cat)));
+          }
+        }
+        return { ...item, isMatch };
       });
-  }, [items, user?.uid, activeCategory, search, userLocation, radius]);
+  }, [items, user?.uid, activeCategory, search, userLocation, radius, myCategories]);
 
   // Toggle favori avec optimistic update
-  async function toggleFavorite(itemId) {
+  const toggleFavorite = useCallback(async (itemId) => {
     if (!user?.uid) {
       alert("Connecte-toi pour ajouter un favori.");
       return;
@@ -255,10 +291,10 @@ export default function useFeedItems() {
         alert("Impossible de modifier les favoris.");
       }
     }
-  }
+  }, [user?.uid, favoriteItemIds]);
 
   // Demande de géolocalisation
-  async function requestLocation() {
+  const requestLocation = useCallback(async () => {
     if (!user?.uid) {
       alert("Vous devez être connecté pour activer la localisation.");
       return;
@@ -291,7 +327,7 @@ export default function useFeedItems() {
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
     );
-  }
+  }, [user?.uid]);
 
   return {
     // données

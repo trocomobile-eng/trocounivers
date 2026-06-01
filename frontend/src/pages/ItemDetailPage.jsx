@@ -15,6 +15,7 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
+import { AIVerificationStatus } from "../components/AIVerification";
 
 import {
   formatLocation,
@@ -396,6 +397,13 @@ export default function ItemDetailPage() {
               </span>
             )}
           </div>
+
+          {/* Affichage de la vérification IA */}
+          {item?.aiVerification && (
+            <div className="mt-4">
+              <AIVerificationStatus verificationData={item.aiVerification} />
+            </div>
+          )}
 
           <p className="mt-5 flex items-center gap-3 text-[17px] font-semibold text-slate-500">
             <MapPin size={21} className="text-[#1ABEA3]" strokeWidth={2.25} />

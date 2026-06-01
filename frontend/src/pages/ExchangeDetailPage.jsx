@@ -1642,13 +1642,12 @@ export default function ExchangeDetailPage() {
           <button type="button"
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]"
             aria-label="Retour"
           >
             <ArrowLeft size={18} strokeWidth={2.3} className="text-[#102033]" />
           </button>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest" className="troco-caption">
+            <p className="troco-caption text-[11px] font-bold uppercase tracking-widest">
               {isReceiver ? "Demande reçue" : isSender ? "Demande envoyée" : "Échange"}
             </p>
             <h1 className="text-[19px] font-extrabold leading-tight tracking-[-0.03em] text-[#102033]">

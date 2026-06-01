@@ -1,45 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import "./i18n";
 
 import SplashScreen from "./components/SplashScreen";
 import PageLayout from "./layouts/PageLayout";
 
+// Pages critiques (chargées immédiatement)
 import LandingPage from "./pages/LandingPage";
-import OnboardingPage from "./pages/OnboardingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-import VerifyEmailPage from "./pages/VerifyEmailPage";
 
-import FeedPage from "./pages/FeedPage";
+// Pages lazy (chargées à la demande)
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
+const FeedPage = lazy(() => import("./pages/FeedPage"));
 
-import UniversPage from "./pages/UniversPage";
-import UniversDetailPage from "./pages/UniversDetailPage";
-
-import ItemDetailPage from "./pages/ItemDetailPage";
-import AddItemPage from "./pages/AddItemPage";
-import EditItemPage from "./pages/EditItemPage";
-import ProposeExchangePage from "./pages/ProposeExchangePage";
-import ExchangesPage from "./pages/ExchangesPage";
-import ExchangeDetailPage from "./pages/ExchangeDetailPage";
-import AvailabilityPage from "./pages/AvailabilityPage";
-import ChatPage from "./pages/ChatPage";
-import MessagesPage from "./pages/MessagesPage";
-import ProfilePage from "./pages/ProfilePage";
-import EditProfilePage from "./pages/EditProfilePage";
-import UserProfilePage from "./pages/UserProfilePage";
-import UserItemsPage from "./pages/UserItemsPage";
-import LibraryPage from "./pages/LibraryPage";
-import FavoritesPage from "./pages/FavoritesPage";
-import InfoPage from "./pages/InfoPage";
-import TrocoDossierPage from "./pages/TrocoDossierPage";
-import ChoosePlacePage from "./pages/ChoosePlacePage";
-import MeetingSummaryPage from "./pages/MeetingSummaryPage";
-import MeetingConfirmedPage from "./pages/MeetingConfirmedPage";
-import PostMeetingPage from "./pages/PostMeetingPage";
-import PostMeetingProblemPage from "./pages/PostMeetingProblemPage";
-import AdminPage from "./pages/AdminPage";
-import ExchangeShowcasePage from "./pages/ExchangeShowcasePage";
+// Pages lazy (chargées à la demande)
+const UniversPage = lazy(() => import("./pages/UniversPage"));
+const UniversDetailPage = lazy(() => import("./pages/UniversDetailPage"));
+const ItemDetailPage = lazy(() => import("./pages/ItemDetailPage"));
+const AddItemPage = lazy(() => import("./pages/AddItemPage"));
+const EditItemPage = lazy(() => import("./pages/EditItemPage"));
+const ProposeExchangePage = lazy(() => import("./pages/ProposeExchangePage"));
+const ExchangesPage = lazy(() => import("./pages/ExchangesPage"));
+const ExchangeDetailPage = lazy(() => import("./pages/ExchangeDetailPage"));
+const AvailabilityPage = lazy(() => import("./pages/AvailabilityPage"));
+const ChatPage = lazy(() => import("./pages/ChatPage"));
+const MessagesPage = lazy(() => import("./pages/MessagesPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const EditProfilePage = lazy(() => import("./pages/EditProfilePage"));
+const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
+const UserItemsPage = lazy(() => import("./pages/UserItemsPage"));
+const LibraryPage = lazy(() => import("./pages/LibraryPage"));
+const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
+const InfoPage = lazy(() => import("./pages/InfoPage"));
+const TrocoDossierPage = lazy(() => import("./pages/TrocoDossierPage"));
+const ChoosePlacePage = lazy(() => import("./pages/ChoosePlacePage"));
+const MeetingSummaryPage = lazy(() => import("./pages/MeetingSummaryPage"));
+const MeetingConfirmedPage = lazy(() => import("./pages/MeetingConfirmedPage"));
+const PostMeetingPage = lazy(() => import("./pages/PostMeetingPage"));
+const PostMeetingProblemPage = lazy(() => import("./pages/PostMeetingProblemPage"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
+const ExchangeShowcasePage = lazy(() => import("./pages/ExchangeShowcasePage"));
+const TestReviewsPage = lazy(() => import("./pages/TestReviewsPage"));
 
 import { useAuth } from "./context/AuthContext";
 import { usePushNotifications } from "./hooks/usePushNotifications";
@@ -80,8 +83,11 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
+    <Suspense fallback={<div className="flex h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#18A98E] border-t-transparent"></div>
+    </div>}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
 
       <Route path="/about" element={<InfoPage type="about" />} />
       <Route path="/contact" element={<InfoPage type="contact" />} />
@@ -151,19 +157,9 @@ export default function App() {
       />
 
       <Route path="/items/:id" element={<PageLayout><ItemDetailPage /></PageLayout>} />
-      <Route path="/items/:itemId" element={<PageLayout><ItemDetailPage /></PageLayout>} />
 
       <Route
         path="/items/:id/edit"
-        element={
-          <PrivateRoute>
-            <EditItemPage />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/items/:itemId/edit"
         element={
           <PrivateRoute>
             <EditItemPage />
@@ -237,16 +233,7 @@ export default function App() {
       />
 
       <Route
-        path="/exchange/:id"
-        element={
-          <PrivateRoute>
-            <ExchangeDetailPage />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/exchanges/:exchangeId"
+        path="/exchanges/:id"
         element={
           <PrivateRoute>
             <ExchangeDetailPage />
@@ -408,15 +395,6 @@ export default function App() {
       />
 
       <Route
-        path="/profile/:userId"
-        element={
-          <PrivateRoute>
-            <UserProfilePage />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
         path="/u/:userId"
         element={
           <PrivateRoute>
@@ -438,8 +416,11 @@ export default function App() {
 
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/admin/feedback" element={<AdminPage />} />
+      
+      <Route path="/test-reviews" element={<TestReviewsPage />} />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

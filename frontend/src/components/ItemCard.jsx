@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Check, Heart, PenLine } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFavorites } from "../context/FavoritesContext";
+import { AIVerificationStatus } from "./AIVerification";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -160,7 +161,7 @@ function OwnerAvatar({ item, name }) {
 
 
 
-export default function ItemCard({
+function ItemCard({
   item,
   selectable = false,
   selected = false,
@@ -279,12 +280,17 @@ export default function ItemCard({
           {[location, relativeTime].filter(Boolean).join(" · ")}
         </p>
 
-        {/* Condition */}
-        {condition && (
-          <span className="mt-1.5 inline-flex items-center whitespace-nowrap rounded-full bg-[#F0FAF7] px-2.5 py-0.5 text-[11px] font-bold text-[#1ABEA3]">
-            {condition}
-          </span>
-        )}
+        {/* Condition et vérification IA */}
+        <div className="mt-1.5 flex items-center gap-2">
+          {condition && (
+            <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[#F0FAF7] px-2.5 py-0.5 text-[11px] font-bold text-[#1ABEA3]">
+              {condition}
+            </span>
+          )}
+          {item?.aiVerification && (
+            <AIVerificationStatus verificationData={item.aiVerification} compact={true} />
+          )}
+        </div>
       </div>
     </article>
   );
@@ -303,3 +309,5 @@ export default function ItemCard({
     </Link>
   );
 }
+
+export default memo(ItemCard);
