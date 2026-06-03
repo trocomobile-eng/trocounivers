@@ -224,14 +224,8 @@ if (!isOwner) {
   const previewImages = useMemo(() => photos.map((photo) => photo.url), [photos]);
 
   const canSubmit = useMemo(() => {
-    return (
-      title.trim() &&
-      category &&
-      condition &&
-      photos.length > 0 &&
-      !saving
-    );
-  }, [title, category, condition, photos.length, saving]);
+    return Boolean(title.trim() && photos.length > 0 && !saving);
+  }, [title, photos.length, saving]);
 
   const addFiles = async (files) => {
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
