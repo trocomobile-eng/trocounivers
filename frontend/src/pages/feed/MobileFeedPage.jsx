@@ -214,6 +214,7 @@ export default function MobileFeedPage() {
 
   const {
     visibleItems,
+    recentItems,
     favoriteItemIds,
     toggleFavorite,
     search, setSearch,
@@ -224,6 +225,8 @@ export default function MobileFeedPage() {
     requestLocation,
     loading,
   } = useFeedItems();
+
+  const MIN_SECTION = 5;
 
   const [showFilters, setShowFilters] = useState(false);
 
@@ -374,7 +377,34 @@ export default function MobileFeedPage() {
         </>
       )}
 
+      {/* Carrousel Nouveautés */}
+      {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (
+        <section className="mt-4">
+          <p className="mb-3 text-[13px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
+            ✨ Nouveautés
+          </p>
+          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-3">
+              {recentItems.map((item) => (
+                <div key={item.id} className="w-[150px] shrink-0">
+                  <MobileItemCard
+                    item={item}
+                    favorite={favoriteItemIds.includes(item.id)}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Résultats */}
+      {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (
+        <p className="mt-5 mb-2 text-[13px] font-black uppercase tracking-[0.18em] text-slate-400">
+          Tous les objets
+        </p>
+      )}
       {loading ? (
         <SkeletonGrid count={8} />
       ) : visibleItems.length === 0 ? (

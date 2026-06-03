@@ -225,12 +225,17 @@ export default function useFeedItems() {
     return () => unsub();
   }, []);
 
+  const recentItems = useMemo(
+    () =>
+      items
+        .filter((item) => item.status !== "deleted" && !belongsToUser(item, user?.uid))
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+        .slice(0, 10),
+    [items, user?.uid]
+  );
+
   const myCategories = useMemo(
-    () => {
-      const cats = new Set(myItems.map((i) => normalize(i.category || "")).filter(Boolean));
-      console.log("[Match] mes items:", myItems.length, "| mes catégories:", [...cats]);
-      return cats;
-    },
+    () => new Set(myItems.map((i) => normalize(i.category || "")).filter(Boolean)),
     [myItems]
   );
 
@@ -332,6 +337,7 @@ export default function useFeedItems() {
   return {
     // données
     visibleItems,
+    recentItems,
     favoriteItemIds,
     userLocation,
     locationEnabled,

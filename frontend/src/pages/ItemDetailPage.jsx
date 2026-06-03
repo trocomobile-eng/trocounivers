@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 
 import { db } from "../firebase";
+import AmbassadorBadge from "../components/AmbassadorBadge";
+import { isAmbassador } from "../utils/ambassador";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { AIVerificationStatus } from "../components/AIVerification";
@@ -212,7 +214,7 @@ export default function ItemDetailPage() {
   const isFavorite = favoriteIds.includes(item?.id);
 
   const title = getDisplayItemType(item) || item?.title || item?.itemType || item?.type || "Objet";
-  const details = getDisplayItemDetails(item) || item?.category || "";
+  const details = clean(item?.itemDetails || item?.item_details || item?.brand || "");
   const condition = getCondition(item);
   const itemLocation = item ? formatLocation(item) : "Paris";
   const postedDate = getPostedDate(item);
@@ -378,7 +380,14 @@ export default function ItemDetailPage() {
                 {isOwner ? "toi" : shortName(ownerName)}
               </span>
             </span>
+            {isAmbassador(ownerProfile) && <AmbassadorBadge className="ml-1" />}
           </div>
+
+          {isAmbassador(ownerProfile) && (
+            <p className="mt-2 text-[12px] font-medium text-slate-400">
+              Compte créé par l'équipe Troco pour présenter des exemples d'objets.
+            </p>
+          )}
 
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="rounded-[14px] bg-[#F0FAF7] px-3 py-1.5 text-[14px] font-black text-[#1ABEA3]">
@@ -439,6 +448,10 @@ export default function ItemDetailPage() {
                 Modifier mon objet
               </button>
             </>
+          ) : isAmbassador(ownerProfile) ? (
+            <p className="text-[15px] font-medium leading-relaxed text-slate-400">
+              Cet objet est présenté par l'équipe Troco à titre d'exemple. Il n'est pas disponible à l'échange.
+            </p>
           ) : (
             <>
               <p className="text-[17px] font-semibold leading-relaxed text-[#081225]">
@@ -466,7 +479,7 @@ export default function ItemDetailPage() {
           )}
         </section>
 
-        {!isOwner && (
+        {!isOwner && !isAmbassador(ownerProfile) && (
           <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F0FAF7] text-[#1ABEA3]">
@@ -484,22 +497,43 @@ export default function ItemDetailPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              <PreferenceChip>🎸 Instruments</PreferenceChip>
-              <PreferenceChip>📚 Livres</PreferenceChip>
-              <PreferenceChip>☕ Café / déco</PreferenceChip>
-            </div>
+            {(() => {
+              const prefs = item?.tradePreferences;
+              const cats = Array.isArray(prefs?.categories) ? prefs.categories : [];
+              const ideas = prefs?.ideas?.trim() || "";
+              const hasPrefs = cats.length > 0 || ideas;
 
-            <p className="mt-4 text-[15px] font-medium leading-relaxed text-slate-500">
-              Ces indices t’aident à proposer un objet qui pourrait vraiment lui plaire.
-            </p>
+              if (!hasPrefs) {
+                return (
+                  <div className="mt-5 rounded-[20px] bg-[#F0FAF7]/60 p-4 text-[15px] font-medium leading-relaxed text-slate-700">
+                    {shortName(ownerName)} n’a pas encore précisé ses envies.
+                    <span className="font-bold text-[#1ABEA3]">
+                      {" "}Tu peux quand même proposer un troc.
+                    </span>
+                  </div>
+                );
+              }
 
-            <div className="mt-5 rounded-[20px] bg-[#F0FAF7]/60 p-4 text-[15px] font-medium leading-relaxed text-slate-700">
-              {shortName(ownerName)} n’a pas encore précisé ses envies.
-              <span className="font-bold text-[#1ABEA3]">
-                {" "}Tu peux quand même proposer un troc.
-              </span>
-            </div>
+              return (
+                <>
+                  {cats.length > 0 && (
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {cats.map((cat) => (
+                        <PreferenceChip key={cat}>{cat}</PreferenceChip>
+                      ))}
+                    </div>
+                  )}
+                  {ideas && (
+                    <p className="mt-3 text-[14px] font-medium leading-relaxed text-slate-600">
+                      "{ideas}"
+                    </p>
+                  )}
+                  <p className="mt-4 text-[15px] font-medium leading-relaxed text-slate-500">
+                    Ces indices t’aident à proposer un objet qui pourrait vraiment lui plaire.
+                  </p>
+                </>
+              );
+            })()}
           </section>
         )}
       </main>

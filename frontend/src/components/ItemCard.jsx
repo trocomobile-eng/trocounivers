@@ -3,6 +3,8 @@ import { Check, Heart, PenLine } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFavorites } from "../context/FavoritesContext";
 import { AIVerificationStatus } from "./AIVerification";
+import AmbassadorBadge from "./AmbassadorBadge";
+import { isAmbassador } from "../utils/ambassador";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -272,6 +274,7 @@ function ItemCard({
             <span className="min-w-0 truncate text-[12px] font-bold text-[#1ABEA3]">
               {ownerName}
             </span>
+            {isAmbassador(item) && <AmbassadorBadge />}
           </button>
         )}
 

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { db, storage } from "../firebase";
+import { isAmbassador } from "../utils/ambassador";
 import SurveyModal from "../components/SurveyModal";
 import { useAuth } from "../context/AuthContext";
 import TradePreferencesForm from "../components/TradePreferencesForm";
@@ -253,10 +254,13 @@ export default function AddItemPage() {
 
     try {
       let ownerLocation = null;
+      let ownerIsAmbassador = false;
 
-      if (useMyLocation && user?.uid) {
+      if (user?.uid) {
         const userSnapshot = await getDoc(doc(db, "users", user.uid));
-        ownerLocation = getGeoPoint(userSnapshot.data()?.location);
+        const userData = userSnapshot.data() || {};
+        if (useMyLocation) ownerLocation = getGeoPoint(userData.location);
+        ownerIsAmbassador = isAmbassador(userData);
       }
 
       const draftRef = await addDoc(collection(db, "items"), {
@@ -281,6 +285,7 @@ export default function AddItemPage() {
         ownerEmail: user.email || "",
         ownerName: user.displayName || user.email || "Utilisateur Troco",
         ownerPhotoURL: user.photoURL || "",
+        ownerIsAmbassador,
         status: "available",
         aiVerification: aiVerification || null,
         createdAt: serverTimestamp(),

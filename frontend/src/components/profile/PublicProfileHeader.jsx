@@ -1,4 +1,6 @@
 import { CalendarDays, MapPin, MoreHorizontal, Shield, Sparkles, Star, ThumbsUp } from "lucide-react";
+import AmbassadorBadge from "../AmbassadorBadge";
+import { isAmbassador } from "../../utils/ambassador";
 
 import {
   getBio,
@@ -157,6 +159,8 @@ export default function PublicProfileHeader({ profile, userId, feedbacks = [] })
               {getHandle(profile, userId)}
             </p>
 
+            {isAmbassador(profile) && <AmbassadorBadge className="mt-1" />}
+
             <ReputationLine feedbacks={feedbacks} />
 
             <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -171,11 +175,15 @@ export default function PublicProfileHeader({ profile, userId, feedbacks = [] })
           </div>
         </div>
 
-        {bio && (
+        {isAmbassador(profile) ? (
+          <p className="mt-3 text-[13px] font-medium leading-relaxed text-slate-400">
+            Compte créé par l'équipe Troco pour aider la communauté à démarrer ses premiers échanges.
+          </p>
+        ) : bio ? (
           <p className="mt-3 line-clamp-2 text-[14px] font-medium leading-relaxed text-[#4D5E6B]">
             {bio}
           </p>
-        )}
+        ) : null}
 
         <TrustBadges feedbacks={feedbacks} />
       </div>
