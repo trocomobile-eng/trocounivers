@@ -211,6 +211,12 @@ export default function MobileFeedPage() {
 
   const [showFilters, setShowFilters] = useState(false);
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = showFilters ? "hidden" : prev;
+    return () => { document.body.style.overflow = prev; };
+  }, [showFilters]);
+
   const handleRefresh = useCallback(async () => {
     // Force reload des items
     window.location.reload();
