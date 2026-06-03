@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { db } from "../firebase";
+import { useToast } from "../context/ToastContext";
 
 const PROBLEMS = [
   "La personne n’est pas venue",
@@ -22,6 +23,7 @@ export default function PostMeetingProblemPage() {
   const { exchangeId, id } = useParams();
   const currentExchangeId = exchangeId || id;
   const navigate = useNavigate();
+  const { show: showToast } = useToast();
 
   const [selected, setSelected] = useState("");
   const [saving, setSaving] = useState(false);
@@ -53,7 +55,7 @@ export default function PostMeetingProblemPage() {
       }
     } catch (error) {
       console.error("Erreur problème rencontre :", error);
-      alert("Impossible d’enregistrer le problème.");
+      showToast({ icon: "error", title: "Impossible d’enregistrer", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }

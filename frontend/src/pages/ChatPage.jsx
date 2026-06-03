@@ -13,6 +13,7 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 import TrocoPageHeader from "../components/TrocoPageHeader";
 
@@ -83,6 +84,7 @@ export default function ChatPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { show: showToast } = useToast();
 
   const [exchange, setExchange] = useState(null);
   const [subMessages, setSubMessages] = useState([]);
@@ -180,7 +182,7 @@ export default function ChatPage() {
       navigate(`/availability/${exchange.id}`, { replace: true });
     } catch (error) {
       console.error("Erreur confirmation lieu chat :", error);
-      alert("Impossible de confirmer le lieu.");
+      showToast({ icon: "error", title: "Impossible de confirmer le lieu", text: "Une erreur est survenue." });
     }
   }
 
@@ -215,7 +217,7 @@ export default function ChatPage() {
       setMessage("");
     } catch (error) {
       console.error("Erreur message :", error);
-      alert("Impossible d’envoyer le message.");
+      showToast({ icon: "error", title: "Impossible d’envoyer", text: "Une erreur est survenue." });
     } finally {
       setSending(false);
     }

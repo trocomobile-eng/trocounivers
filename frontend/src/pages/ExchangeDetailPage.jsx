@@ -27,6 +27,7 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import MeetingValidationModal from "../components/MeetingValidationModal";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoCard, TrocoButton, TrocoPill } from "../components/UI";
@@ -1273,6 +1274,7 @@ export default function ExchangeDetailPage() {
 
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { show: showToast } = useToast();
 
   const [exchange, setExchange] = useState(null);
   const [requestedItem, setRequestedItem] = useState(null);
@@ -1383,7 +1385,7 @@ export default function ExchangeDetailPage() {
       await loadExchange();
     } catch (error) {
       console.error("Erreur annulation demande :", error);
-      alert("Impossible d’annuler cette demande.");
+      showToast({ icon: "error", title: "Impossible d’annuler", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }
@@ -1414,7 +1416,7 @@ export default function ExchangeDetailPage() {
       await loadExchange();
     } catch (error) {
       console.error("Erreur acceptation :", error);
-      alert("Impossible d’accepter ce troc.");
+      showToast({ icon: "error", title: "Impossible d’accepter", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }
@@ -1438,7 +1440,7 @@ export default function ExchangeDetailPage() {
       await loadExchange();
     } catch (error) {
       console.error("Erreur refus :", error);
-      alert("Impossible de refuser ce troc.");
+      showToast({ icon: "error", title: "Impossible de refuser", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }
@@ -1469,7 +1471,7 @@ export default function ExchangeDetailPage() {
       await loadExchange();
     } catch (error) {
       console.error("Erreur objet en plus :", error);
-      alert("Impossible de demander cet objet en plus.");
+      showToast({ icon: "error", title: "Impossible de demander cet objet", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }
@@ -1495,7 +1497,7 @@ export default function ExchangeDetailPage() {
       await loadExchange();
     } catch (error) {
       console.error("Erreur demande ouverte :", error);
-      alert("Impossible d’envoyer la demande.");
+      showToast({ icon: "error", title: "Impossible d’envoyer", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }
@@ -1527,7 +1529,7 @@ export default function ExchangeDetailPage() {
       await loadExchange();
     } catch (error) {
       console.error("Erreur ajout objet en plus :", error);
-      alert("Impossible d’ajouter cet objet.");
+      showToast({ icon: "error", title: "Impossible d’ajouter", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }
@@ -1602,7 +1604,7 @@ export default function ExchangeDetailPage() {
       });
     } catch (error) {
       console.error("Erreur confirmation troc :", error);
-      alert("Impossible de confirmer le troc pour le moment.");
+      showToast({ icon: "error", title: "Impossible de confirmer", text: "Réessaie dans un instant." });
     } finally {
       setSaving(false);
     }

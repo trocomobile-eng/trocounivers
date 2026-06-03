@@ -15,6 +15,7 @@ import { ArrowLeft, Check, MapPin, Plus, Repeat2, Send } from "lucide-react";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import {
   formatLocation,
   getDisplayItemDetails,
@@ -207,6 +208,7 @@ export default function ProposeExchangePage() {
   const requestedItemId = itemId || id;
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { show: showToast } = useToast();
 
   const [requestedItem, setRequestedItem] = useState(null);
   const [ownerProfile, setOwnerProfile] = useState(null);
@@ -329,13 +331,13 @@ export default function ProposeExchangePage() {
 
   async function sendProposal() {
     if (isMyItem(requestedItem, user)) {
-      alert("Tu ne peux pas proposer un troc sur ton propre objet.");
+      showToast({ icon: "info", title: "Cet objet t'appartient", text: "Tu ne peux pas proposer un troc sur ton propre objet." });
       navigate(`/items/${requestedItem.id}`, { replace: true });
       return;
     }
 
     if (!canSend) {
-      alert("Sélectionne un ou deux objets à proposer.");
+      showToast({ icon: "info", title: "Sélectionne un objet", text: "Choisis un ou deux objets à proposer." });
       return;
     }
 
@@ -401,7 +403,7 @@ export default function ProposeExchangePage() {
       navigate("/exchanges", { replace: true });
     } catch (err) {
       console.error("Erreur envoi proposition :", err);
-      alert("Impossible d'envoyer la proposition.");
+      showToast({ icon: "error", title: "Impossible d'envoyer", text: "Une erreur est survenue." });
     } finally {
       setSending(false);
     }

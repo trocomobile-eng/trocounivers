@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { CheckCircle2, CalendarDays, MapPin, MessageCircle, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, CalendarDays, Info, MapPin, MessageCircle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
@@ -13,27 +13,30 @@ export function useToast() { return useContext(ToastContext); }
 
 // ─── Toast UI ─────────────────────────────────────────────────────────────────
 
-const ICONS = {
-  success: CheckCircle2,
-  calendar: CalendarDays,
-  place: MapPin,
-  message: MessageCircle,
+const VARIANTS = {
+  success:  { icon: CheckCircle2, bg: "bg-[#F0FAF7]", color: "text-[#1ABEA3]" },
+  error:    { icon: AlertCircle,  bg: "bg-rose-50",    color: "text-rose-500"   },
+  info:     { icon: Info,         bg: "bg-slate-50",   color: "text-slate-500"  },
+  calendar: { icon: CalendarDays, bg: "bg-[#F0FAF7]", color: "text-[#1ABEA3]" },
+  place:    { icon: MapPin,       bg: "bg-[#F0FAF7]", color: "text-[#1ABEA3]" },
+  message:  { icon: MessageCircle,bg: "bg-[#F0FAF7]", color: "text-[#1ABEA3]" },
 };
 
 function Toast({ id, icon = "success", title, text, to, onDismiss }) {
   const navigate = useNavigate();
-  const Icon = ICONS[icon] || CheckCircle2;
+  const variant = VARIANTS[icon] || VARIANTS.success;
+  const Icon = variant.icon;
 
   useEffect(() => {
-    const t = setTimeout(() => onDismiss(id), 5000);
+    const t = setTimeout(() => onDismiss(id), icon === "error" ? 6000 : 5000);
     return () => clearTimeout(t);
-  }, [id, onDismiss]);
+  }, [id, icon, onDismiss]);
 
   return (
     <div
       className="flex w-full max-w-[360px] items-start gap-3 rounded-[18px] border border-[#E4ECE8] bg-white p-3.5 shadow-[0_8px_32px_rgba(15,23,42,0.14)] animate-[trocoFadeUp_280ms_ease_both]"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F0FAF7] text-[#1ABEA3]">
+      <span className={["flex h-9 w-9 shrink-0 items-center justify-center rounded-full", variant.bg, variant.color].join(" ")}>
         <Icon size={17} strokeWidth={2.2} />
       </span>
       <button

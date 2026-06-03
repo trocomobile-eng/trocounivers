@@ -16,6 +16,7 @@ import {
 
 import { db, storage } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import ItemPhotoManager from "../components/ItemPhotoManager";
@@ -109,6 +110,7 @@ export default function EditItemPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const { show: showToast } = useToast();
 
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -291,7 +293,7 @@ if (!isOwner) {
       navigate("/profile", { replace: true });
     } catch (error) {
       console.error("Erreur suppression objet :", error);
-      alert("Impossible de supprimer l’objet.");
+      showToast({ icon: "error", title: "Impossible de supprimer", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }
@@ -299,7 +301,7 @@ if (!isOwner) {
 
   const submit = async () => {
     if (!canSubmit) {
-      alert("Ajoute un titre, une catégorie, un état et au moins une photo.");
+      showToast({ icon: "info", title: "Infos manquantes", text: "Ajoute un titre, une catégorie, un état et au moins une photo." });
       return;
     }
 
@@ -339,7 +341,7 @@ if (!isOwner) {
       navigate(`/items/${currentItemId}`);
     } catch (error) {
       console.error("Erreur modification objet :", error);
-      alert("Impossible de modifier l’objet.");
+      showToast({ icon: "error", title: "Impossible de modifier", text: "Une erreur est survenue." });
     } finally {
       setSaving(false);
     }

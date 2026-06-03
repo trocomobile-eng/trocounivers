@@ -42,6 +42,7 @@ const MeetingConfirmedPage = lazy(() => import("./pages/MeetingConfirmedPage"));
 const PostMeetingPage = lazy(() => import("./pages/PostMeetingPage"));
 const PostMeetingProblemPage = lazy(() => import("./pages/PostMeetingProblemPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ExchangeShowcasePage = lazy(() => import("./pages/ExchangeShowcasePage"));
 const TestReviewsPage = lazy(() => import("./pages/TestReviewsPage"));
 
@@ -415,6 +416,15 @@ export default function App() {
       />
 
       <Route path="/troc/:id" element={<ExchangeShowcasePage />} />
+
+      <Route
+        path="/settings"
+        element={
+          <PrivateRoute>
+            <SettingsPage />
+          </PrivateRoute>
+        }
+      />
 
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/admin/feedback" element={<AdminPage />} />
