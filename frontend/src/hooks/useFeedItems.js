@@ -17,12 +17,48 @@ import { useAuth } from "../context/AuthContext";
 
 // ─── Géo ────────────────────────────────────────────────────────────────────
 
+const PARIS_ARRONDISSEMENTS = {
+  "1er": { lat: 48.8603, lng: 2.3477 },
+  "1e":  { lat: 48.8603, lng: 2.3477 },
+  "2e":  { lat: 48.8662, lng: 2.3496 },
+  "3e":  { lat: 48.8640, lng: 2.3616 },
+  "4e":  { lat: 48.8553, lng: 2.3569 },
+  "5e":  { lat: 48.8517, lng: 2.3470 },
+  "6e":  { lat: 48.8496, lng: 2.3354 },
+  "7e":  { lat: 48.8566, lng: 2.3174 },
+  "8e":  { lat: 48.8747, lng: 2.3103 },
+  "9e":  { lat: 48.8765, lng: 2.3385 },
+  "10e": { lat: 48.8765, lng: 2.3580 },
+  "11e": { lat: 48.8589, lng: 2.3790 },
+  "12e": { lat: 48.8404, lng: 2.3896 },
+  "13e": { lat: 48.8317, lng: 2.3562 },
+  "14e": { lat: 48.8337, lng: 2.3253 },
+  "15e": { lat: 48.8413, lng: 2.2980 },
+  "16e": { lat: 48.8635, lng: 2.2680 },
+  "17e": { lat: 48.8840, lng: 2.3137 },
+  "18e": { lat: 48.8929, lng: 2.3431 },
+  "19e": { lat: 48.8790, lng: 2.3827 },
+  "20e": { lat: 48.8637, lng: 2.4018 },
+};
+
 function getGeoPoint(value) {
   if (!value) return null;
   if (typeof value.lat === "number" && typeof value.lng === "number")
     return { lat: value.lat, lng: value.lng };
   if (typeof value.latitude === "number" && typeof value.longitude === "number")
     return { lat: value.latitude, lng: value.longitude };
+  return null;
+}
+
+function getArrondissementGeoPoint(item) {
+  const text = (
+    item?.arrondissement || item?.locationArea || item?.district ||
+    item?.location || item?.city || ""
+  ).toLowerCase();
+  for (const [suffix, coords] of Object.entries(PARIS_ARRONDISSEMENTS)) {
+    if (text.includes(suffix)) return coords;
+  }
+  if (text.includes("paris")) return { lat: 48.8566, lng: 2.3522 };
   return null;
 }
 
@@ -34,7 +70,8 @@ function getItemGeoPoint(item) {
     getGeoPoint(item?.location) ||
     (typeof item?.lat === "number" && typeof item?.lng === "number"
       ? { lat: item.lat, lng: item.lng }
-      : null)
+      : null) ||
+    getArrondissementGeoPoint(item)
   );
 }
 
@@ -112,20 +149,36 @@ function matchesSearch(item, search) {
 
 function enrichItemsWithDistance(items, userLocation) {
   return items.map((item) => {
-    const itemLocation = getItemGeoPoint(item);
-    const distanceMeters = getDistanceMeters(userLocation, itemLocation);
-    const distanceLabel = formatDistance(distanceMeters);
+    // GPS précis disponible sur l'item ?
+    const preciseGeo =
+      getGeoPoint(item?.geo) ||
+      getGeoPoint(item?.locationCoords) ||
+      getGeoPoint(item?.coordinates) ||
+      (typeof item?.lat === "number" && typeof item?.lng === "number"
+        ? { lat: item.lat, lng: item.lng }
+        : null);
+
+    // Coordonnées pour l'affichage (précises ou approximatives via arrondissement)
+    const displayGeo = preciseGeo || getArrondissementGeoPoint(item);
+
+    // distanceMeters pour le FILTRE : null si pas de GPS précis (ne filtre pas)
+    const distanceMeters = getDistanceMeters(userLocation, preciseGeo);
+
+    // distance pour l'AFFICHAGE : utilise les coords approx si dispo
+    const displayDistance = getDistanceMeters(userLocation, displayGeo);
+    const distanceLabel = formatDistance(displayDistance);
+
     const timeAgoLabel = getTimeAgo(item);
     return {
       ...item,
       distanceMeters,
       distanceLabel,
       activityLabel:
-        distanceMeters !== null && distanceMeters <= 1000
+        displayDistance !== null && displayDistance <= 1000
           ? "Nouveau près de toi"
           : timeAgoLabel,
       localHint:
-        distanceMeters !== null && distanceMeters <= 3000
+        displayDistance !== null && displayDistance <= 3000
           ? "Disponible dans ton quartier"
           : "",
     };
@@ -184,6 +237,7 @@ export default function useFeedItems() {
   const [activeCategory, setActiveCategory] = useState("Tout");
   const [viewMode, setViewMode] = useState("list");
   const [radius, setRadius] = useState(3000);
+  const [locationError, setLocationError] = useState("");
 
   // Écoute profil utilisateur (favoris + localisation)
   useEffect(() => {
@@ -300,12 +354,10 @@ export default function useFeedItems() {
 
   // Demande de géolocalisation
   const requestLocation = useCallback(async () => {
-    if (!user?.uid) {
-      alert("Vous devez être connecté pour activer la localisation.");
-      return;
-    }
+    setLocationError("");
+    if (!user?.uid) return;
     if (!navigator.geolocation) {
-      alert("La géolocalisation n'est pas supportée par ce navigateur.");
+      setLocationError("La géolocalisation n'est pas supportée par ce navigateur.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -319,16 +371,17 @@ export default function useFeedItems() {
           );
           setUserLocation(loc);
           setLocationEnabled(true);
+          setLocationError("");
         } catch {
-          alert("La position a été trouvée, mais impossible de l'enregistrer.");
+          setLocationError("Position trouvée mais impossible de l'enregistrer.");
         }
       },
       (err) => {
         if (err.code === 1) {
-          alert("Vous avez refusé la localisation. Vous pourrez l'activer plus tard.");
-          return;
+          setLocationError("denied");
+        } else {
+          setLocationError("Impossible d'accéder à ta position. Réessaie.");
         }
-        alert("Impossible d'accéder à votre position.");
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
     );
@@ -349,5 +402,7 @@ export default function useFeedItems() {
     // actions
     toggleFavorite,
     requestLocation,
+    locationError,
+    clearLocationError: () => setLocationError(""),
   };
 }

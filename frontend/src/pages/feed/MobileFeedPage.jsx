@@ -204,6 +204,8 @@ export default function MobileFeedPage() {
     radius, setRadius,
     locationEnabled,
     requestLocation,
+    locationError,
+    clearLocationError,
     loading,
   } = useFeedItems();
 
@@ -287,7 +289,30 @@ export default function MobileFeedPage() {
         </div>
 
         {/* Bannière localisation */}
-        {!locationEnabled && (
+        {locationError === "denied" ? (
+          <div className="flex items-start gap-3 rounded-[16px] border border-amber-100 bg-amber-50 px-4 py-3">
+            <Navigation size={15} strokeWidth={2.3} className="mt-0.5 shrink-0 text-amber-500" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-bold text-amber-700">
+                Localisation refusée
+              </p>
+              <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-amber-600">
+                Pour l'activer : Réglages → Safari → Localisation → Autoriser
+              </p>
+            </div>
+            <button type="button" onClick={clearLocationError} className="shrink-0 text-amber-400">
+              <span className="text-[16px] leading-none">×</span>
+            </button>
+          </div>
+        ) : locationError ? (
+          <div className="flex items-center gap-3 rounded-[16px] border border-rose-100 bg-rose-50 px-4 py-3">
+            <Navigation size={15} strokeWidth={2.3} className="shrink-0 text-rose-400" />
+            <p className="flex-1 text-[12px] font-bold text-rose-600">{locationError}</p>
+            <button type="button" onClick={clearLocationError} className="shrink-0 text-rose-300">
+              <span className="text-[16px] leading-none">×</span>
+            </button>
+          </div>
+        ) : !locationEnabled ? (
           <button
             type="button"
             onClick={requestLocation}
@@ -298,7 +323,7 @@ export default function MobileFeedPage() {
               Activer ma position pour voir les distances
             </p>
           </button>
-        )}
+        ) : null}
       </section>
 
       {/* Panneau filtres */}

@@ -89,7 +89,7 @@ function getAvatarColor(name = "") {
 function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
   const navigate = useNavigate();
   const title = getItemTitle(item);
-  const location = getItemLocation(item);
+  const location = item.distanceLabel || getItemLocation(item);
   const ownerName = getOwnerName(item);
   const relativeTime = formatRelativeTime(item?.createdAt || item?.postedAt || item?.updatedAt);
   const condition = formatCondition(item?.conditionLabel || item?.condition || item?.state || item?.itemCondition || "");
@@ -178,11 +178,36 @@ export default function DesktopFeedPage() {
     radius,
     setRadius,
     toggleFavorite,
+    locationEnabled,
+    requestLocation,
+    locationError,
+    clearLocationError,
   } = useFeedItems();
 
   return (
     <main className="mx-auto w-full max-w-[1480px] px-8 py-6">
         <section>
+          {locationError === "denied" ? (
+            <div className="mb-4 flex items-center gap-3 rounded-[14px] border border-amber-100 bg-amber-50 px-4 py-3">
+              <Navigation size={15} strokeWidth={2.3} className="shrink-0 text-amber-500" />
+              <p className="flex-1 text-[13px] font-bold text-amber-700">
+                Localisation refusée — Pour l'activer : Réglages → Chrome/Safari → Localisation → Autoriser
+              </p>
+              <button type="button" onClick={clearLocationError} className="shrink-0 text-amber-400 text-lg leading-none">×</button>
+            </div>
+          ) : !locationEnabled && (
+            <button
+              type="button"
+              onClick={requestLocation}
+              className="mb-4 flex w-full items-center gap-3 rounded-[14px] border border-[#D4EFE9] bg-[#F0FAF7] px-4 py-3 text-left transition hover:bg-[#E6F7F2] active:scale-[0.99]"
+            >
+              <Navigation size={15} strokeWidth={2.3} className="shrink-0 text-[#1ABEA3]" />
+              <p className="text-[13px] font-bold text-[#0f9f9a]">
+                Activer ma position pour voir les distances
+              </p>
+            </button>
+          )}
+
           <div className="grid items-end gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]">
             <div className="min-w-0">
               <h1 className="troco-soft-title text-[35px] font-extrabold leading-[1.5] tracking-[-0.045em] text-[#102033]">
