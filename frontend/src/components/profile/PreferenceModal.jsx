@@ -156,7 +156,8 @@ export default function PreferenceModal({
         aria-label="Fermer"
       />
 
-      <div className="relative z-10 flex max-h-[90vh] w-[92vw] max-w-[430px] flex-col overflow-hidden rounded-[28px] border border-white/75 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+      <div className="relative z-10 flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] border border-white/75 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:max-h-[85vh] sm:w-[92vw] sm:rounded-[28px]" style={{maxHeight: "min(85vh, calc(100dvh - 20px))"}}>
+
         <header className="shrink-0 border-b border-[#E4ECE8] bg-white/86 px-5 py-4 backdrop-blur-xl">
           <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#D8E7E1] sm:hidden" />
 
@@ -254,7 +255,7 @@ export default function PreferenceModal({
           )}
         </div>
 
-        <footer className="shrink-0 border-t border-[#E4ECE8] bg-white/90 px-5 py-4 backdrop-blur-xl">
+        <footer className="shrink-0 border-t border-[#E4ECE8] bg-white/90 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
           <div className="flex items-center justify-end gap-3">
             <button
               type="button"
