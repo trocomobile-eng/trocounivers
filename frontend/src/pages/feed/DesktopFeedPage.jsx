@@ -168,6 +168,7 @@ export default function DesktopFeedPage() {
 
   const {
     visibleItems,
+    recentItems,
     favoriteItemIds,
     search,
     setSearch,
@@ -183,6 +184,8 @@ export default function DesktopFeedPage() {
     locationError,
     clearLocationError,
   } = useFeedItems();
+
+  const MIN_SECTION = 5;
 
   return (
     <main className="mx-auto w-full max-w-[1480px] px-8 py-6">
@@ -246,6 +249,33 @@ export default function DesktopFeedPage() {
         <section className="mt-2 overflow-x-auto pb-1 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
         </section>
+
+        {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (
+          <section className="mt-6">
+            <p className="mb-3 text-[12px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
+              ✨ Nouveautés
+            </p>
+            <div className="overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-3">
+                {recentItems.map((item) => (
+                  <div key={item.id} className="w-[160px] shrink-0">
+                    <DesktopFeedCard
+                      item={item}
+                      favorite={favoriteItemIds.includes(item.id)}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (
+          <p className="mt-6 mb-2 text-[12px] font-black uppercase tracking-[0.18em] text-slate-400">
+            Tous les objets
+          </p>
+        )}
 
         {showFilters && (
           <>

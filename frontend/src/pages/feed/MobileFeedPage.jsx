@@ -413,7 +413,7 @@ export default function MobileFeedPage() {
           <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex gap-3">
               {recentItems.map((item) => (
-                <div key={item.id} className="w-[150px] shrink-0">
+                <div key={item.id} className="w-[120px] shrink-0">
                   <MobileItemCard
                     item={item}
                     favorite={favoriteItemIds.includes(item.id)}
@@ -441,7 +441,7 @@ export default function MobileFeedPage() {
       ) : viewMode === "map" ? (
         <TrocoMap items={visibleItems} className="mt-2 h-[calc(100vh-280px)]" onBackToList={() => setViewMode("list")} />
       ) : (
-        <section className="mt-2 grid grid-cols-3 gap-2">
+        <section className="mt-2 grid grid-cols-2 gap-3">
           {visibleItems.map((item) => (
             <MobileItemCard
               key={item.id}

@@ -1,86 +1,63 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { ArrowLeft, Heart, MapPin, Plus, Search, SlidersHorizontal, Sparkles, UsersRound } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, Navigation, Plus, Search, SlidersHorizontal } from "lucide-react";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 import { trackInterest } from "../utils/interestTracking";
 
 import imgJeux from "../assets/univers/univ-jeux.png";
 import imgMusique from "../assets/univers/univ-musique.png";
 import imgDeco from "../assets/univers/univ-deco_maison.png";
 import imgPhoto from "../assets/univers/univ-photo.png";
+import imgSport from "../assets/univers/univ-sport.png";
 
 const UNIVERS_CONFIG = {
   musique: {
     label: "Musique",
-    tagline: "Écouter, collectionner, faire résonner.",
-    heroTitle: "Objets musicaux autour de toi",
+    tagline: "Des instruments, vinyles et objets. Des gens qui circulent près de toi.",
     img: imgMusique,
-    accent: "#5EB7C3",
+    accent: "#4BA8B8",
     icon: "♪",
     keywords: ["musique", "instrument", "vinyle", "guitare", "piano", "audio", "basse", "batterie", "casque", "enceinte", "synthé", "pedale", "pédale"],
-    subcats: ["Instruments", "Vinyles", "Audio", "Pédales", "Claviers", "Accessoires"],
+    subcats: ["Instruments", "Vinyles", "Audio", "Platines", "Claviers", "Accessoires"],
   },
   jeux: {
     label: "Jeux",
-    tagline: "Partager, jouer, s'amuser ensemble.",
-    heroTitle: "Jeux et objets ludiques près de toi",
+    tagline: "Jeux de société, cartes, puzzles et objets ludiques à échanger près de toi.",
     img: imgJeux,
-    accent: "#C7B75F",
-    icon: "⬡",
+    accent: "#B8A040",
+    icon: "✣",
     keywords: ["jeux", "jeu", "board game", "puzzle", "carte", "cartes", "échecs", "dés", "catan", "carcassonne"],
     subcats: ["Société", "Cartes", "Puzzles", "Jeux vidéo", "Échecs", "Enfants"],
   },
   deco: {
     label: "Déco & Maison",
-    tagline: "Sublimer, aménager, se sentir bien chez soi.",
-    heroTitle: "Objets maison et déco autour de toi",
+    tagline: "Mobilier, luminaires, plantes, vaisselle et objets de maison.",
     img: imgDeco,
-    accent: "#C89A63",
+    accent: "#B07840",
     icon: "⌂",
     keywords: ["deco", "déco", "maison", "mobilier", "meuble", "luminaire", "vaisselle", "coussin", "tapis", "lampe"],
     subcats: ["Mobilier", "Luminaires", "Vaisselle", "Textile", "Plantes", "Art"],
   },
   photo: {
     label: "Photo",
-    tagline: "Capturer, créer, immortaliser.",
-    heroTitle: "Photo, appareils et accessoires",
+    tagline: "Appareils, objectifs, argentique, trépieds et accessoires photo.",
     img: imgPhoto,
-    accent: "#A78BD4",
+    accent: "#8060B0",
     icon: "◎",
     keywords: ["photo", "appareil", "objectif", "camera", "caméra", "reflex", "argentique", "trépied", "flash"],
     subcats: ["Appareils", "Objectifs", "Argentique", "Accessoires", "Éclairage", "Trépied"],
   },
-  velo: {
-    label: "Vélo",
-    tagline: "Se déplacer, vivre la ville autrement.",
-    heroTitle: "Vélos et accessoires près de toi",
-    img: null,
-    accent: "#72BE82",
-    icon: "⚲",
-    keywords: ["velo", "vélo", "bicyclette", "cyclisme", "roue", "selle", "casque vélo"],
-    subcats: ["Vélos", "Accessoires", "Casques", "Éclairage", "Sacoches", "Entretien"],
-  },
-  livres: {
-    label: "Livres",
-    tagline: "Lire, apprendre, s'évader.",
-    heroTitle: "Livres, BD et objets papier",
-    img: null,
-    accent: "#C9886E",
-    icon: "⊟",
-    keywords: ["livre", "livres", "roman", "bd", "manga", "essai", "bande dessinée"],
-    subcats: ["Romans", "BD & Manga", "Essais", "Jeunesse", "Sciences", "Art & Photo"],
-  },
   sport: {
     label: "Sport",
-    tagline: "Bouger, se dépasser, explorer.",
-    heroTitle: "Équipements sport et outdoor",
-    img: null,
-    accent: "#E0A860",
-    icon: "◈",
-    keywords: ["sport", "fitness", "outdoor", "randonnée", "tennis", "foot", "yoga", "ski"],
+    tagline: "Outdoor, vélo, fitness doux, raquettes, sacs et équipement sport.",
+    img: imgSport,
+    accent: "#4F9F67",
+    icon: "♧",
+    keywords: ["sport", "fitness", "outdoor", "randonnée", "tennis", "foot", "yoga", "ski", "vélo", "velo"],
     subcats: ["Fitness", "Outdoor", "Ballon", "Raquettes", "Ski & Snow", "Yoga"],
   },
 };
@@ -97,7 +74,7 @@ function getGeoPoint(value) {
 }
 
 function getItemGeoPoint(item) {
-  return getGeoPoint(item?.geo) || getGeoPoint(item?.locationCoords) || getGeoPoint(item?.coordinates) || getGeoPoint(item?.location) || (typeof item?.lat === "number" && typeof item?.lng === "number" ? { lat: item.lat, lng: item.lng } : null);
+  return getGeoPoint(item?.geo) || getGeoPoint(item?.locationCoords) || getGeoPoint(item?.coordinates) || (typeof item?.lat === "number" ? { lat: item.lat, lng: item.lng } : null);
 }
 
 function getDistanceMeters(from, to) {
@@ -128,23 +105,24 @@ function getItemImage(item) {
 }
 
 function getItemTitle(item) {
-  return item?.title || item?.name || item?.itemName || item?.itemType || item?.type || "Objet";
+  return item?.title || item?.name || item?.itemType || item?.type || "Objet";
 }
 
-function getItemOwner(item) {
+function getItemOwnerName(item) {
   const name = item?.ownerName || item?.ownerDisplayName || item?.userName || item?.displayName || "";
-  if (!name) return null;
+  if (!name) return "Utilisateur Troco";
+  if (String(name).includes("@")) return String(name).split("@")[0];
   const parts = String(name).trim().split(/\s+/);
   return parts.length > 1 ? `${parts[0]} ${parts[1].charAt(0)}.` : parts[0];
 }
 
 function getSearchFields(item) {
-  return [item.category, item.subCategory, item.type, item.itemType, item.title, item.name, item.description, item.details].map((v) => normalize(v || "")).join(" ");
+  return [item.category, item.subCategory, item.type, item.itemType, item.title, item.name, item.description].map((v) => normalize(v || "")).join(" ");
 }
 
 function matchesUnivers(item, config) {
   const fields = getSearchFields(item);
-  return config.keywords.some((keyword) => fields.includes(normalize(keyword)));
+  return config.keywords.some((kw) => fields.includes(normalize(kw)));
 }
 
 function matchesSubcat(item, subcat) {
@@ -160,215 +138,213 @@ function matchesSearch(item, search) {
 function sortItems(items, mode) {
   const copy = [...items];
   if (mode === "near") return copy.sort((a, b) => (a.distanceMeters ?? 99999999) - (b.distanceMeters ?? 99999999));
-  if (mode === "popular") return copy.sort((a, b) => Number(b.favoriteCount || b.likes || 0) - Number(a.favoriteCount || a.likes || 0));
+  if (mode === "popular") return copy.sort((a, b) => Number(b.favoriteCount || 0) - Number(a.favoriteCount || 0));
   return copy.sort((a, b) => Number(b.createdAt?.seconds || 0) - Number(a.createdAt?.seconds || 0));
 }
 
-function UniverseHero({ config, onAdd }) {
-  return (
-    <section className="troco-universe-card-strong relative mb-5 min-h-[238px] overflow-hidden rounded-[32px]">
-      {config.img ? (
-        <img src={config.img} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: "center", opacity: 0.9 }} />
-      ) : (
-        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${config.accent}34 0%, rgba(255,255,255,0.66) 100%)` }} />
-      )}
-      <div className="absolute inset-0" style={{ background: "var(--troco-universe-overlay-bottom)" }} />
-      <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 20% 10%, ${config.accent}38, transparent 36%)` }} />
+// ─── Hero ─────────────────────────────────────────────────────────────────────
 
-      <div className="relative z-10 flex min-h-[238px] flex-col justify-end p-6 text-white lg:p-7">
-        <div className="mb-3 flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/18 backdrop-blur-xl">
-            <span className="text-[18px] font-black">{config.icon}</span>
-          </div>
-          <span className="rounded-full bg-white/18 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] backdrop-blur-xl">
-            Univers
+function UniversHero({ config, onBack, onAdd }) {
+  return (
+    <section className="relative mb-5 h-[200px] overflow-hidden rounded-[24px] lg:h-[220px]">
+      {config.img ? (
+        <img src={config.img} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${config.accent}44, #0d1b2a)` }} />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+
+      <div className="relative z-10 flex h-full flex-col justify-between p-5 lg:p-6">
+        <div className="flex items-start justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30 lg:hidden"
+          >
+            <ArrowLeft size={16} strokeWidth={2.3} />
+          </button>
+          <span className="rounded-full bg-[#1ABEA3] px-3 py-1 text-[11px] font-black text-white">
+            En vedette
           </span>
         </div>
 
-        <h1 className="max-w-[360px] text-[42px] font-black leading-[0.92] tracking-[-0.065em] drop-shadow-[0_4px_18px_rgba(0,0,0,0.28)] lg:text-[48px]">
-          {config.label}
-        </h1>
-        <p className="mt-3 max-w-[360px] text-[15px] font-semibold leading-relaxed text-white/90 drop-shadow-sm">
-          {config.tagline}
-        </p>
-        <button
-          type="button"
-          onClick={onAdd}
-          className="mt-5 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-white px-5 text-[13px] font-black text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.20)] transition hover:-translate-y-0.5 active:scale-95"
-        >
-          <Plus size={15} /> Ajouter un objet {config.label.toLowerCase()}
-        </button>
+        <div>
+          <h1 className="text-[40px] font-black leading-none tracking-[-0.055em] text-white lg:text-[48px]">
+            {config.label}
+          </h1>
+          <p className="mt-1.5 max-w-[360px] text-[13px] font-medium leading-relaxed text-white/80">
+            {config.tagline}
+          </p>
+        </div>
       </div>
     </section>
   );
 }
 
-function ItemCard({ item, accent, onFavorite }) {
+// ─── Item card ────────────────────────────────────────────────────────────────
+
+function UniversItemCard({ item, accent }) {
+  const { favoriteIds, toggle } = useFavorites();
+  const isFav = favoriteIds.includes(item?.id);
   const img = getItemImage(item);
   const title = getItemTitle(item);
-  const owner = getItemOwner(item);
-  const [fav, setFav] = useState(false);
+  const owner = getItemOwnerName(item);
 
   return (
-    <Link to={`/items/${item.id}`} className="block">
-      <article className="troco-universe-card overflow-hidden bg-white/94 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
-        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+    <Link to={`/items/${item.id}`} className="group block">
+      <article className="overflow-hidden rounded-[18px] bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition hover:-translate-y-[1px] hover:shadow-[0_8px_24px_rgba(15,23,42,0.11)]">
+        <div className="relative aspect-square overflow-hidden bg-slate-100">
           {img ? (
-            <img src={img} alt={title} className="h-full w-full object-cover" />
+            <img src={img} alt={title} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center" style={{ color: accent, opacity: 0.28 }}>
-              <Sparkles size={28} strokeWidth={1.8} />
+            <div className="flex h-full w-full items-center justify-center text-3xl" style={{ color: accent, opacity: 0.3 }}>
+              {accent}
             </div>
           )}
           {item.distanceLabel && (
-            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white/88 px-2 py-1 text-[10px] font-black text-slate-700 backdrop-blur-xl">
-              <MapPin size={10} strokeWidth={2.5} style={{ color: accent }} /> {item.distanceLabel}
+            <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-black text-slate-700 backdrop-blur-sm">
+              <MapPin size={9} strokeWidth={2.5} style={{ color: accent }} />
+              {item.distanceLabel}
             </span>
           )}
           <button
             type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              setFav((value) => !value);
-              onFavorite?.(item);
-            }}
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/86 shadow-sm backdrop-blur-xl"
-            aria-label="Favori"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(item.id); }}
+            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition active:scale-95"
           >
-            <Heart size={15} strokeWidth={2.2} fill={fav ? accent : "none"} style={{ color: fav ? accent : "#64748b" }} />
+            <Heart size={13} strokeWidth={2.2} fill={isFav ? accent : "none"} style={{ color: isFav ? accent : "#94a3b8" }} />
           </button>
         </div>
         <div className="p-3">
-          <h2 className="line-clamp-1 text-[14px] font-black leading-tight tracking-[-0.03em] text-slate-900">{title}</h2>
-          <div className="mt-2 flex items-center justify-between gap-2">
-            {(item.ownerId || item.userId || item.ownerUid) ? (
-              <Link
-                to={`/users/${item.ownerId || item.userId || item.ownerUid}`}
-                onClick={(e) => e.stopPropagation()}
-                className="line-clamp-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition-colors"
-              >
-                {owner || "Utilisateur Troco"}
-              </Link>
-            ) : (
-              <p className="line-clamp-1 text-[11px] font-semibold text-slate-500">{owner || "Utilisateur Troco"}</p>
-            )}
-            <span className="rounded-full px-2 py-1 text-[10px] font-black" style={{ background: `${accent}20`, color: accent }}>
-              Troc
-            </span>
-          </div>
+          <h2 className="line-clamp-1 text-[13px] font-extrabold leading-snug tracking-[-0.02em] text-[#0d1b2a]">
+            {title}
+          </h2>
+          <p className="mt-0.5 truncate text-[11px] font-semibold text-[#94a3b8]">{owner}</p>
         </div>
       </article>
     </Link>
   );
 }
 
-function PassionRow({ items, accent, compact = false }) {
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+
+function PassionnesList({ items, accent }) {
   const people = Array.from(
     new Map(
       items
-        .filter((item) => item.ownerName || item.ownerDisplayName || item.userName || item.ownerEmail)
-        .map((item) => [item.ownerId || item.userId || item.ownerEmail || item.id, item])
+        .filter((item) => item.ownerId || item.userId || item.ownerUid)
+        .map((item) => [item.ownerId || item.userId || item.ownerUid, item])
     ).values()
-  ).slice(0, compact ? 5 : 8);
+  ).slice(0, 5);
 
   if (!people.length) return null;
 
-  if (compact) {
-    return (
-      <section className="rounded-[28px] border border-white/85 bg-white/86 p-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur-xl">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <p className="troco-caption">Couche humaine</p>
-            <h2 className="mt-1 text-[22px] font-black leading-tight tracking-[-0.045em] text-slate-950">
-              Passionnés près de toi
-            </h2>
-          </div>
-
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-400">
-            <UsersRound size={18} />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {people.map((person) => {
-            const name = getItemOwner(person) || "Troco";
-            const avatar = person.ownerPhotoURL || person.ownerAvatar || person.userPhotoURL || null;
-            const profileId = person.ownerId || person.userId || person.ownerUid;
-
-            return (
-              <Link
-                key={person.id}
-                to={profileId ? `/users/${profileId}` : "#"}
-                className="flex items-center gap-3 rounded-[20px] border border-white/70 bg-white/72 p-3 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition hover:-translate-y-0.5 active:scale-95"
-              >
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full" style={{ background: `${accent}22` }}>
-                  {avatar ? (
-                    <img src={avatar} alt={name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[15px] font-black" style={{ color: accent }}>
-                      {name.charAt(0)}
-                    </div>
-                  )}
-
-                  <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: accent }} />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-black text-slate-900">{name}</p>
-                  <p className="mt-0.5 text-[11px] font-semibold text-slate-400">
-                    {person.distanceLabel || "local"} · passionné
-                  </p>
-                </div>
-
-                <span className="rounded-full px-2.5 py-1 text-[10px] font-black" style={{ background: `${accent}18`, color: accent }}>
-                  Troco
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-
-        <button
-          type="button"
-          className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white text-[13px] font-black text-slate-800 transition hover:bg-slate-50 active:scale-95"
-        >
-          Explorer plus de passionnés
-          <span>→</span>
-        </button>
-      </section>
-    );
-  }
-
   return (
-    <section className="mb-6">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <p className="troco-caption">Couche humaine</p>
-          <h2 className="text-[20px] font-black tracking-[-0.045em] text-slate-950">Passionnés près de toi</h2>
-        </div>
-        <UsersRound size={18} className="text-slate-400" />
-      </div>
-
-      <div className="troco-scrollbar-hide flex gap-3 overflow-x-auto pb-1">
+    <section className="rounded-[20px] border border-[#E8F1ED] bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.06)]">
+      <h3 className="mb-3 text-[13px] font-black tracking-[-0.02em] text-[#0d1b2a]">
+        Passionnés près de toi
+      </h3>
+      <div className="space-y-2.5">
         {people.map((person) => {
-          const name = getItemOwner(person) || "Troco";
+          const name = getItemOwnerName(person);
           const avatar = person.ownerPhotoURL || person.ownerAvatar || person.userPhotoURL || null;
           const profileId = person.ownerId || person.userId || person.ownerUid;
+          const exchanges = person.ownerExchangeCount || person.exchangeCount || 0;
+
           return (
-            <Link
-              key={person.id}
-              to={profileId ? `/users/${profileId}` : "#"}
-              className="min-w-[92px] rounded-[22px] border border-white/80 bg-white/82 p-3 text-center shadow-[0_10px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl transition hover:-translate-y-0.5 active:scale-95"
-            >
-              <div className="mx-auto mb-2 h-12 w-12 overflow-hidden rounded-full" style={{ background: `${accent}22` }}>
-                {avatar
-                  ? <img src={avatar} alt={name} className="h-full w-full object-cover" />
-                  : <div className="flex h-full w-full items-center justify-center text-[15px] font-black" style={{ color: accent }}>{name.charAt(0)}</div>
-                }
+            <div key={person.id} className="flex items-center gap-3">
+              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full" style={{ background: `${accent}22` }}>
+                {avatar ? (
+                  <img src={avatar} alt={name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[13px] font-black" style={{ color: accent }}>
+                    {name.charAt(0)}
+                  </div>
+                )}
+                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white" style={{ background: accent }} />
               </div>
-              <p className="line-clamp-1 text-[12px] font-black text-slate-800">{name}</p>
-              <p className="mt-1 text-[10px] font-semibold text-slate-400">{person.distanceLabel || "local"}</p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12px] font-black text-[#0d1b2a]">{name}</p>
+                {exchanges > 0 && (
+                  <p className="text-[10px] font-semibold text-[#94a3b8]">{exchanges} échanges</p>
+                )}
+              </div>
+              {profileId && (
+                <Link
+                  to={`/users/${profileId}`}
+                  className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black transition hover:opacity-80"
+                  style={{ background: `${accent}18`, color: accent }}
+                >
+                  Voir le profil
+                </Link>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        className="mt-3 w-full rounded-full border border-[#E4ECE8] py-2 text-[11px] font-black text-[#64748b] transition hover:bg-[#F5F5F3]"
+      >
+        Voir tous les profils
+      </button>
+    </section>
+  );
+}
+
+function CategoriesPopulaires({ config, subcat, onSelect }) {
+  const acc = config.accent;
+  return (
+    <section className="mt-3 rounded-[20px] border border-[#E8F1ED] bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.06)]">
+      <h3 className="mb-3 text-[13px] font-black tracking-[-0.02em] text-[#0d1b2a]">
+        Catégories populaires
+      </h3>
+      <div className="flex flex-wrap gap-1.5">
+        {config.subcats.map((label) => {
+          const active = subcat === label;
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => onSelect(active ? "Tous" : label)}
+              className="rounded-full border px-3 py-1.5 text-[11px] font-black transition active:scale-95"
+              style={{
+                background: active ? acc : `${acc}12`,
+                borderColor: active ? acc : `${acc}30`,
+                color: active ? "white" : acc,
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function DerniersObjets({ items, accent }) {
+  const last = items.slice(0, 4);
+  if (!last.length) return null;
+
+  return (
+    <section className="mt-3 rounded-[20px] border border-[#E8F1ED] bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.06)]">
+      <h3 className="mb-3 text-[13px] font-black tracking-[-0.02em] text-[#0d1b2a]">
+        Derniers dans cet univers
+      </h3>
+      <div className="grid grid-cols-4 gap-1.5">
+        {last.map((item) => {
+          const img = getItemImage(item);
+          return (
+            <Link key={item.id} to={`/items/${item.id}`} className="group block">
+              <div className="aspect-square overflow-hidden rounded-[10px] bg-slate-100">
+                {img ? (
+                  <img src={img} alt={getItemTitle(item)} className="h-full w-full object-cover transition group-hover:scale-[1.04]" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs" style={{ color: accent, opacity: 0.4 }}>?</div>
+                )}
+              </div>
+              <p className="mt-1 line-clamp-1 text-[9px] font-bold text-[#64748b]">{getItemTitle(item)}</p>
             </Link>
           );
         })}
@@ -377,37 +353,14 @@ function PassionRow({ items, accent, compact = false }) {
   );
 }
 
-function PopularCategoriesPanel({ config }) {
-  return (
-    <section className="mt-5 rounded-[28px] border border-white/85 bg-white/82 p-5 shadow-[0_16px_42px_rgba(15,23,42,0.05)] backdrop-blur-xl">
-      <h3 className="text-[16px] font-black tracking-[-0.035em] text-slate-950">
-        Catégories populaires
-      </h3>
-
-      <div className="mt-4 grid grid-cols-4 gap-3">
-        {config.subcats.slice(0, 4).map((label) => (
-          <div key={label} className="text-center">
-            <div
-              className="mx-auto flex h-12 w-12 items-center justify-center rounded-full text-[16px] font-black"
-              style={{ background: `${config.accent}20`, color: config.accent }}
-            >
-              {label.charAt(0)}
-            </div>
-            <p className="mt-2 line-clamp-1 text-[11px] font-bold text-slate-500">
-              {label}
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function UniversDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const config = UNIVERS_CONFIG[id] || UNIVERS_CONFIG.musique;
+  const accent = config.accent;
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -423,7 +376,7 @@ export default function UniversDetailPage() {
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (position) => setUserPosition({ lat: position.coords.latitude, lng: position.coords.longitude }),
+      (pos) => setUserPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => setUserPosition(null),
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
     );
@@ -432,37 +385,22 @@ export default function UniversDetailPage() {
   useEffect(() => {
     setLoading(true);
     const q = query(collection(db, "items"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const loaded = snapshot.docs
-          .map((document) => ({ id: document.id, ...document.data() }))
-          .filter((item) => item.status !== "deleted")
-          .filter((item) => !belongsToUser(item, user?.uid));
-        setItems(loaded);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Erreur chargement univers :", error);
-        setItems([]);
-        setLoading(false);
-      }
-    );
-    return () => unsubscribe();
+    const unsub = onSnapshot(q, (snap) => {
+      const loaded = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((item) => item.status !== "deleted")
+        .filter((item) => !belongsToUser(item, user?.uid));
+      setItems(loaded);
+      setLoading(false);
+    }, () => { setItems([]); setLoading(false); });
+    return () => unsub();
   }, [user?.uid]);
-
-  useEffect(() => {
-    if (!search.trim() || !user?.uid) return;
-    const timer = window.setTimeout(() => trackInterest(user.uid, id, "search_universe"), 650);
-    return () => window.clearTimeout(timer);
-  }, [id, search, user?.uid]);
 
   const visibleItems = useMemo(() => {
     const enriched = items.map((item) => {
       const distanceMeters = getDistanceMeters(userPosition, getItemGeoPoint(item));
       return { ...item, distanceMeters, distanceLabel: formatDistance(distanceMeters) };
     });
-
     return sortItems(
       enriched
         .filter((item) => matchesUnivers(item, config))
@@ -472,37 +410,36 @@ export default function UniversDetailPage() {
     );
   }, [config, items, search, sort, subcat, userPosition]);
 
-  const featuredItems = visibleItems.slice(0, 6);
+  const SORT_OPTIONS = [
+    { value: "near", label: "Autour de moi", icon: Navigation },
+    { value: "recent", label: "Récents" },
+    { value: "popular", label: "Populaires" },
+  ];
 
   return (
-    <div className="troco-universe-screen min-h-screen pb-28">
-      <main className="mx-auto w-full max-w-[1200px] px-4 pt-[max(14px,env(safe-area-inset-top))] lg:px-8 lg:pt-8">
-        <header className="mb-4 flex items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} className="troco-floating-action flex h-10 w-10 items-center justify-center" aria-label="Retour">
-            <ArrowLeft size={17} className="text-slate-700" />
+    <div className="min-h-screen pb-28 lg:pb-10">
+      <main className="mx-auto w-full max-w-[1200px] px-4 pt-[max(14px,env(safe-area-inset-top))] lg:px-8 lg:pt-6">
+
+        {/* Back button desktop */}
+        <div className="mb-4 hidden items-center gap-3 lg:flex">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E4ECE8] bg-white text-[#0d1b2a] shadow-sm transition hover:bg-[#F5F5F3]"
+          >
+            <ArrowLeft size={15} strokeWidth={2.3} />
           </button>
-          <p className="text-[12px] font-black uppercase tracking-[0.16em] text-slate-400">Univers</p>
-          <button type="button" className="troco-floating-action flex h-10 w-10 items-center justify-center" aria-label="Filtres">
-            <SlidersHorizontal size={16} className="text-slate-700" />
-          </button>
-        </header>
+          <Link to="/univers" className="text-[12px] font-bold text-[#94a3b8] transition hover:text-[#1ABEA3]">
+            Tous les univers
+          </Link>
+        </div>
 
-        <UniverseHero config={config} onAdd={() => navigate("/add-item", { state: { universe: id, category: config.label } })} />
+        {/* Hero */}
+        <UniversHero config={config} onBack={() => navigate(-1)} onAdd={() => navigate("/add", { state: { universe: id } })} />
 
-        <section className="mb-4">
-          <div className="troco-search h-[54px] border-white/95 bg-white/95 px-4 shadow-[0_14px_34px_rgba(15,23,42,0.055)]">
-            <Search size={17} className="mr-2 text-slate-400" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={`Rechercher dans ${config.label}...`}
-              className="h-full min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-800 outline-none placeholder:text-slate-400"
-            />
-          </div>
-        </section>
-
-        <section className="mb-4">
-          <div className="troco-scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+        {/* Subcategory pills */}
+        <div className="-mx-4 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2 pb-1">
             {["Tous", ...config.subcats].map((label) => {
               const active = subcat === label;
               return (
@@ -510,12 +447,12 @@ export default function UniversDetailPage() {
                   key={label}
                   type="button"
                   onClick={() => setSubcat(label)}
-                  className="shrink-0 rounded-full border px-4.5 py-2.5 text-[12px] font-black transition hover:-translate-y-0.5 active:scale-95"
+                  className="shrink-0 rounded-full border px-4 py-2 text-[12px] font-black transition active:scale-95"
                   style={{
-                    background: active ? config.accent : "rgba(255,255,255,0.86)",
-                    borderColor: active ? config.accent : "rgba(255,255,255,0.9)",
+                    background: active ? accent : "white",
+                    borderColor: active ? accent : "#E4ECE8",
                     color: active ? "white" : "#475569",
-                    boxShadow: active ? `0 10px 22px ${config.accent}30` : "0 8px 20px rgba(15,23,42,0.035)",
+                    boxShadow: active ? `0 8px 20px ${accent}30` : "0 2px 8px rgba(15,23,42,0.04)",
                   }}
                 >
                   {label}
@@ -523,100 +460,121 @@ export default function UniversDetailPage() {
               );
             })}
           </div>
-        </section>
+        </div>
 
-        <section className="mb-6 rounded-[24px] border border-white/85 bg-white/86 p-2 shadow-[0_12px_30px_rgba(15,23,42,0.045)] backdrop-blur-xl">
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              ["near", "Plus proches"],
-              ["recent", "Récents"],
-              ["popular", "Populaires"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setSort(value)}
-                className="rounded-[18px] px-2 py-3 text-[12px] font-black transition hover:bg-white/60 active:scale-95"
-                style={{ background: sort === value ? `${config.accent}20` : "transparent", color: sort === value ? config.accent : "#64748b" }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_330px] lg:gap-8 lg:items-start xl:grid-cols-[minmax(0,1fr)_360px]">
-
-        {/* col objets */}
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <p className="troco-caption" style={{ color: config.accent }}>{config.heroTitle}</p>
-              <h2 className="text-[25px] font-black leading-tight tracking-[-0.055em] text-slate-950">
-                {visibleItems.length ? `${visibleItems.length} objets trouvés` : "Objets autour de toi"}
-              </h2>
-            </div>
-
-            <div className="hidden items-center gap-2 lg:flex">
-              <button
-                type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
-                style={{ background: `${config.accent}18`, color: config.accent }}
-                aria-label="Vue grille"
-              >
-                ⊞
-              </button>
-              <button
-                type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/80 text-slate-500 shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
-                aria-label="Vue liste"
-              >
-                ☰
-              </button>
-            </div>
+        {/* Sort + search row */}
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {SORT_OPTIONS.map(({ value, label, icon: Icon }) => {
+              const active = sort === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSort(value)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-black transition"
+                  style={{
+                    background: active ? `${accent}14` : "white",
+                    borderColor: active ? `${accent}50` : "#E4ECE8",
+                    color: active ? accent : "#64748b",
+                  }}
+                >
+                  {Icon && <Icon size={12} strokeWidth={2.3} />}
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
-          {loading ? (
-            <div className="rounded-[28px] border border-white/80 bg-white/72 p-8 text-center text-[13px] font-semibold text-slate-500 shadow-sm backdrop-blur-xl">
-              Chargement des objets…
-            </div>
-          ) : visibleItems.length ? (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-              {visibleItems.map((item) => (
-                <ItemCard key={item.id} item={item} accent={config.accent} onFavorite={() => user?.uid && trackInterest(user.uid, id, "favorite_item")} />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-[28px] border border-white/80 bg-white/78 p-7 text-center shadow-[0_12px_28px_rgba(15,23,42,0.04)] backdrop-blur-xl">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: `${config.accent}20`, color: config.accent }}>
-                <Search size={22} />
-              </div>
-              <h3 className="text-[18px] font-black tracking-[-0.04em] text-slate-900">Aucun objet pour l’instant</h3>
-              <p className="mt-2 text-[13px] font-medium leading-relaxed text-slate-500">
-                Essaie une autre recherche ou ajoute le premier objet dans cet univers.
-              </p>
-              <button type="button" onClick={() => navigate("/add-item", { state: { universe: id, category: config.label } })} className="mt-5 rounded-full px-5 py-3 text-[13px] font-black text-white" style={{ background: config.accent }}>
-                Ajouter un objet
-              </button>
-            </div>
+          <button
+            type="button"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E4ECE8] bg-white text-[#0d1b2a] shadow-sm"
+          >
+            <SlidersHorizontal size={14} strokeWidth={2.2} />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="mt-3 flex h-[46px] items-center gap-2.5 rounded-[14px] border border-[#E4ECE8] bg-white px-3.5 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <Search size={16} strokeWidth={2.1} className="shrink-0 text-[#94a3b8]" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Rechercher dans ${config.label}…`}
+            className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-[#0d1b2a] outline-none placeholder:text-[#94a3b8]"
+          />
+        </div>
+
+        {/* Count */}
+        <div className="mt-3 mb-4 flex items-center gap-2">
+          <p className="text-[13px] font-black text-[#0d1b2a]">
+            {loading ? "Chargement…" : `${visibleItems.length} objet${visibleItems.length !== 1 ? "s" : ""} trouvé${visibleItems.length !== 1 ? "s" : ""}`}
+          </p>
+          {subcat !== "Tous" && (
+            <span
+              className="rounded-full px-2.5 py-0.5 text-[10px] font-black"
+              style={{ background: `${accent}18`, color: accent }}
+            >
+              {subcat} ×
+            </span>
           )}
-          {/* Passionnés mobile — sous les objets */}
-          <div className="mt-8 lg:hidden">
-            <PassionRow items={featuredItems} accent={config.accent} />
-          </div>
-        </section>
+        </div>
 
-        {/* Passionnés desktop — sidebar droite sticky */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-8">
-            <PassionRow items={featuredItems} accent={config.accent} compact />
-            <PopularCategoriesPanel config={config} />
-          </div>
-        </aside>
+        {/* Main 2-col layout */}
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
 
-        </div>{/* fin grid */}
+          {/* Items grid */}
+          <section>
+            {loading ? (
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="aspect-square animate-pulse rounded-[18px] bg-slate-100" />
+                ))}
+              </div>
+            ) : visibleItems.length ? (
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {visibleItems.map((item) => (
+                  <UniversItemCard key={item.id} item={item} accent={accent} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[20px] border border-[#E4ECE8] bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full" style={{ background: `${accent}18`, color: accent }}>
+                  <Search size={20} />
+                </div>
+                <h3 className="text-[16px] font-black text-[#0d1b2a]">Aucun objet trouvé</h3>
+                <p className="mt-1.5 text-[13px] font-medium text-[#94a3b8]">
+                  Essaie un autre filtre ou ajoute le premier objet.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/add")}
+                  className="mt-4 flex items-center gap-2 rounded-full px-4 py-2.5 text-[12px] font-black text-white mx-auto"
+                  style={{ background: accent }}
+                >
+                  <Plus size={14} /> Ajouter un objet
+                </button>
+              </div>
+            )}
+
+            {/* Passionnés mobile */}
+            <div className="mt-6 lg:hidden">
+              <PassionnesList items={visibleItems} accent={accent} />
+              <CategoriesPopulaires config={config} subcat={subcat} onSelect={setSubcat} />
+            </div>
+          </section>
+
+          {/* Sidebar desktop */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-6 space-y-3">
+              <PassionnesList items={visibleItems} accent={accent} />
+              <CategoriesPopulaires config={config} subcat={subcat} onSelect={setSubcat} />
+              <DerniersObjets items={visibleItems.slice(-4)} accent={accent} />
+            </div>
+          </aside>
+
+        </div>
       </main>
-
     </div>
   );
 }

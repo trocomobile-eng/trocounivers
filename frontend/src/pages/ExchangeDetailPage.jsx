@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { sendPushNotification } from "../utils/sendPushNotification";
 import {
   collection,
   doc,
@@ -1402,6 +1403,13 @@ export default function ExchangeDetailPage() {
         notificationType: "proposal_accepted",
         updatedAt: serverTimestamp(),
       });
+
+      sendPushNotification(
+        exchange.senderId,
+        "Ton troc a été accepté ! 🎉",
+        `Pour : ${exchange.requestedItemTitle || exchange.offeredItemTitle || "ton objet"}`,
+        `/exchanges/${exchange.id}`
+      );
 
       await loadExchange();
     } catch (error) {

@@ -244,7 +244,7 @@ function ItemCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              toggleFavorite();
+              toggleFavorite(item.id);
             }}
             aria-label="Ajouter aux favoris"
           >

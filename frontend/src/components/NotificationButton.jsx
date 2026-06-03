@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, CalendarDays, CheckCircle2, MapPin, MessageCircle, X } from "lucide-react";
+import { Bell, BellOff, CalendarDays, CheckCircle2, MapPin, MessageCircle, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { usePushNotifications } from "../hooks/usePushNotifications";
 
 function clean(v = "") { return String(v || "").trim(); }
 function shortName(v = "") {
@@ -80,9 +81,17 @@ function NotificationRow({ item, onNavigate }) {
 export default function NotificationButton({ className = "" }) {
   const { user } = useAuth();
   const navigate  = useNavigate();
+  const { pushStatus, enablePushNotifications } = usePushNotifications(user?.uid);
 
   const [open, setOpen]         = useState(false);
   const [exchanges, setExchanges] = useState([]);
+  const [enabling, setEnabling] = useState(false);
+
+  async function handleEnablePush() {
+    setEnabling(true);
+    await enablePushNotifications();
+    setEnabling(false);
+  }
 
   // ── Temps réel avec onSnapshot ──────────────────────────────────────────
   useEffect(() => {
@@ -156,6 +165,24 @@ export default function NotificationButton({ className = "" }) {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
+              {pushStatus !== "granted" && pushStatus !== "unsupported" && (
+                <button
+                  type="button"
+                  onClick={handleEnablePush}
+                  disabled={enabling || pushStatus === "denied"}
+                  className="mb-3 flex w-full items-center gap-3 rounded-[14px] border border-[#D4EFE9] bg-[#F0FAF7] px-4 py-3 text-left transition active:scale-[0.98] disabled:opacity-50"
+                >
+                  <BellOff size={15} strokeWidth={2.3} className="shrink-0 text-[#1ABEA3]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-black text-[#0d1b2a]">
+                      {pushStatus === "denied" ? "Notifications bloquées" : enabling ? "Activation…" : "Activer les notifications push"}
+                    </p>
+                    <p className="text-[10px] font-medium text-[#94a3b8]">
+                      {pushStatus === "denied" ? "Autorise dans les réglages du navigateur" : "Sois alerté en temps réel pour tes trocs"}
+                    </p>
+                  </div>
+                </button>
+              )}
               <div className="space-y-1.5">
                 {count === 0 ? (
                   <div className="rounded-[14px] bg-[#F0FAF7] p-4 text-[13px] font-medium text-[#0f9f9a]">
@@ -190,6 +217,24 @@ export default function NotificationButton({ className = "" }) {
                 <X size={15} />
               </button>
             </div>
+            {pushStatus !== "granted" && pushStatus !== "unsupported" && (
+              <button
+                type="button"
+                onClick={handleEnablePush}
+                disabled={enabling || pushStatus === "denied"}
+                className="mb-3 flex w-full items-center gap-3 rounded-[14px] border border-[#D4EFE9] bg-[#F0FAF7] px-4 py-3 text-left transition active:scale-[0.98] disabled:opacity-50"
+              >
+                <BellOff size={14} strokeWidth={2.3} className="shrink-0 text-[#1ABEA3]" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-black text-[#0d1b2a]">
+                    {pushStatus === "denied" ? "Notifications bloquées" : enabling ? "Activation…" : "Activer les notifications push"}
+                  </p>
+                  <p className="text-[10px] font-medium text-[#94a3b8]">
+                    {pushStatus === "denied" ? "Autorise dans les réglages du navigateur" : "Alertes en temps réel pour tes trocs"}
+                  </p>
+                </div>
+              </button>
+            )}
             <div className="space-y-1.5">
               {count === 0 ? (
                 <div className="rounded-[14px] bg-[#F0FAF7] p-4 text-[13px] font-medium text-[#0f9f9a]">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { sendPushNotification } from "../utils/sendPushNotification";
 import {
   addDoc,
   collection,
@@ -389,6 +390,13 @@ export default function ProposeExchangePage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+
+      sendPushNotification(
+        ownerId,
+        `${getCurrentUserName(user)} te propose un troc`,
+        `Pour : ${requestedTitle}`,
+        "/exchanges"
+      );
 
       navigate("/exchanges", { replace: true });
     } catch (err) {
