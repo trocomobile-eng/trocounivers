@@ -303,23 +303,24 @@ export default function MobileFeedPage() {
             onClick={() => setShowFilters?.(false)}
           />
 
-          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-[32px] bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-5 shadow-[0_-20px_60px_rgba(15,23,42,0.18)]">
-            <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-[#D7E4DF]" />
-
-            <div className="flex items-center justify-between">
-              <h3 className="text-[20px] font-black tracking-[-0.04em] text-[#102033]">
-                Filtres
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowFilters?.(false)}
-                className="text-[13px] font-black text-[#1ABEA3]"
-              >
-                Fermer
-              </button>
+          <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[75vh] flex-col rounded-t-[32px] bg-white shadow-[0_-20px_60px_rgba(15,23,42,0.18)]">
+            <div className="shrink-0 px-5 pt-5">
+              <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-[#D7E4DF]" />
+              <div className="flex items-center justify-between">
+                <h3 className="text-[20px] font-black tracking-[-0.04em] text-[#102033]">
+                  Filtres
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowFilters?.(false)}
+                  className="text-[13px] font-black text-[#1ABEA3]"
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
 
-            <div className="mt-6">
+            <div className="flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4">
               {/* Géolocalisation */}
               {!locationEnabled && (
                 <button
