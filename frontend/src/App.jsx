@@ -34,6 +34,7 @@ const UserItemsPage = lazy(() => import("./pages/UserItemsPage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
 const InfoPage = lazy(() => import("./pages/InfoPage"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 const TrocoDossierPage = lazy(() => import("./pages/TrocoDossierPage"));
 const ChoosePlacePage = lazy(() => import("./pages/ChoosePlacePage"));
 const MeetingSummaryPage = lazy(() => import("./pages/MeetingSummaryPage"));
@@ -92,8 +93,9 @@ export default function App() {
       <Route path="/about" element={<InfoPage type="about" />} />
       <Route path="/contact" element={<InfoPage type="contact" />} />
       <Route path="/safety" element={<InfoPage type="safety" />} />
-      <Route path="/privacy" element={<InfoPage type="privacy" />} />
-      <Route path="/terms" element={<InfoPage type="terms" />} />
+      <Route path="/privacy" element={<LegalPage type="privacy" />} />
+      <Route path="/terms" element={<LegalPage type="cgu" />} />
+      <Route path="/mentions" element={<LegalPage type="mentions" />} />
       <Route path="/troco-dossier" element={<TrocoDossierPage />} />
 
       <Route path="/onboarding" element={<OnboardingPage />} />

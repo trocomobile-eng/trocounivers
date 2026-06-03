@@ -82,6 +82,11 @@ export default function DesktopSidebar() {
         >
           Aide / Contact
         </button>
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 px-3">
+          <button type="button" onClick={() => navigate("/terms")} className="text-[11px] font-semibold text-slate-400 transition hover:text-[#1ABEA3]">CGU</button>
+          <button type="button" onClick={() => navigate("/privacy")} className="text-[11px] font-semibold text-slate-400 transition hover:text-[#1ABEA3]">Confidentialité</button>
+          <button type="button" onClick={() => navigate("/mentions")} className="text-[11px] font-semibold text-slate-400 transition hover:text-[#1ABEA3]">Mentions légales</button>
+        </div>
       </div>
     </aside>
   );

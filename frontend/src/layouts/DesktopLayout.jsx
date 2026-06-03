@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import NotificationButton from "../components/NotificationButton";
 import DesktopSidebar from "./DesktopSidebar";
+import TrocoFooter from "../components/TrocoFooter";
 
 function getPhoto(user) {
   return user?.photoURL || user?.photoUrl || user?.avatarUrl || "";
@@ -56,6 +57,8 @@ export default function DesktopLayout({ children }) {
           <main className="flex-1 p-6">
             {children}
           </main>
+
+          <TrocoFooter compact />
         </div>
       </div>
     </div>

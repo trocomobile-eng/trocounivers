@@ -897,6 +897,28 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* Liens légaux */}
+      <section className="mt-10 border-t border-[#E8F1ED] pt-6">
+        <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+          Informations légales
+        </p>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <Link to="/terms" className="text-[13px] font-semibold text-slate-500 hover:text-[#1ABEA3]">
+            Conditions d'utilisation
+          </Link>
+          <Link to="/privacy" className="text-[13px] font-semibold text-slate-500 hover:text-[#1ABEA3]">
+            Confidentialité
+          </Link>
+          <Link to="/mentions" className="text-[13px] font-semibold text-slate-500 hover:text-[#1ABEA3]">
+            Mentions légales
+          </Link>
+          <a href="mailto:troco.mobile@gmail.com" className="text-[13px] font-semibold text-slate-400 hover:text-[#1ABEA3]">
+            Contact
+          </a>
+        </div>
+        <p className="mt-4 text-[11px] font-medium text-slate-300">© 2025 Troco</p>
+      </section>
+
       <PreferenceModal
         open={preferencesOpen}
         mode={preferenceMode}
