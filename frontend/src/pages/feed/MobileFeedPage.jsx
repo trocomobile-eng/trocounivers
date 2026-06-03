@@ -136,7 +136,7 @@ function MobileItemCard({ item, favorite, onToggleFavorite }) {
   return (
     <Link
       to={`/items/${item.id}`}
-      className="group block overflow-hidden rounded-[20px] bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition active:scale-[0.98]"
+      className="group block overflow-hidden rounded-[14px] bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition active:scale-[0.98]"
     >
       <div className="relative overflow-hidden bg-[#F0F0EE]">
         <img
@@ -153,52 +153,34 @@ function MobileItemCard({ item, favorite, onToggleFavorite }) {
             onToggleFavorite(item.id);
           }}
           className={[
-            "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 backdrop-blur-sm shadow-[0_2px_8px_rgba(15,23,42,0.08)] transition active:scale-95",
+            "absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/70 backdrop-blur-sm shadow-[0_2px_8px_rgba(15,23,42,0.08)] transition active:scale-95",
             favorite ? "text-[#1ABEA3]" : "text-slate-400",
           ].join(" ")}
           aria-label="Ajouter aux favoris"
         >
-          <Heart size={15} fill={favorite ? "currentColor" : "none"} strokeWidth={2.1} />
+          <Heart size={11} fill={favorite ? "currentColor" : "none"} strokeWidth={2.1} />
         </button>
 
+        <span className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 rounded-full bg-black/40 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-sm">
+          {item.distanceLabel || location}
+        </span>
+
         {item.isMatch && (
-          <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-[#1ABEA3] px-2 py-0.5 text-[10px] font-black text-white shadow-sm">
+          <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-[#1ABEA3] px-1.5 py-0.5 text-[9px] font-black text-white shadow-sm">
             <Zap size={9} strokeWidth={2.5} fill="currentColor" />
             Match
           </span>
         )}
       </div>
 
-      <div className="p-3">
-        <h2 className="line-clamp-2 text-[14px] font-extrabold leading-snug tracking-[-0.02em] text-[#0d1b2a]">
+      <div className="p-2">
+        <h2 className="line-clamp-1 text-[11px] font-extrabold leading-snug tracking-[-0.01em] text-[#0d1b2a]">
           {title}
         </h2>
-
-        {getOwnerProfilePath(item) ? (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              navigate(getOwnerProfilePath(item));
-            }}
-            className="mt-2 flex min-w-0 items-center gap-1.5 rounded-full text-left transition active:scale-[0.98]"
-          >
-            <OwnerAvatar item={item} name={ownerName} />
-            <span className="min-w-0 truncate text-[12px] font-bold text-[#1ABEA3]">
-              {ownerName}
-            </span>
-          </button>
-        ) : (
-          <div className="mt-2 flex min-w-0 items-center gap-1.5">
-            <OwnerAvatar item={item} name={ownerName} />
-            <span className="min-w-0 truncate text-[12px] font-bold text-[#1ABEA3]">
-              {ownerName}
-            </span>
-          </div>
-        )}
-
-        <p className="mt-1.5 truncate text-[11.5px] font-medium text-[#94a3b8]">
+        <p className="mt-0.5 truncate text-[10px] font-semibold text-[#1ABEA3]">
+          {ownerName}
+        </p>
+        <p className="truncate text-[9.5px] font-medium text-[#94a3b8]">
           {[location, relativeTime].filter(Boolean).join(" · ")}
         </p>
       </div>
@@ -413,7 +395,7 @@ export default function MobileFeedPage() {
       ) : viewMode === "map" ? (
         <TrocoMap items={visibleItems} className="mt-2 h-[calc(100vh-280px)]" onBackToList={() => setViewMode("list")} />
       ) : (
-        <section className="mt-2 grid grid-cols-2 gap-3">
+        <section className="mt-2 grid grid-cols-3 gap-2">
           {visibleItems.map((item) => (
             <MobileItemCard
               key={item.id}
