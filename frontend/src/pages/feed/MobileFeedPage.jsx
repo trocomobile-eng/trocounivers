@@ -8,7 +8,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import CategoryPills from "../../components/CategoryPills";
 import TrocoPageHeader from "../../components/TrocoPageHeader";
-import MobileLayout from "../../layouts/MobileLayout";
 import useFeedItems, { getItemImage, getItemTitle, getItemLocation } from "../../hooks/useFeedItems";
 
 const RADIUS_OPTIONS = [
@@ -248,7 +247,7 @@ export default function MobileFeedPage() {
   const hasActiveFilters = search.trim() !== "" || activeCategory !== "Tout" || radius !== 3000;
 
   return (
-    <MobileLayout>
+    <>
       {/* Pull to refresh indicator */}
       {(pulling || refreshing) && (
         <div
@@ -425,6 +424,6 @@ export default function MobileFeedPage() {
           ))}
         </section>
       )}
-    </MobileLayout>
+    </>
   );
 }

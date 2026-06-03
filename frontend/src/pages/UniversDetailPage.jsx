@@ -5,7 +5,6 @@ import { ArrowLeft, Heart, MapPin, Plus, Search, SlidersHorizontal, Sparkles, Us
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import { trackInterest } from "../utils/interestTracking";
 
 import imgJeux from "../assets/univers/univ-jeux.png";
@@ -618,7 +617,6 @@ export default function UniversDetailPage() {
         </div>{/* fin grid */}
       </main>
 
-      <BottomNav />
     </div>
   );
 }

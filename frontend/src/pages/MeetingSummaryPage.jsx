@@ -29,7 +29,6 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import BottomNav from "../components/BottomNav";
 import { TrocoCard, TrocoButton, TrocoPill } from "../components/ui";
 
 import {
@@ -729,7 +728,6 @@ export default function MeetingSummaryPage() {
         <div className="mx-auto w-full max-w-5xl rounded-[28px] bg-white/74 p-7 text-center text-sm font-bold text-slate-500 shadow-[0_8px_30px_rgba(15,23,42,0.035)]">
           Chargement de la rencontre...
         </div>
-        <BottomNav />
       </main>
     );
   }
@@ -762,7 +760,6 @@ export default function MeetingSummaryPage() {
           </div>
         </div>
 
-        <BottomNav />
       </main>
     );
   }
@@ -945,7 +942,6 @@ export default function MeetingSummaryPage() {
         </div>
       </div>
 
-      <BottomNav />
     </main>
   );
 }

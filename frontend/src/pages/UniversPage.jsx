@@ -1,7 +1,6 @@
 import { ArrowLeft, ArrowRight, ChevronRight, Search, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-import BottomNav from "../components/BottomNav";
 
 import imgJeux from "../assets/univers/univ-jeux.png";
 import imgMusique from "../assets/univers/univ-musique.png";
@@ -315,7 +314,6 @@ function MobileUniversPage() {
         </section>
       </main>
 
-      <BottomNav />
     </div>
   );
 }

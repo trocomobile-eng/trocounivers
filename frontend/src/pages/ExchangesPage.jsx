@@ -12,7 +12,6 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
-import BottomNav from "../components/BottomNav";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 
 import {
@@ -500,7 +499,7 @@ export default function ExchangesPage() {
           </div>
         </div>
 
-        <BottomNav />
+
       </div>
     );
   }
@@ -567,7 +566,7 @@ export default function ExchangesPage() {
         )}
       </main>
 
-      <BottomNav />
+
     </div>
   );
 }
