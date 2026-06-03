@@ -148,7 +148,7 @@ export default function PreferenceModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center overflow-hidden sm:items-center">
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center overflow-hidden pb-[84px] sm:items-center sm:pb-0">
       <button
         type="button"
         className="absolute inset-0 bg-slate-950/28 backdrop-blur-[6px]"
