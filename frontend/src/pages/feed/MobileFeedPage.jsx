@@ -279,6 +279,20 @@ export default function MobileFeedPage() {
         <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
         </div>
+
+        {/* Bannière localisation */}
+        {!locationEnabled && (
+          <button
+            type="button"
+            onClick={requestLocation}
+            className="flex w-full items-center gap-3 rounded-[16px] border border-[#D4EFE9] bg-[#F0FAF7] px-4 py-3 text-left transition active:scale-[0.98]"
+          >
+            <Navigation size={15} strokeWidth={2.3} className="shrink-0 text-[#1ABEA3]" />
+            <p className="text-[12px] font-bold text-[#0f9f9a]">
+              Activer ma position pour voir les distances
+            </p>
+          </button>
+        )}
       </section>
 
       {/* Panneau filtres */}
