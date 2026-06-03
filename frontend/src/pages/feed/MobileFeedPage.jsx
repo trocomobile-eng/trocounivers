@@ -309,7 +309,7 @@ export default function MobileFeedPage() {
             onClick={() => setShowFilters?.(false)}
           />
 
-          <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[75vh] flex-col rounded-t-[32px] bg-white shadow-[0_-20px_60px_rgba(15,23,42,0.18)]">
+          <div className="fixed inset-x-0 bottom-[84px] z-50 flex max-h-[calc(75vh-84px)] flex-col rounded-t-[32px] bg-white shadow-[0_-20px_60px_rgba(15,23,42,0.18)]">
             <div className="shrink-0 px-5 pt-5">
               <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-[#D7E4DF]" />
               <div className="flex items-center justify-between">
