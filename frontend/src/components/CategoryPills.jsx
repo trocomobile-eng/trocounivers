@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   BookOpen,
   Grid2X2,
@@ -21,6 +22,12 @@ const CATEGORIES = [
 ];
 
 export default function CategoryPills({ activeCategory = "Tout", onChange }) {
+  const activeRef = useRef(null);
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeCategory]);
+
   return (
     <div className="flex items-center gap-2">
       {CATEGORIES.map(({ label, icon: Icon }) => {
@@ -29,6 +36,7 @@ export default function CategoryPills({ activeCategory = "Tout", onChange }) {
         return (
           <button
             key={label}
+            ref={active ? activeRef : null}
             type="button"
             onClick={() => onChange?.(label)}
             className={[
