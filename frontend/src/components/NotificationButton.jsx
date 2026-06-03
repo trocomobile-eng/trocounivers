@@ -137,8 +137,48 @@ export default function NotificationButton({ className = "" }) {
       {/* Panneau */}
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-50 w-[320px] rounded-[20px] border border-[#E4ECE8] bg-white p-3 shadow-[0_8px_32px_rgba(15,23,42,0.12)]">
+          <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] lg:bg-transparent lg:backdrop-blur-none" onClick={() => setOpen(false)} />
+
+          {/* Mobile : bottom sheet */}
+          <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[75vh] flex-col rounded-t-[28px] bg-white shadow-[0_-16px_48px_rgba(15,23,42,0.16)] lg:hidden">
+            <div className="shrink-0 px-5 pt-4 pb-3">
+              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D7E4DF]" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[16px] font-extrabold text-[#0d1b2a]">Notifications</p>
+                  <p className="text-[11px] font-medium text-slate-400">
+                    {count > 0 ? `${count} action${count > 1 ? "s" : ""} en attente` : "Tout est à jour"}
+                  </p>
+                </div>
+                <button type="button" onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F3] text-slate-500">
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
+              <div className="space-y-1.5">
+                {count === 0 ? (
+                  <div className="rounded-[14px] bg-[#F0FAF7] p-4 text-[13px] font-medium text-[#0f9f9a]">
+                    Aucune action en attente. Tes prochains trocs apparaîtront ici.
+                  </div>
+                ) : (
+                  notifications.map((item, i) => (
+                    <NotificationRow key={i} item={item} onNavigate={() => goTo(item)} />
+                  ))
+                )}
+              </div>
+              <Link
+                to="/exchanges"
+                onClick={() => setOpen(false)}
+                className="troco-primary-btn mt-3 flex h-10 w-full items-center justify-center rounded-full text-[13px]"
+              >
+                Voir tous les trocs
+              </Link>
+            </div>
+          </div>
+
+          {/* Desktop : dropdown */}
+          <div className="absolute right-0 top-12 z-50 hidden w-[320px] rounded-[20px] border border-[#E4ECE8] bg-white p-3 shadow-[0_8px_32px_rgba(15,23,42,0.12)] lg:block">
             <div className="mb-3 flex items-center justify-between px-1">
               <div>
                 <p className="text-[14px] font-extrabold text-[#0d1b2a]">Notifications</p>
@@ -150,7 +190,6 @@ export default function NotificationButton({ className = "" }) {
                 <X size={15} />
               </button>
             </div>
-
             <div className="space-y-1.5">
               {count === 0 ? (
                 <div className="rounded-[14px] bg-[#F0FAF7] p-4 text-[13px] font-medium text-[#0f9f9a]">
@@ -162,7 +201,6 @@ export default function NotificationButton({ className = "" }) {
                 ))
               )}
             </div>
-
             <Link
               to="/exchanges"
               onClick={() => setOpen(false)}
