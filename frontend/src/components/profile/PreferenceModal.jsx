@@ -184,7 +184,7 @@ export default function PreferenceModal({
           </div>
         </header>
 
-        <div className="max-h-[340px] overflow-y-auto px-5 py-5">
+        <div className="flex-1 overflow-y-auto px-5 py-5">
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             {PREFERENCE_OPTIONS.map((label) => {
               const active = selected.includes(label);
