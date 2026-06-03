@@ -17,7 +17,6 @@ import { useNavigate } from "react-router-dom";
 
 import { auth, db, storage } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import MobileLayout from "../layouts/MobileLayout";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoButton, TrocoCard } from "../components/UI";
 import PreferenceModal from "../components/profile/PreferenceModal";
@@ -207,7 +206,7 @@ setTimeout(() => {
   }
 
   return (
-    <MobileLayout withBottomNav={false}>
+    <>
       <TrocoPageHeader
   showBack
   onBack={() => navigate(-1)}
@@ -475,6 +474,6 @@ setTimeout(() => {
         onClose={() => setPreferencesOpen(false)}
         onSaved={(payload) => setProfile((current) => ({ ...(current || {}), ...payload }))}
       />
-    </MobileLayout>
+    </>
   );
 }

@@ -14,7 +14,6 @@ import { ArrowLeft, Check, MapPin, Plus, Repeat2, Send } from "lucide-react";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import MobileLayout from "../layouts/MobileLayout";
 import {
   formatLocation,
   getDisplayItemDetails,
@@ -402,19 +401,19 @@ export default function ProposeExchangePage() {
 
   if (authLoading || loading) {
     return (
-      <MobileLayout>
+      <>
         <div className="flex min-h-[60vh] items-center justify-center px-5">
           <div className="rounded-[24px] bg-white px-7 py-6 text-center text-sm font-bold text-slate-500 shadow-[0_18px_50px_rgba(15,23,42,0.055)]">
             Chargement…
           </div>
         </div>
-      </MobileLayout>
+      </>
     );
   }
 
   if (!requestedItem) {
     return (
-      <MobileLayout withBottomNav={false}>
+      <>
         <div className="mx-auto max-w-[430px] px-4 pt-[max(14px,env(safe-area-inset-top))]">
           <button
             type="button"
@@ -438,13 +437,13 @@ export default function ProposeExchangePage() {
           </div>
         </div>
 
-    </MobileLayout>
+      </>
     );
   }
 
   if (isMyItem(requestedItem, user)) {
     return (
-      <MobileLayout withBottomNav={false}>
+      <>
         <div className="mx-auto max-w-[430px] px-4 pt-[max(14px,env(safe-area-inset-top))]">
           <button
             type="button"
@@ -468,7 +467,7 @@ export default function ProposeExchangePage() {
           </div>
         </div>
 
-    </MobileLayout>
+      </>
     );
   }
 
@@ -588,7 +587,7 @@ export default function ProposeExchangePage() {
   );
 
   return (
-    <MobileLayout>
+    <>
       {/* ── Mobile ── */}
       <div className="mx-auto w-full max-w-[430px] px-4 pt-[max(14px,env(safe-area-inset-top))] lg:hidden">
         {headerBlock}
@@ -607,6 +606,6 @@ export default function ProposeExchangePage() {
           </div>
         </div>
       </div>
-    </MobileLayout>
+    </>
   );
 }
