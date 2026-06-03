@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import {
   ArrowLeft,
@@ -376,9 +376,16 @@ export default function ItemDetailPage() {
 
             <span>
               {postedDate} par{" "}
-              <span className="font-black text-slate-700">
-                {isOwner ? "toi" : shortName(ownerName)}
-              </span>
+              {isOwner ? (
+                <span className="font-black text-slate-700">toi</span>
+              ) : (
+                <Link
+                  to={`/u/${getOwnerId(item)}`}
+                  className="font-black text-[#1ABEA3] underline-offset-2 hover:underline"
+                >
+                  {shortName(ownerName)}
+                </Link>
+              )}
             </span>
             {isAmbassador(ownerProfile) && <AmbassadorBadge className="ml-1" />}
           </div>
