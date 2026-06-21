@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { AlertCircle, CheckCircle2, CalendarDays, Info, MapPin, MessageCircle, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
@@ -33,8 +34,13 @@ function Toast({ id, icon = "success", title, text, to, onDismiss }) {
   }, [id, icon, onDismiss]);
 
   return (
-    <div
-      className="flex w-full max-w-[360px] items-start gap-3 rounded-[18px] border border-[#E4ECE8] bg-white p-3.5 shadow-[0_8px_32px_rgba(15,23,42,0.14)] animate-[trocoFadeUp_280ms_ease_both]"
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 24, scale: 0.94 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 12, scale: 0.96 }}
+      transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+      className="flex w-full max-w-[360px] items-start gap-3 rounded-[18px] border border-[#E4ECE8] bg-white p-3.5 shadow-[0_8px_32px_rgba(15,23,42,0.14)]"
     >
       <span className={["flex h-9 w-9 shrink-0 items-center justify-center rounded-full", variant.bg, variant.color].join(" ")}>
         <Icon size={17} strokeWidth={2.2} />
@@ -50,7 +56,7 @@ function Toast({ id, icon = "success", title, text, to, onDismiss }) {
       <button type="button" onClick={() => onDismiss(id)} className="shrink-0 text-slate-300 hover:text-slate-500">
         <X size={15} />
       </button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -152,9 +158,11 @@ export function ToastProvider({ children }) {
 
       {/* Zone toasts — bas droite desktop, bas mobile */}
       <div className="fixed bottom-[90px] left-1/2 z-[9999] flex -translate-x-1/2 flex-col gap-2 px-4 lg:bottom-6 lg:left-auto lg:right-6 lg:translate-x-0">
-        {toasts.map((t) => (
-          <Toast key={t.id} {...t} onDismiss={dismiss} />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {toasts.map((t) => (
+            <Toast key={t.id} {...t} onDismiss={dismiss} />
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

@@ -18,7 +18,7 @@ function DesktopTopBar() {
   const photo = getPhoto(user);
 
   return (
-    <div className="sticky top-0 z-30 flex h-[56px] items-center justify-end gap-2.5 bg-[#F5F5F3] px-8">
+    <div className="sticky top-0 z-30 flex h-[56px] items-center justify-end gap-2.5 bg-white/80 backdrop-blur-md px-8">
       <NotificationButton />
 
       <button

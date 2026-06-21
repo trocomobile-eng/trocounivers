@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import FavoriteUsersFeedSection from "../../components/FavoriteUsersFeedSection";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { SkeletonGrid } from "../../components/SkeletonCard";
 import { Heart, Map, Navigation, Search, SlidersHorizontal, Zap } from "lucide-react";
@@ -136,7 +138,12 @@ function MobileItemCard({ item, favorite, onToggleFavorite }) {
   return (
     <Link
       to={`/items/${item.id}`}
-      className="group block overflow-hidden rounded-[14px] bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition active:scale-[0.98]"
+      className={[
+        "group block overflow-hidden rounded-[14px] bg-white transition active:scale-[0.98]",
+        item.isMatch
+          ? "shadow-[0_2px_12px_rgba(26,190,163,0.18),0_0_0_1.5px_rgba(26,190,163,0.25)]"
+          : "shadow-[0_2px_12px_rgba(15,23,42,0.07)]",
+      ].join(" ")}
     >
       <div className="relative overflow-hidden bg-[#F0F0EE]">
         <img
@@ -166,10 +173,21 @@ function MobileItemCard({ item, favorite, onToggleFavorite }) {
         </span>
 
         {item.isMatch && (
-          <span className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-[#1ABEA3] px-1.5 py-0.5 text-[9px] font-black text-white shadow-sm">
-            <Zap size={9} strokeWidth={2.5} fill="currentColor" />
+          <motion.span
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 520, damping: 18, delay: 0.05 }}
+            className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-[#1ABEA3] px-1.5 py-0.5 text-[9px] font-black text-white shadow-[0_2px_8px_rgba(26,190,163,0.45)]"
+          >
+            <motion.span
+              animate={{ rotate: [0, -20, 20, -10, 0] }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              className="flex"
+            >
+              <Zap size={9} strokeWidth={2.5} fill="currentColor" />
+            </motion.span>
             Match
-          </span>
+          </motion.span>
         )}
       </div>
 
@@ -404,6 +422,11 @@ export default function MobileFeedPage() {
         </>
       )}
 
+      {/* Troqueurs favoris */}
+      {!search.trim() && activeCategory === "Tout" && (
+        <FavoriteUsersFeedSection cardWidth="w-[120px]" maxItems={6} />
+      )}
+
       {/* Carrousel Nouveautés */}
       {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (
         <section className="mt-4">
@@ -411,17 +434,29 @@ export default function MobileFeedPage() {
             ✨ Nouveautés
           </p>
           <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex gap-3">
+            <motion.div
+              className="flex gap-3"
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+            >
               {recentItems.map((item) => (
-                <div key={item.id} className="w-[120px] shrink-0">
+                <motion.div
+                  key={item.id}
+                  className="w-[120px] shrink-0"
+                  variants={{
+                    hidden: { opacity: 0, x: 14 },
+                    show: { opacity: 1, x: 0, transition: { duration: 0.28, ease: [0.2, 0.8, 0.2, 1] } },
+                  }}
+                >
                   <MobileItemCard
                     item={item}
                     favorite={favoriteItemIds.includes(item.id)}
                     onToggleFavorite={toggleFavorite}
                   />
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
       )}
@@ -441,16 +476,28 @@ export default function MobileFeedPage() {
       ) : viewMode === "map" ? (
         <TrocoMap items={visibleItems} className="mt-2 h-[calc(100vh-280px)]" onBackToList={() => setViewMode("list")} />
       ) : (
-        <section className="mt-2 grid grid-cols-2 gap-3">
+        <motion.section
+          className="mt-2 grid grid-cols-2 gap-3"
+          initial="hidden"
+          animate="show"
+          variants={{ show: { transition: { staggerChildren: 0.05 } } }}
+        >
           {visibleItems.map((item) => (
-            <MobileItemCard
+            <motion.div
               key={item.id}
-              item={item}
-              favorite={favoriteItemIds.includes(item.id)}
-              onToggleFavorite={toggleFavorite}
-            />
+              variants={{
+                hidden: { opacity: 0, y: 16 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.2, 0.8, 0.2, 1] } },
+              }}
+            >
+              <MobileItemCard
+                item={item}
+                favorite={favoriteItemIds.includes(item.id)}
+                onToggleFavorite={toggleFavorite}
+              />
+            </motion.div>
           ))}
-        </section>
+        </motion.section>
       )}
     </>
   );

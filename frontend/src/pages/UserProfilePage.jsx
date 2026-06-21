@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Heart } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   collection,
@@ -18,6 +20,8 @@ import ProfileAboutSection from "../components/profile/ProfileAboutSection";
 import { ReputationDisplay, TrustScore } from "../components/TrustBadges";
 import { ReviewCard } from "../components/ReviewSystem";
 import { useReputation } from "../hooks/useReputation";
+import { useFavoriteUsers } from "../hooks/useFavoriteUsers";
+import { useAuth } from "../context/AuthContext";
 import {
   belongsToUser,
 } from "../components/profile/profileUtils";
@@ -26,12 +30,17 @@ export default function UserProfilePage() {
   const { userId, id } = useParams();
   const resolvedUserId = userId || id;
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isFavorite, toggle } = useFavoriteUsers();
 
   const [profile, setProfile] = useState(null);
   const [items, setItems] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
+  const isOwn = user?.uid === resolvedUserId;
+  const fav = isFavorite(resolvedUserId);
+
   // Hook pour la réputation
   const reputation = useReputation(resolvedUserId);
 
@@ -110,6 +119,30 @@ export default function UserProfilePage() {
     <>
       <div className="space-y-3">
           <PublicProfileHeader profile={profile} userId={resolvedUserId} feedbacks={feedbacks} />
+
+          {/* Bouton troqueur favori — masqué si c'est son propre profil */}
+          {!isOwn && user && (
+            <motion.button
+              type="button"
+              onClick={() => toggle(resolvedUserId)}
+              whileTap={{ scale: 0.95 }}
+              className={[
+                "flex w-full items-center justify-center gap-2 rounded-[18px] border py-3 text-[14px] font-black transition",
+                fav
+                  ? "border-[#C8EDE5] bg-[#F0FAF7] text-[#0f9f9a]"
+                  : "border-[#E4ECE8] bg-white text-[#344256]",
+              ].join(" ")}
+            >
+              <motion.span
+                animate={fav ? { scale: [1, 1.35, 0.9, 1.1, 1] } : { scale: 1 }}
+                transition={{ duration: 0.38 }}
+                className="flex"
+              >
+                <Heart size={16} fill={fav ? "currentColor" : "none"} strokeWidth={2.2} />
+              </motion.span>
+              {fav ? "Troqueur suivi" : "Suivre ce troqueur"}
+            </motion.button>
+          )}
 
           {/* Section réputation */}
           {((reputation && !reputation.loading && reputation.totalReviews > 0) || 

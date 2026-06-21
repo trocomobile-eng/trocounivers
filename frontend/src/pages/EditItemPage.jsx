@@ -274,11 +274,13 @@ if (!isOwner) {
   const uploadPhoto = async (photo, index) => {
     if (photo.kind === "existing") return photo.url;
 
-    const cleanName = photo.file.name.replace(/\s+/g, "-").toLowerCase();
+    const { compressImage } = await import("../utils/compressImage");
+    const compressed = await compressImage(photo.file);
+    const cleanName = compressed.name.replace(/\s+/g, "-").toLowerCase();
     const path = `items/${user.uid}/${Date.now()}-${index}-${cleanName}`;
     const storageRef = ref(storage, path);
 
-    await uploadBytes(storageRef, photo.file);
+    await uploadBytes(storageRef, compressed);
     return getDownloadURL(storageRef);
   };
 

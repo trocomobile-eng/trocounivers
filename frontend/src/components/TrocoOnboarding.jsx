@@ -2,50 +2,42 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
-  Coffee,
   HeartHandshake,
-  Image as ImageIcon,
   MapPin,
   Repeat2,
   Sparkles,
-  UsersRound,
 } from "lucide-react";
 
 import slide1 from "../assets/onboarding/onboarding_slide_1.png";
 import slide2 from "../assets/onboarding/onboarding_slide_2.png";
 import slide3 from "../assets/onboarding/onboarding_slide_3.png";
 import slide4 from "../assets/onboarding/onboarding_slide_4.png";
+import { useGeolocation } from "../hooks/useGeolocation";
 
 function LanguageSwitcher({ dark = false }) {
   const { i18n } = useTranslation();
-
-  function changeLanguage(lang) {
+  const current = i18n.language?.startsWith("en") ? "en" : "fr";
+  function change(lang) {
     i18n.changeLanguage(lang);
     try { localStorage.setItem("troco-lang", lang); } catch {}
   }
-
-  const current = i18n.language?.startsWith("en") ? "en" : "fr";
-
-  const base = dark
-    ? "rounded-full px-3 py-1.5 text-[12px] font-black uppercase transition"
-    : "rounded-full px-3 py-1.5 text-[12px] font-black uppercase transition";
-
-  const active = dark
-    ? "bg-white/20 text-white backdrop-blur-sm"
-    : "bg-[#0f9f9a] text-white shadow-[0_8px_20px_rgba(15,159,154,0.18)]";
-
-  const inactive = dark
-    ? "text-white/60"
-    : "bg-white/82 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.04)]";
-
   return (
-    <div className="flex items-center gap-1">
+    <div className={["flex items-center gap-1 rounded-full p-1", dark ? "bg-white/15" : "border border-[#E4ECE8] bg-white/80 backdrop-blur-sm"].join(" ")}>
       {["fr", "en"].map((lang) => (
         <button
           key={lang}
           type="button"
-          onClick={() => changeLanguage(lang)}
-          className={[base, current === lang ? active : inactive].join(" ")}
+          onClick={() => change(lang)}
+          className={[
+            "rounded-full px-3 py-1 text-[12px] font-black uppercase tracking-[0.06em] transition",
+            current === lang
+              ? dark
+                ? "bg-white/25 text-white"
+                : "bg-[#1ABEA3] text-white shadow-[0_4px_12px_rgba(26,190,163,0.25)]"
+              : dark
+                ? "text-white/60 hover:text-white"
+                : "text-slate-500 hover:text-[#1ABEA3]",
+          ].join(" ")}
         >
           {lang.toUpperCase()}
         </button>
@@ -54,17 +46,105 @@ function LanguageSwitcher({ dark = false }) {
   );
 }
 
-function Pill({ children }) {
+function Chip({ children }) {
   return (
-    <span className="rounded-full border border-[#E4ECE8] bg-white/82 px-3 py-1.5 text-[11px] font-black text-slate-600 shadow-[0_4px_12px_rgba(15,23,42,0.04)] backdrop-blur-xl">
+    <span className="rounded-full border border-[#E4ECE8] bg-white/80 px-3 py-1.5 text-[11px] font-black text-slate-600 backdrop-blur-sm">
       {children}
     </span>
+  );
+}
+
+function GeoScreen({ onDone }) {
+  const { status, requesting, request } = useGeolocation();
+
+  async function handleAllow() {
+    await request();
+    onDone();
+  }
+
+  return (
+    <>
+      {/* Mobile */}
+      <div className="flex h-[100dvh] flex-col items-center justify-center overflow-hidden bg-[#071420] px-6 pb-[max(32px,env(safe-area-inset-bottom))] pt-[max(32px,env(safe-area-inset-top))] lg:hidden">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1ABEA3]/15">
+          <MapPin size={36} className="text-[#1ABEA3]" strokeWidth={2} />
+        </div>
+        <h2 className="mt-6 text-center text-[26px] font-black leading-[1.05] tracking-[-0.05em] text-white">
+          Autour de toi
+        </h2>
+        <p className="mt-3 text-center text-[14px] font-medium leading-[1.55] text-white/60">
+          Active ta position pour voir les objets disponibles près de toi et trouver des troconautes dans ton quartier.
+        </p>
+        <div className="mt-8 flex w-full max-w-[320px] flex-col gap-3">
+          <button
+            type="button"
+            onClick={handleAllow}
+            disabled={requesting}
+            className="flex w-full items-center justify-center gap-2 rounded-[18px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-5 py-3.5 text-[15px] font-black text-white shadow-[0_10px_28px_rgba(26,190,163,0.28)] transition active:scale-[0.97] disabled:opacity-60"
+          >
+            <MapPin size={17} strokeWidth={2.3} />
+            {requesting ? "Activation…" : "Activer ma position"}
+          </button>
+          <button
+            type="button"
+            onClick={onDone}
+            className="py-3 text-[13px] font-black text-white/40 transition hover:text-white/60"
+          >
+            Passer cette étape
+          </button>
+        </div>
+        {status === "denied" && (
+          <p className="mt-4 text-center text-[12px] font-medium text-rose-400">
+            Accès refusé — active la localisation dans les réglages de ton navigateur.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop */}
+      <main className="hidden min-h-screen items-center justify-center bg-[#F8FAF9] lg:flex">
+        <div className="flex max-w-[420px] flex-col items-center px-8 text-center">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#F0FAF7]">
+            <MapPin size={42} className="text-[#1ABEA3]" strokeWidth={1.8} />
+          </div>
+          <h2 className="mt-6 text-[32px] font-black leading-[1.05] tracking-[-0.05em] text-[#081225]">
+            Autour de toi
+          </h2>
+          <p className="mt-3 text-[15px] font-medium leading-[1.6] text-[#64748B]">
+            Active ta position pour voir les objets disponibles près de toi et trouver des troconautes dans ton quartier.
+          </p>
+          <div className="mt-8 flex w-full flex-col gap-3">
+            <button
+              type="button"
+              onClick={handleAllow}
+              disabled={requesting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-8 py-3.5 text-[15px] font-black text-white shadow-[0_14px_36px_rgba(26,190,163,0.28)] transition hover:shadow-[0_18px_44px_rgba(26,190,163,0.36)] active:scale-[0.98] disabled:opacity-60"
+            >
+              <MapPin size={17} strokeWidth={2.3} />
+              {requesting ? "Activation…" : "Activer ma position"}
+            </button>
+            <button
+              type="button"
+              onClick={onDone}
+              className="py-2 text-[13px] font-black text-[#94a3b8] transition hover:text-[#64748B]"
+            >
+              Passer cette étape
+            </button>
+          </div>
+          {status === "denied" && (
+            <p className="mt-4 text-[12px] font-medium text-rose-500">
+              Accès refusé — active la localisation dans les réglages de ton navigateur.
+            </p>
+          )}
+        </div>
+      </main>
+    </>
   );
 }
 
 export default function TrocoOnboarding({ onDone, onSkip }) {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
+  const [showGeo, setShowGeo] = useState(false);
 
   const slides = useMemo(
     () => [
@@ -127,42 +207,39 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
   const slide = slides[index];
   const Icon = slide.icon;
   const isLast = index === slides.length - 1;
-  const progress = useMemo(() => ((index + 1) / slides.length) * 100, [index, slides.length]);
+  const progress = ((index + 1) / slides.length) * 100;
+
+  if (showGeo) return <GeoScreen onDone={onDone} />;
 
   function next() {
-    if (isLast) { onDone?.(); return; }
+    if (isLast) { setShowGeo(true); return; }
     setIndex((v) => v + 1);
   }
 
-  const dots = (
-    <div className="flex items-center justify-between">
-      <div className="flex gap-2">
-        {slides.map((_, dotIndex) => (
-          <button
-            key={dotIndex}
-            type="button"
-            onClick={() => setIndex(dotIndex)}
-            className={[
-              "h-2 rounded-full transition-all duration-300",
-              dotIndex === index ? "w-7 bg-[#0f9f9a]" : "w-2 bg-slate-200",
-            ].join(" ")}
-            aria-label={t("onboarding.goToStep", { number: dotIndex + 1 })}
-          />
-        ))}
-      </div>
-      <span className="text-[12px] font-black uppercase tracking-[0.16em] text-slate-400">
-        {index + 1}/{slides.length}
-      </span>
+  const progressDots = (
+    <div className="flex items-center gap-2">
+      {slides.map((_, i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => setIndex(i)}
+          aria-label={t("onboarding.goToStep", { number: i + 1 })}
+          className={[
+            "h-2 rounded-full transition-all duration-300",
+            i === index ? "w-7 bg-[#1ABEA3]" : "w-2 bg-slate-200 hover:bg-slate-300",
+          ].join(" ")}
+        />
+      ))}
     </div>
   );
 
   return (
     <>
-      {/* ── MOBILE layout ──────────────────────────────────────── */}
-      <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#0d1b2a] lg:hidden">
+      {/* ── MOBILE ──────────────────────────────────────────────── */}
+      <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#071420] lg:hidden">
 
-        {/* Image zone (top ~47%) */}
-        <div className="relative flex-shrink-0" style={{ height: "47dvh" }}>
+        {/* Full-bleed image */}
+        <div className="relative" style={{ height: "46dvh" }}>
           <img
             key={slide.image}
             src={slide.image}
@@ -170,180 +247,167 @@ export default function TrocoOnboarding({ onDone, onSkip }) {
             className="h-full w-full object-cover"
             draggable="false"
           />
-
-          {/* Dark gradient top → transparent (for header legibility) */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/42 via-black/10 to-transparent" />
+          {/* gradient top for header */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-black/30" />
 
           {/* Header */}
-          <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 pt-[max(18px,env(safe-area-inset-top))]">
-            <img
-              src="/logo.png"
-              alt="Troco"
-              className="h-7 w-auto object-contain brightness-0 invert"
-            />
+          <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 pt-[max(16px,env(safe-area-inset-top))]">
+            <img src="/logo.png" alt="Troco" className="h-7 w-auto object-contain brightness-0 invert" />
             <div className="flex items-center gap-2">
               <LanguageSwitcher dark />
               <button
                 type="button"
                 onClick={onSkip}
-                className="rounded-full bg-black/30 px-4 py-2 text-[13px] font-black text-white/90 backdrop-blur-sm transition active:scale-95"
+                className="rounded-full bg-black/30 px-4 py-2 text-[13px] font-black text-white/85 backdrop-blur-sm transition active:scale-95"
               >
                 {t("onboarding.skip")}
               </button>
             </div>
           </div>
 
-          {/* Eyebrow badge */}
-          <div className="absolute bottom-4 left-5 flex items-center gap-1.5 rounded-full bg-white/92 px-3 py-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.14)] backdrop-blur-md">
-            <Icon size={14} className="text-[#159b6b]" strokeWidth={2.5} />
-            <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-700">
+          {/* Eyebrow badge over image */}
+          <div className="absolute bottom-5 left-5 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.18)] backdrop-blur-md">
+            <Icon size={13} className="text-[#1ABEA3]" strokeWidth={2.5} />
+            <span className="text-[11px] font-black uppercase tracking-[0.12em] text-[#0d1b2a]">
               {slide.eyebrow}
             </span>
           </div>
         </div>
 
-        {/* White content drawer */}
-        <div className="relative -mt-6 flex flex-1 flex-col overflow-y-auto rounded-t-[28px] bg-white px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-5">
-          {/* Handle */}
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
+        {/* Content drawer */}
+        <div className="relative -mt-5 flex flex-1 flex-col rounded-t-[32px] bg-white px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-4">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200" />
 
-          {/* Text */}
-          <h1 className="text-[26px] font-black leading-[1.0] tracking-[-0.05em] text-[#081225]">
+          <h1 className="text-[24px] font-black leading-[1.02] tracking-[-0.05em] text-[#081225]">
             {slide.title}
           </h1>
-
-          <p className="mt-3 text-[14px] font-medium leading-[1.58] text-slate-500">
+          <p className="mt-2 text-[13.5px] font-medium leading-[1.55] text-[#64748B]">
             {slide.text}
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {slide.chips.map((chip) => (
-              <Pill key={chip}>{chip}</Pill>
+              <Chip key={chip}>{chip}</Chip>
             ))}
           </div>
 
-          {/* Spacer */}
-          <div className="min-h-[12px] flex-1" />
+          <div className="flex-1" />
 
-          {/* Progress bar + dots + CTA */}
           <div className="mt-4">
-            <div className="mb-2 h-1 overflow-hidden rounded-full bg-slate-100">
+            <div className="mb-1 h-[3px] overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#22C7B8] to-[#36C982] transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-[#1ABEA3] to-[#36C982] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
-
-            <div className="mb-4">{dots}</div>
-
+            <div className="mt-2.5 mb-3 flex items-center justify-between">
+              {progressDots}
+              <span className="text-[12px] font-black text-slate-300">
+                {index + 1}/{slides.length}
+              </span>
+            </div>
             <button
               type="button"
               onClick={next}
-              className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-gradient-to-br from-[#22C7B8] to-[#36C982] px-5 py-4 text-[16px] font-black text-white shadow-[0_10px_24px_rgba(46,204,138,0.22)] transition active:scale-[0.97]"
+              className="flex w-full items-center justify-center gap-2 rounded-[18px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-5 py-3.5 text-[15px] font-black text-white shadow-[0_10px_28px_rgba(26,190,163,0.28)] transition active:scale-[0.97]"
             >
               {isLast ? t("onboarding.start") : t("onboarding.continue")}
-              <ArrowRight size={20} strokeWidth={2.4} />
+              <ArrowRight size={18} strokeWidth={2.4} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── DESKTOP layout ─────────────────────────────────────── */}
-      <main className="hidden min-h-screen overflow-hidden bg-[radial-gradient(circle_at_18%_10%,rgba(125,211,252,0.10),transparent_35%),radial-gradient(circle_at_82%_18%,rgba(134,239,172,0.10),transparent_38%),radial-gradient(circle_at_50%_92%,rgba(16,185,129,0.06),transparent_42%),linear-gradient(180deg,#F5FAF8_0%,#F4FAF8_100%)] px-5 pb-7 pt-[max(22px,env(safe-area-inset-top))] text-[#081225] lg:block">
-        <div className="mx-auto flex min-h-[calc(100vh-30px)] max-w-6xl flex-col">
+      {/* ── DESKTOP ─────────────────────────────────────────────── */}
+      <main className="hidden min-h-screen overflow-hidden bg-[#F8FAF9] text-[#081225] lg:block">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-32 top-0 h-[400px] w-[400px] rounded-full bg-cyan-100/20 blur-[140px]" />
+          <div className="absolute -right-32 top-[200px] h-[440px] w-[440px] rounded-full bg-emerald-100/20 blur-[150px]" />
+        </div>
 
+        <div className="relative mx-auto flex h-screen max-w-6xl flex-col px-8 pb-6 pt-[max(16px,env(safe-area-inset-top))]">
+
+          {/* Nav */}
           <header className="flex items-center justify-between">
-            <img
-              src="/logo.png"
-              alt="Troco"
-              className="h-auto w-[135px] object-contain drop-shadow-[0_7px_16px_rgba(46,204,138,0.10)]"
-            />
-            <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Troco" className="h-auto w-[100px] object-contain" />
+            <div className="flex items-center gap-3">
               <LanguageSwitcher />
               <button
                 type="button"
                 onClick={onSkip}
-                className="rounded-full border border-[#E4ECE8] bg-white/82 px-4 py-2 text-sm font-black text-slate-600 shadow-[0_8px_22px_rgba(15,23,42,0.05)] backdrop-blur-[14px] transition active:scale-95"
+                className="rounded-full border border-[#E4ECE8] bg-white px-5 py-2 text-[13px] font-black text-[#344256] shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition hover:border-[#C0D5CE] active:scale-95"
               >
                 {t("onboarding.skip")}
               </button>
             </div>
           </header>
 
-          <section className="grid flex-1 grid-cols-[0.9fr_1.1fr] items-center gap-12 py-12">
-            {/* Left: image */}
-            <div className="relative">
-              <div className="absolute -inset-3 rounded-[46px] bg-white/35 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[46px] border border-[#E4ECE8] bg-white shadow-[0_32px_90px_rgba(15,23,42,0.16)]">
+          {/* Main content */}
+          <section className="grid flex-1 grid-cols-[1fr_1fr] items-center gap-10 py-5 overflow-hidden">
+
+            {/* Image */}
+            <div className="relative h-full max-h-[calc(100vh-130px)]">
+              <div className="absolute -inset-4 rounded-[50px] bg-[#1ABEA3]/5 blur-3xl" />
+              <div className="relative h-full overflow-hidden rounded-[36px] shadow-[0_28px_80px_rgba(15,23,42,0.14)]">
                 <img
+                  key={slide.image}
                   src={slide.image}
                   alt=""
-                  className="aspect-[4/3] w-full object-cover"
+                  className="h-full w-full object-cover"
                   draggable="false"
                 />
-                <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-[#E4ECE8] bg-white/82 px-3 py-2 shadow-[0_10px_28px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-                  <Icon size={17} className="text-[#159b6b]" strokeWidth={2.5} />
-                  <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-700">
-                    {slide.eyebrow}
-                  </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] backdrop-blur-md">
+                    <Icon size={15} className="text-[#1ABEA3]" strokeWidth={2.5} />
+                    <span className="text-[12px] font-black uppercase tracking-[0.12em] text-[#0d1b2a]">
+                      {slide.eyebrow}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right: content card */}
-            <div className="rounded-[42px] border border-[#E4ECE8] bg-white/88 p-10 shadow-[0_14px_40px_rgba(15,23,42,0.055)] backdrop-blur-xl">
-              <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#E8F7EF] px-3 py-1.5 text-[12px] font-black uppercase tracking-[0.14em] text-[#22a06b]">
-                <ImageIcon size={14} />
-                {slide.eyebrow}
+            {/* Content */}
+            <div className="flex flex-col">
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
+                {index + 1} / {slides.length}
               </p>
 
-              <h1 className="max-w-[620px] text-[64px] font-black leading-[0.96] tracking-[-0.055em]">
+              <h1 className="mt-3 text-[38px] font-black leading-[1.0] tracking-[-0.05em] text-[#081225] xl:text-[46px]">
                 {slide.title}
               </h1>
 
-              <p className="mt-4 max-w-[380px] text-[19px] font-medium leading-[1.58] text-slate-600">
+              <p className="mt-3 max-w-[380px] text-[16px] font-medium leading-[1.6] text-[#64748B]">
                 {slide.text}
               </p>
 
-              <div className="mt-6 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {slide.chips.map((chip) => (
-                  <Pill key={chip}>{chip}</Pill>
+                  <Chip key={chip}>{chip}</Chip>
                 ))}
               </div>
 
-              <div className="mt-7 h-2 overflow-hidden rounded-full bg-slate-200/70">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#22C7B8] to-[#36C982] transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+              <div className="mt-7">
+                <div className="mb-3 h-[3px] overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#1ABEA3] to-[#36C982] transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
 
-              <div className="mt-5">{dots}</div>
+                <div className="mb-4 flex items-center justify-between">
+                  {progressDots}
+                </div>
 
-              <div className="mt-7 space-y-3">
                 <button
                   type="button"
                   onClick={next}
-                  className="flex w-full items-center justify-center gap-2 rounded-[24px] bg-gradient-to-br from-[#22C7B8] to-[#36C982] px-5 py-4 text-base font-black text-white shadow-[0_12px_24px_rgba(46,204,138,0.18)] transition active:scale-95"
+                  className="inline-flex h-12 items-center gap-2 rounded-[20px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] px-8 text-[15px] font-black text-white shadow-[0_14px_36px_rgba(26,190,163,0.28)] ring-1 ring-white/20 transition hover:shadow-[0_18px_44px_rgba(26,190,163,0.36)] active:scale-[0.98]"
                 >
                   {isLast ? t("onboarding.start") : t("onboarding.continue")}
-                  <ArrowRight size={20} strokeWidth={2.4} />
+                  <ArrowRight size={18} strokeWidth={2.5} />
                 </button>
-
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-[20px] bg-white/82 px-2 py-3 text-[11px] font-black text-slate-500">
-                    <UsersRound size={17} className="mx-auto mb-1 text-[#22a06b]" />
-                    {t("onboarding.values.local")}
-                  </div>
-                  <div className="rounded-[20px] bg-white/82 px-2 py-3 text-[11px] font-black text-slate-500">
-                    <Sparkles size={17} className="mx-auto mb-1 text-[#22a06b]" />
-                    {t("onboarding.values.surprise")}
-                  </div>
-                  <div className="rounded-[20px] bg-white/82 px-2 py-3 text-[11px] font-black text-slate-500">
-                    <Coffee size={17} className="mx-auto mb-1 text-[#22a06b]" />
-                    {t("onboarding.values.human")}
-                  </div>
-                </div>
               </div>
             </div>
           </section>

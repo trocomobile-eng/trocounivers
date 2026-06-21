@@ -14,14 +14,12 @@ import {
 } from "firebase/firestore";
 import {
   ArrowLeft,
-  CalendarDays,
   CheckCircle2,
   ChevronRight,
-  Clock3,
   MapPin,
   MessageCircle,
   Phone,
-  ShieldCheck,
+  Repeat2,
   XCircle,
 } from "lucide-react";
 
@@ -29,6 +27,7 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import MeetingValidationModal from "../components/MeetingValidationModal";
+import TrocConfirmedCelebration from "../components/TrocConfirmedCelebration";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoCard, TrocoButton, TrocoPill } from "../components/UI";
 
@@ -723,139 +722,98 @@ function shouldShowMeetingValidation(exchange) {
 
 function StatusHero({ stage, exchange, userId, navigate }) {
   const copy = getStageCopy(stage, exchange, userId);
-  const isConfirmed = stage === "confirmed";
-  const isWaitingTime = stage === "waiting_time";
-  const isRespondTime = stage === "respond_time";
-  const isWaitingPlace = stage === "waiting_place";
-  const isRespondPlace = stage === "respond_place";
+  const isWaiting = ["pending", "waiting_time", "waiting_place"].includes(stage);
+  const isAction = ["respond_time", "respond_place", "start_time", "start_place", "chat", "confirmed"].includes(stage);
+  const isEnded = ["declined", "cancelled", "completed"].includes(stage);
 
   function go() {
-    if (stage === "chat") {
-      navigate(`/exchanges/${exchange.id}/chat`);
-      return;
-    }
-
+    if (stage === "chat") { navigate(`/exchanges/${exchange.id}/chat`); return; }
     if (["start_place", "waiting_place", "respond_place"].includes(stage)) {
-      navigate("/choose-place", {
-        state: {
-          exchangeId: exchange.id,
-          exchange,
-        },
-      });
-      return;
+      navigate("/choose-place", { state: { exchangeId: exchange.id, exchange } }); return;
     }
-
     if (["start_time", "waiting_time", "respond_time"].includes(stage)) {
-      navigate(`/availability/${exchange.id}`);
-      return;
+      navigate(`/availability/${exchange.id}`); return;
     }
-
-    if (stage === "confirmed") {
-      navigate(`/exchanges/${exchange.id}/meeting`);
-      return;
-    }
-
+    if (stage === "confirmed") { navigate(`/exchanges/${exchange.id}/meeting`); return; }
     navigate("/exchanges");
   }
 
+  if (isEnded) return null;
+
   return (
-    <section className="rounded-[30px] border border-emerald-100 bg-emerald-50/60 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.035)] sm:p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-700">
-            {copy.eyebrow}
-          </p>
+    <section className={[
+      "rounded-[18px] border px-4 py-4 text-center",
+      isWaiting ? "border-[#F5DFA0] bg-[#FFFBF0]" :
+      isAction ? "border-[#C8EDE5] bg-[#F0FAF7]" :
+      "border-[#E4ECE8] bg-white",
+    ].join(" ")}>
+      <span className={[
+        "inline-flex items-center rounded-full px-3.5 py-1.5 text-[11px] font-black",
+        isWaiting ? "bg-amber-200 text-amber-800" :
+        isAction ? "bg-[#C8EDE5] text-[#0f9f9a]" :
+        "bg-slate-100 text-slate-600",
+      ].join(" ")}>
+        {copy.eyebrow}
+      </span>
+      <p className={[
+        "mt-3 text-[13px] font-medium leading-relaxed",
+        isWaiting ? "text-[#7A5C1E]" : isAction ? "text-[#0f7a74]" : "text-slate-500",
+      ].join(" ")}>
+        {copy.text}
+      </p>
 
-          <h2 className="mt-2 text-[28px] font-black leading-[1.02] tracking-[-0.055em] text-[#081225] sm:text-[34px]">
-            {copy.title}
-          </h2>
-
-          <p className="mt-2 max-w-[560px] text-[15px] font-medium leading-relaxed text-slate-600">
-            {copy.text}
-          </p>
-        </div>
-
-        <span className="hidden shrink-0 rounded-full bg-white/90 px-4 py-2 text-[12px] font-black text-emerald-700 sm:inline-flex">
-          {STATUS_LABELS[exchange.status] || "Statut"}
-        </span>
-      </div>
-
-      {isConfirmed && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[20px] bg-white/84 p-4">
-            <div className="flex items-center gap-3">
-              <CalendarDays className="text-emerald-700" size={22} />
-              <div>
-                <p className="text-[13px] font-black text-emerald-700">Date et heure</p>
-                <p className="mt-1 text-sm font-semibold text-[#081225]">
-                  {exchange.selectedAvailability?.day || "Jour confirmé"} · {exchange.selectedAvailability?.time || "Horaire confirmé"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[20px] bg-white/84 p-4">
-            <div className="flex items-center gap-3">
-              <MapPin className="text-emerald-700" size={22} />
-              <div>
-                <p className="text-[13px] font-black text-emerald-700">Lieu</p>
-                <p className="mt-1 text-sm font-semibold text-[#081225]">
-                  {exchange.selectedPlace?.title || "Lieu confirmé"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[20px] bg-white/84 p-4">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="text-emerald-700" size={22} />
-              <div>
-                <p className="text-[13px] font-black text-emerald-700">Sécurité</p>
-                <p className="mt-1 text-sm font-semibold text-[#081225]">
-                  Lieu partenaire Troco
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {!["pending", "waiting_time", "waiting_place"].includes(stage) && (
+        <TrocoButton variant="plain"
+          onClick={go}
+          className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-[14px] font-black text-white shadow-[0_8px_20px_rgba(26,190,163,0.22)] transition active:scale-[0.98]"
+        >
+          {copy.cta}
+          <ChevronRight size={17} strokeWidth={2.4} />
+        </TrocoButton>
       )}
-
-      {(isWaitingTime || isRespondTime) && exchange.availabilityOptions?.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {exchange.availabilityOptions.map((option, index) => (
-            <div
-              key={option?.id || index}
-              className="rounded-[20px] bg-white/86 px-4 py-3 text-[15px] font-black text-slate-700"
-            >
-              <Clock3 className="mr-2 inline text-slate-400" size={16} />
-              {formatAvailability(option)}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {(isWaitingPlace || isRespondPlace) && exchange.placeOptions?.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {exchange.placeOptions.map((place, index) => (
-            <div
-              key={place?.id || index}
-              className="rounded-[20px] bg-white/86 px-4 py-3 text-[15px] font-black text-slate-700"
-            >
-              <MapPin className="mr-2 inline text-slate-400" size={16} />
-              {place?.title || "Lieu proposé"}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <TrocoButton variant="plain"
-        onClick={go}
-        className="mt-5 flex h-[54px] w-full items-center justify-center gap-2 rounded-[19px] bg-gradient-to-r from-[#22c55e] to-[#14b8a6] text-[16px] font-black text-white shadow-[0_12px_28px_rgba(16,185,129,0.17)] transition active:scale-[0.985]"
-      >
-        {copy.cta}
-        <ChevronRight size={19} strokeWidth={2.4} />
-      </TrocoButton>
     </section>
+  );
+}
+
+function ItemTile({ item, label, labelColor = "teal", onClick }) {
+  const title = cleanTitle(getDisplayItemType(item));
+  const image = getItemImage(item);
+  const condition = item?.conditionLabel || item?.condition || item?.state || "";
+  const location = item?.arrondissement || item?.district || item?.location || item?.city || "Paris";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left"
+    >
+      <p className={[
+        "mb-2 text-[10px] font-black uppercase tracking-[0.14em]",
+        labelColor === "teal" ? "text-[#1ABEA3]" : "text-[#94a3b8]",
+      ].join(" ")}>
+        {label}
+      </p>
+      <div className="overflow-hidden rounded-[16px] border border-[#E4EDE9] bg-white shadow-[0_4px_12px_rgba(15,23,42,0.05)]">
+        <div className="aspect-square lg:aspect-auto lg:h-36 overflow-hidden bg-[#F4F7F5]">
+          {image
+            ? <img src={image} alt={title} className="h-full w-full object-cover" />
+            : <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300">📦</div>
+          }
+        </div>
+        <div className="p-3">
+          <p className="line-clamp-2 text-[13px] font-black leading-snug text-[#0d1b2a]">{title}</p>
+          {condition && (
+            <span className="mt-1.5 inline-flex items-center rounded-full bg-[#F0FAF7] px-2 py-0.5 text-[10px] font-bold text-[#1ABEA3]">
+              {condition}
+            </span>
+          )}
+          <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#94a3b8]">
+            <MapPin size={10} strokeWidth={2.2} />
+            {location}
+          </p>
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -869,48 +827,41 @@ function ExchangeObjects({ requestedItem, offeredItems, extraItems, navigate, us
     .filter((item) => !sameItem(item, primaryOfferedItem))
     .filter((item) => !extraItems.some((extraItem) => sameItem(item, extraItem)));
 
-  return (
-    <TrocoCard as="section" variant="plain" className="rounded-[30px] border border-slate-100 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:p-5">
-      <h2 className="text-[22px] font-black tracking-[-0.04em] text-[#081225]">
-        Votre échange
-      </h2>
+  function goToItem(item) {
+    if (item?.id && !String(item.id).includes("fallback") && item.id !== "requested") {
+      navigate(`/items/${item.id}`);
+    }
+  }
 
-      <div className="mt-5 grid items-start gap-5 sm:grid-cols-[1fr_auto_1fr]">
-        <MiniItemCard
+  return (
+    <section>
+      <div className="grid grid-cols-[1fr_32px_1fr] items-start gap-2">
+        <ItemTile
           item={leftItem}
           label={userIsSender ? "Vous proposez" : "Votre objet"}
-          onClick={() => {
-            const item = leftItem;
-            if (item?.id && !String(item.id).includes("fallback") && item.id !== "requested") {
-              navigate(`/items/${item.id}`);
-            }
-          }}
+          labelColor="teal"
+          onClick={() => goToItem(leftItem)}
         />
 
-        <div className="flex justify-center pt-0 sm:pt-28">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-600 shadow-[0_10px_26px_rgba(15,23,42,0.04)]">
-            ↔
+        <div className="flex justify-center pt-10">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E4ECE8] bg-white text-[#94a3b8] shadow-sm">
+            <Repeat2 size={13} strokeWidth={2.2} />
           </span>
         </div>
 
-        <MiniItemCard
+        <ItemTile
           item={rightItem}
           label={userIsSender ? "Vous recevez" : "Il vous propose"}
-          onClick={() => {
-            const item = rightItem;
-            if (item?.id && !String(item.id).includes("fallback") && item.id !== "requested") {
-              navigate(`/items/${item.id}`);
-            }
-          }}
+          labelColor="gray"
+          onClick={() => goToItem(rightItem)}
         />
       </div>
 
       {otherOfferedItems.length > 0 && (
         <div className="mt-4">
-          <p className="mb-3 text-[12px] font-black uppercase tracking-[0.16em] text-sky-600">
+          <p className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#94a3b8]">
             Autres objets proposés
           </p>
-
           <div className="grid gap-3 sm:grid-cols-2">
             {otherOfferedItems.map((item) => (
               <MiniItemCard key={item.id} item={item} compact />
@@ -920,11 +871,10 @@ function ExchangeObjects({ requestedItem, offeredItems, extraItems, navigate, us
       )}
 
       {extraItems.length > 0 && (
-        <div className="mt-5 rounded-[24px] border border-orange-100 bg-orange-50/30 p-4">
-          <p className="mb-3 text-[12px] font-black uppercase tracking-[0.16em] text-orange-600">
+        <div className="mt-4 rounded-[18px] border border-amber-100 bg-amber-50/40 p-4">
+          <p className="mb-3 text-[11px] font-black uppercase tracking-[0.14em] text-amber-600">
             Objet en plus demandé
           </p>
-
           <div className="grid gap-3 sm:grid-cols-2">
             {extraItems.map((item) => (
               <MiniItemCard key={item.id} item={item} compact />
@@ -932,7 +882,7 @@ function ExchangeObjects({ requestedItem, offeredItems, extraItems, navigate, us
           </div>
         </div>
       )}
-    </TrocoCard>
+    </section>
   );
 }
 
@@ -944,43 +894,32 @@ function PersonCard({ exchange, userId, navigate }) {
       : exchange.senderPhone || exchange.senderUserPhone || "";
 
   return (
-    <TrocoCard as="section" variant="plain" className="rounded-[30px] border border-slate-100 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:p-5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2ECC8A] to-cyan-400 text-xl font-black text-white">
-            {shortName(otherName).charAt(0).toUpperCase()}
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-[20px] font-black text-[#081225]">
-              Avec {shortName(otherName)}
-            </p>
-
-            <p className="mt-1 text-[14px] font-semibold text-slate-500">
-              Membre Troco · Répond vite
-            </p>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 gap-2">
-          <TrocoButton variant="plain"
-            onClick={() => navigate(`/exchanges/${exchange.id}/chat`)}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-100 bg-white text-emerald-700 shadow-sm"
-          >
-            <MessageCircle size={20} />
-          </TrocoButton>
-
-          {otherPhone && (
-            <a
-              href={`tel:${otherPhone.replace(/\D/g, "")}`}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-100 bg-white text-emerald-700 shadow-sm"
-            >
-              <Phone size={20} />
-            </a>
-          )}
+    <div className="flex items-center justify-between rounded-[16px] border border-[#E4EDE9] bg-white px-4 py-3 shadow-[0_4px_12px_rgba(15,23,42,0.04)]">
+      <div className="flex items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-[13px] font-black text-white">
+          {shortName(otherName).charAt(0).toUpperCase()}
+        </span>
+        <div>
+          <p className="text-[13px] font-black text-[#0d1b2a]">Échange avec {shortName(otherName)}</p>
+          <p className="text-[11px] font-medium text-[#94a3b8]">{formatDate(exchange)}</p>
         </div>
       </div>
-    </TrocoCard>
+      <div className="flex gap-2">
+        <TrocoButton variant="plain"
+          onClick={() => navigate(`/exchanges/${exchange.id}/chat`)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F0FAF7] text-[#1ABEA3]"
+        >
+          <MessageCircle size={16} strokeWidth={2.2} />
+        </TrocoButton>
+        {otherPhone && (
+          <a href={`tel:${otherPhone.replace(/\D/g, "")}`}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E4ECE8] bg-white text-[#94a3b8]"
+          >
+            <Phone size={16} strokeWidth={2.2} />
+          </a>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1120,59 +1059,59 @@ function MeetingValidationSection({
 
 function ProgressTimeline({ stage }) {
   const steps = [
-    { key: "pending", label: "Demande envoyée" },
-    { key: "accepted", label: "Troc accepté" },
-    { key: "time", label: "Disponibilités validées" },
-    { key: "place", label: "Lieu confirmé" },
-    { key: "confirmed", label: "Rencontre confirmée" },
+    { key: "pending",   label: "Demande\nenvoyée" },
+    { key: "accepted",  label: "Acceptation" },
+    { key: "time",      label: "Disponibilités" },
+    { key: "place",     label: "Lieu\nconfirmé" },
+    { key: "confirmed", label: "Rencontre\nconfirmée" },
   ];
 
   const indexByStage = {
     pending: 0,
-    start_time: 1,
-    waiting_time: 1,
-    respond_time: 1,
+    start_time: 1, waiting_time: 1, respond_time: 1,
     start_place: 2,
-    waiting_place: 3,
-    respond_place: 3,
-    confirmed: 4,
-    chat: 3,
-    completed: 4,
+    waiting_place: 3, respond_place: 3, chat: 3,
+    confirmed: 4, completed: 4,
   };
 
   const activeIndex = indexByStage[stage] ?? 0;
 
   return (
-    <TrocoCard as="section" variant="plain" className="rounded-[30px] border border-slate-100 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:p-5">
-      <h2 className="text-[21px] font-black tracking-[-0.04em] text-[#081225]">
-        Avancement du troc
-      </h2>
+    <section className="rounded-[18px] border border-[#E4EDE9] bg-white p-4 shadow-[0_4px_12px_rgba(15,23,42,0.04)]">
+      <p className="mb-4 text-[13px] font-black text-[#0d1b2a]">Avancement du troc</p>
 
-      <div className="mt-5 grid grid-cols-5 gap-2">
+      <div className="relative flex items-start justify-between">
+        {/* Ligne de connexion */}
+        <div className="absolute left-[10%] right-[10%] top-[18px] h-[2px] bg-[#E4EDE9]" />
+        <div
+          className="absolute left-[10%] top-[18px] h-[2px] bg-gradient-to-r from-[#1ABEA3] to-[#36C982] transition-all duration-500"
+          style={{ width: `${(activeIndex / (steps.length - 1)) * 80}%` }}
+        />
+
         {steps.map((step, index) => {
           const done = index <= activeIndex;
-
+          const active = index === activeIndex;
           return (
-            <div key={step.key} className="flex flex-col items-center text-center">
-              <span
-                className={[
-                  "flex h-10 w-10 items-center justify-center rounded-full border text-sm font-black",
-                  done
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-slate-100 bg-slate-50 text-slate-300",
-                ].join(" ")}
-              >
-                {done ? <CheckCircle2 size={20} /> : index + 1}
+            <div key={step.key} className="relative flex flex-1 flex-col items-center">
+              <span className={[
+                "relative z-10 flex h-9 w-9 items-center justify-center rounded-full border-2 text-[12px] font-black transition-all",
+                done
+                  ? "border-[#1ABEA3] bg-[#1ABEA3] text-white shadow-[0_4px_12px_rgba(26,190,163,0.3)]"
+                  : "border-[#E4EDE9] bg-white text-[#94a3b8]",
+              ].join(" ")}>
+                {done ? <CheckCircle2 size={16} strokeWidth={2.5} /> : index + 1}
               </span>
-
-              <p className="mt-2 text-[11px] font-semibold leading-tight text-slate-500">
+              <p className={[
+                "mt-2 whitespace-pre-line text-center text-[9.5px] font-semibold leading-tight",
+                done ? "text-[#1ABEA3]" : "text-[#94a3b8]",
+              ].join(" ")}>
                 {step.label}
               </p>
             </div>
           );
         })}
       </div>
-    </TrocoCard>
+    </section>
   );
 }
 
@@ -1290,6 +1229,8 @@ export default function ExchangeDetailPage() {
   const [showAddExtraPicker, setShowAddExtraPicker] = useState(false);
   const [selectedExtraId, setSelectedExtraId] = useState("");
   const [showValidationModal, setShowValidationModal] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationIsBothConfirmed, setCelebrationIsBothConfirmed] = useState(false);
 
   async function loadExchange() {
     if (!id) return;
@@ -1414,6 +1355,8 @@ export default function ExchangeDetailPage() {
       );
 
       await loadExchange();
+      setCelebrationIsBothConfirmed(false);
+      setShowCelebration(true);
     } catch (error) {
       console.error("Erreur acceptation :", error);
       showToast({ icon: "error", title: "Impossible d’accepter", text: "Une erreur est survenue." });
@@ -1599,9 +1542,13 @@ export default function ExchangeDetailPage() {
       }
 
       setShowValidationModal(false);
-      navigate(`/exchanges/${exchange.id}/post-meeting`, {
-        state: { exchangeId: exchange.id, exchange },
-      });
+      if (bothConfirmed) {
+        setCelebrationIsBothConfirmed(true);
+        setShowCelebration(true);
+        setTimeout(() => navigate(`/exchanges/${exchange.id}/post-meeting`, { state: { exchangeId: exchange.id, exchange } }), 4000);
+      } else {
+        navigate(`/exchanges/${exchange.id}/post-meeting`, { state: { exchangeId: exchange.id, exchange } });
+      }
     } catch (error) {
       console.error("Erreur confirmation troc :", error);
       showToast({ icon: "error", title: "Impossible de confirmer", text: "Réessaie dans un instant." });
@@ -1647,41 +1594,147 @@ export default function ExchangeDetailPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-[430px] px-4 pb-10 pt-[max(14px,env(safe-area-inset-top))] lg:max-w-3xl lg:px-8 lg:pt-8">
-        <header className="mb-5 flex items-center gap-3">
+    <main className="mx-auto w-full max-w-[430px] px-4 pb-10 lg:max-w-4xl lg:px-8">
+        <header className="mb-5 flex items-center">
           <button type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E4ECE8] bg-white shadow-[0_4px_12px_rgba(15,23,42,0.06)]"
             aria-label="Retour"
           >
             <ArrowLeft size={18} strokeWidth={2.3} className="text-[#102033]" />
           </button>
-          <div>
-            <p className="troco-caption text-[11px] font-bold uppercase tracking-widest">
-              {isReceiver ? "Demande reçue" : isSender ? "Demande envoyée" : "Échange"}
-            </p>
-            <h1 className="text-[19px] font-extrabold leading-tight tracking-[-0.03em] text-[#102033]">
-              Détail du troc
-            </h1>
-          </div>
+          <h1 className="flex-1 text-center text-[16px] font-black text-[#0d1b2a]">
+            Détail du troc
+          </h1>
+          <div className="h-10 w-10" />
         </header>
 
-        <div className="space-y-4">
-          <StatusHero
-            stage={stage}
-            exchange={exchange}
-            userId={user.uid}
-            navigate={navigate}
-          />
+        <div className="lg:grid lg:grid-cols-[1fr_340px] lg:items-start lg:gap-6">
+          {/* Colonne gauche : statut, actions, personne, timeline */}
+          <div className="space-y-4">
+            <StatusHero
+              stage={stage}
+              exchange={exchange}
+              userId={user.uid}
+              navigate={navigate}
+            />
 
-          <MeetingValidationSection
-            exchange={exchange}
-            userId={user.uid}
-            saving={saving}
-            onConfirmClick={() => setShowValidationModal(true)}
-            onProblemClick={reportMeetingProblem}
-          />
+            <MeetingValidationSection
+              exchange={exchange}
+              userId={user.uid}
+              saving={saving}
+              onConfirmClick={() => setShowValidationModal(true)}
+              onProblemClick={reportMeetingProblem}
+            />
 
+            {stage === "pending" && isReceiver && (
+              <section className="grid grid-cols-2 gap-3">
+                <TrocoButton variant="plain"
+                  onClick={declineProposal}
+                  disabled={saving}
+                  className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-rose-200 bg-rose-50 text-sm font-black text-rose-600 disabled:opacity-50"
+                >
+                  <XCircle size={18} />
+                  Refuser
+                </TrocoButton>
+
+                <TrocoButton variant="plain"
+                  onClick={acceptProposal}
+                  disabled={saving}
+                  className="troco-primary-btn flex h-12 items-center justify-center gap-2 rounded-[16px] disabled:opacity-50"
+                >
+                  <CheckCircle2 size={18} />
+                  Accepter
+                </TrocoButton>
+              </section>
+            )}
+
+            {stage === "pending" && isSender && (
+              <section className="space-y-3">
+                <TrocoButton variant="plain"
+                  onClick={cancelOwnProposal}
+                  disabled={saving}
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 text-[13px] font-black text-rose-600 disabled:opacity-50"
+                >
+                  <XCircle size={16} strokeWidth={2.2} />
+                  Annuler ma demande
+                </TrocoButton>
+                <p className="text-center text-[11px] font-medium text-[#94a3b8]">
+                  Tu pourras annuler tant que l’autre personne n’a pas répondu.
+                </p>
+              </section>
+            )}
+
+            {stage === "pending" && isReceiver && !isSender && !showExtraPicker && !isOpenExtraRequest && (
+              <TrocoButton variant="plain"
+                onClick={() => setShowExtraPicker(true)}
+                className="w-full rounded-[16px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-black text-amber-700"
+              >
+                {senderOtherItems.length > 0 ? "Demander un objet en plus" : "Demander un autre objet"}
+              </TrocoButton>
+            )}
+
+            {isSender && isOpenExtraRequest && !showAddExtraPicker && (
+              <section className="rounded-[20px] border border-amber-200 bg-amber-50/60 p-5">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">
+                  Objet en plus demandé
+                </p>
+                <h2 className="mt-2 text-[19px] font-extrabold tracking-[-0.03em] text-[#102033]">
+                  L’autre personne vous demande un objet en plus.
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                  Avez-vous quelque chose à rajouter ?
+                </p>
+                <TrocoButton variant="plain"
+                  onClick={() => setShowAddExtraPicker(true)}
+                  className="troco-primary-btn mt-4 h-12 w-full rounded-full"
+                >
+                  Ajouter un objet
+                </TrocoButton>
+              </section>
+            )}
+
+            {showExtraPicker && (
+              <ExtraItemPicker
+                items={senderOtherItems}
+                selectedId={selectedExtraId}
+                onSelect={setSelectedExtraId}
+                onCancel={() => { setShowExtraPicker(false); setSelectedExtraId(""); }}
+                onSubmit={requestExtraItem}
+                onSubmitWithoutItem={requestExtraItemWithoutSelection}
+                saving={saving}
+              />
+            )}
+
+            {showAddExtraPicker && (
+              <ExtraItemPicker
+                mode="add"
+                items={myOtherItems}
+                selectedId={selectedExtraId}
+                onSelect={setSelectedExtraId}
+                onCancel={() => { setShowAddExtraPicker(false); setSelectedExtraId(""); }}
+                onSubmit={addExtraItemResponse}
+                saving={saving}
+              />
+            )}
+
+            {stage !== "pending" && (
+              <PersonCard exchange={exchange} userId={user.uid} navigate={navigate} />
+            )}
+
+            <ProgressTimeline stage={stage} />
+
+            {stage === "start_time" && (
+              <TrocoButton variant="plain"
+                onClick={goToAvailability}
+                className="troco-primary-btn flex h-14 w-full items-center justify-center rounded-full text-[15px]"
+              >
+                Valider mes disponibilités
+              </TrocoButton>
+            )}
+          </div>
+
+          {/* Colonne droite : les objets */}
           <ExchangeObjects
             requestedItem={requestedItem}
             offeredItems={offeredItems}
@@ -1689,129 +1742,6 @@ export default function ExchangeDetailPage() {
             navigate={navigate}
             userIsSender={isSender}
           />
-
-          {stage === "pending" && isReceiver && (
-            <section className="grid grid-cols-2 gap-3">
-              <TrocoButton variant="plain"
-                onClick={declineProposal}
-                disabled={saving}
-                className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-rose-200 bg-rose-50 text-sm font-black text-rose-600 disabled:opacity-50"
-              >
-                <XCircle size={18} />
-                Refuser
-              </TrocoButton>
-
-              <TrocoButton variant="plain"
-                onClick={acceptProposal}
-                disabled={saving}
-                className="troco-primary-btn flex h-12 items-center justify-center gap-2 rounded-[16px] disabled:opacity-50"
-              >
-                <CheckCircle2 size={18} />
-                Accepter
-              </TrocoButton>
-            </section>
-          )}
-
-          {stage === "pending" && isSender && (
-            <section className="rounded-[20px] border border-sky-100 bg-sky-50/60 p-5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-600">
-                Demande envoyée
-              </p>
-
-              <h2 className="mt-2 text-[20px] font-extrabold tracking-[-0.03em] text-[#102033]">
-                En attente de réponse
-              </h2>
-
-              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">
-                Vous avez envoyé cette proposition. Seule l’autre personne peut l’accepter, la refuser ou demander un objet en plus.
-              </p>
-
-              <TrocoButton variant="plain"
-                onClick={cancelOwnProposal}
-                disabled={saving}
-                className="mt-4 h-12 w-full rounded-full border border-rose-200 bg-rose-50 text-sm font-black text-rose-600 disabled:opacity-50"
-              >
-                Annuler ma demande
-              </TrocoButton>
-            </section>
-          )}
-
-          {stage === "pending" && isReceiver && !isSender && !showExtraPicker && !isOpenExtraRequest && (
-            <TrocoButton variant="plain"
-              onClick={() => setShowExtraPicker(true)}
-              className="w-full rounded-[16px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-black text-amber-700"
-            >
-              {senderOtherItems.length > 0 ? "Demander un objet en plus" : "Demander un autre objet"}
-            </TrocoButton>
-          )}
-
-          {isSender && isOpenExtraRequest && !showAddExtraPicker && (
-            <section className="rounded-[20px] border border-amber-200 bg-amber-50/60 p-5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">
-                Objet en plus demandé
-              </p>
-
-              <h2 className="mt-2 text-[19px] font-extrabold tracking-[-0.03em] text-[#102033]">
-                L’autre personne vous demande un objet en plus.
-              </h2>
-
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                Avez-vous quelque chose à rajouter ?
-              </p>
-
-              <TrocoButton variant="plain"
-                onClick={() => setShowAddExtraPicker(true)}
-                className="troco-primary-btn mt-4 h-12 w-full rounded-full"
-              >
-                Ajouter un objet
-              </TrocoButton>
-            </section>
-          )}
-
-          {showExtraPicker && (
-            <ExtraItemPicker
-              items={senderOtherItems}
-              selectedId={selectedExtraId}
-              onSelect={setSelectedExtraId}
-              onCancel={() => {
-                setShowExtraPicker(false);
-                setSelectedExtraId("");
-              }}
-              onSubmit={requestExtraItem}
-              onSubmitWithoutItem={requestExtraItemWithoutSelection}
-              saving={saving}
-            />
-          )}
-
-          {showAddExtraPicker && (
-            <ExtraItemPicker
-              mode="add"
-              items={myOtherItems}
-              selectedId={selectedExtraId}
-              onSelect={setSelectedExtraId}
-              onCancel={() => {
-                setShowAddExtraPicker(false);
-                setSelectedExtraId("");
-              }}
-              onSubmit={addExtraItemResponse}
-              saving={saving}
-            />
-          )}
-
-          {stage !== "pending" && (
-            <PersonCard exchange={exchange} userId={user.uid} navigate={navigate} />
-          )}
-
-          <ProgressTimeline stage={stage} />
-
-          {stage === "start_time" && (
-            <TrocoButton variant="plain"
-              onClick={goToAvailability}
-              className="troco-primary-btn flex h-14 w-full items-center justify-center rounded-full text-[15px]"
-            >
-              Valider mes disponibilités
-            </TrocoButton>
-          )}
         </div>
       <MeetingValidationModal
         open={showValidationModal}
@@ -1819,6 +1749,15 @@ export default function ExchangeDetailPage() {
         onClose={() => setShowValidationModal(false)}
         onConfirm={markTradeAsCompleted}
         onProblem={reportMeetingProblem}
+      />
+
+      <TrocConfirmedCelebration
+        open={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        requestedItem={requestedItem}
+        offeredItem={offeredItems[0] || null}
+        exchangeId={exchange?.id}
+        isBothConfirmed={celebrationIsBothConfirmed}
       />
     </main>
   );

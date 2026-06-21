@@ -24,7 +24,9 @@ service cloud.firestore {
     // Échanges — lecture/écriture uniquement pour les participants
     match /exchanges/{exchangeId} {
       allow read, write: if request.auth != null
-        && request.auth.uid in resource.data.participants;
+        && (request.auth.uid in resource.data.participants
+            || request.auth.uid == resource.data.senderId
+            || request.auth.uid == resource.data.receiverId);
       allow create: if request.auth != null;
 
       // Sous-collection messages — accessible uniquement aux participants de l'échange

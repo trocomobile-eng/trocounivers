@@ -38,7 +38,7 @@ function LanguageSwitcher() {
   const currentLanguage = i18n.language?.startsWith("en") ? "en" : "fr";
 
   return (
-    <div className="absolute right-5 top-8 z-40 flex items-center rounded-full border border-[#E4ECE8] bg-white/82 p-1 shadow-[0_10px_30px_rgba(15,23,42,0.055)] backdrop-blur-xl lg:right-8 lg:top-8">
+    <div className="absolute right-5 top-5 z-40 flex items-center rounded-full border border-[#E4ECE8] bg-white/82 p-1 shadow-[0_10px_30px_rgba(15,23,42,0.055)] backdrop-blur-xl lg:right-8 lg:top-8">
       <button
         type="button"
         onClick={() => changeLanguage("fr")}
@@ -183,7 +183,7 @@ function ObjectStorySection() {
   ];
 
   return (
-    <section className="mx-auto mt-2 max-w-7xl px-5">
+    <section className="mx-auto mt-9 max-w-7xl px-5">
       <div className="overflow-hidden rounded-[38px] border border-[#E4ECE8] bg-white/86 shadow-[0_20px_70px_rgba(15,23,42,0.055)] backdrop-blur-xl">
         <div className="grid items-center gap-8 p-6 md:p-9 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
@@ -253,15 +253,18 @@ export default function LandingPage() {
 
       <LanguageSwitcher />
 
-      <section className="relative px-5 pb-12 pt-20 md:pb-20 md:pt-14">
+      <section className="relative px-5 pb-10 pt-2 md:pb-16 md:pt-8">
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="relative z-20 mx-auto w-full max-w-[410px] text-center lg:mx-0 lg:max-w-[360px] lg:text-left">
-            <div className="mb-0 flex justify-center lg:mb-5 lg:justify-start">
-              <div className="origin-center scale-[1.2] lg:origin-left lg:scale-[1.15]">
+            <div className="mb-3 flex justify-center lg:mb-5 lg:justify-start">
+              <div className="origin-center scale-[1.05] lg:origin-left lg:scale-[1.28]">
                 <TrocoLogo size="l" />
               </div>
             </div>
 
+            <div className="mx-auto inline-flex max-w-full items-center justify-center rounded-full border border-[#E4ECE8] bg-white/86 px-4 py-2 text-center text-[13px] font-black text-[#0f9f9a] shadow-[0_8px_24px_rgba(15,23,42,0.04)] backdrop-blur-xl lg:mx-0">
+              {t("landing.badge")}
+            </div>
 
             <h1 className="mx-auto mt-5 max-w-[360px] text-[40px] font-black leading-[0.96] tracking-[-0.06em] text-[#081225] sm:max-w-[360px] sm:text-[54px] md:text-[52px] lg:mx-0">
               {t("landing.title")}
@@ -281,7 +284,14 @@ export default function LandingPage() {
                 <ArrowRight size={20} strokeWidth={2.5} />
               </button>
 
-             
+              <a
+                href={PROPOSER_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-[54px] w-full items-center justify-center rounded-[22px] border border-[#E4ECE8] bg-white/88 px-6 py-3 text-center text-[16px] font-black text-[#081225] shadow-[0_10px_28px_rgba(15,23,42,0.045)] backdrop-blur-xl transition active:scale-[0.98] lg:w-auto"
+              >
+                Accès anticipé
+              </a>
             </div>
           </div>
 
@@ -374,9 +384,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <div className="relative mt-6 border-t border-[#E4ECE8] bg-white/70">
-  <TrocoFooter />
-</div>
+      <TrocoFooter />
+
       <div className="relative pb-8 text-center">
         <Link
           to="/troco-dossier"

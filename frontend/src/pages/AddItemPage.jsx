@@ -176,11 +176,13 @@ export default function AddItemPage() {
   }
 
   async function uploadPhotos(itemId) {
+    const { compressImage } = await import("../utils/compressImage");
     const urls = [];
     for (const photo of photos) {
-      const safeName = photo.file.name.replace(/\s+/g, "-").toLowerCase();
+      const compressed = await compressImage(photo.file);
+      const safeName = compressed.name.replace(/\s+/g, "-").toLowerCase();
       const storageRef = ref(storage, `items/${itemId}/${Date.now()}-${safeName}`);
-      await uploadBytes(storageRef, photo.file);
+      await uploadBytes(storageRef, compressed);
       urls.push(await getDownloadURL(storageRef));
     }
     return urls;

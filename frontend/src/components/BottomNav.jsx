@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Compass, MessageCircle, Plus, Repeat2, UserRound } from "lucide-react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -61,29 +62,31 @@ function Badge({ count }) {
 
 function NavItem({ to, label, icon: Icon, badge = 0 }) {
   return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        [
-          "relative flex h-[46px] min-w-[54px] flex-col items-center justify-center rounded-[18px] px-2 text-[11px] font-extrabold transition-all duration-200",
-          isActive
-            ? "bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-white shadow-[0_6px_16px_rgba(26,190,163,0.22)] scale-[1.06]"
-            : "text-slate-400 hover:text-slate-600 active:scale-95",
-        ].join(" ")
-      }
-    >
+    <NavLink to={to}>
       {({ isActive }) => (
-        <>
+        <motion.span
+          whileTap={{ scale: 0.84 }}
+          animate={isActive ? { scale: 1.06 } : { scale: 1 }}
+          transition={{ type: "spring", stiffness: 420, damping: 26 }}
+          className={[
+            "relative flex h-[46px] min-w-[54px] flex-col items-center justify-center rounded-[18px] px-2 text-[11px] font-extrabold",
+            isActive
+              ? "bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-white shadow-[0_6px_16px_rgba(26,190,163,0.22)]"
+              : "text-slate-400",
+          ].join(" ")}
+        >
           <span className="relative">
-            <Icon
-              size={19}
-              strokeWidth={isActive ? 2.5 : 2.1}
-              className={isActive ? "drop-shadow-sm" : ""}
-            />
+            <motion.span
+              animate={isActive ? { y: -1 } : { y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 28 }}
+              className="block"
+            >
+              <Icon size={19} strokeWidth={isActive ? 2.5 : 2.1} className={isActive ? "drop-shadow-sm" : ""} />
+            </motion.span>
             <Badge count={badge} />
           </span>
           <span className="mt-[2px]">{label}</span>
-        </>
+        </motion.span>
       )}
     </NavLink>
   );

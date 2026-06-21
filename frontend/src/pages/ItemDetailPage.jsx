@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import {
@@ -272,7 +273,12 @@ export default function ItemDetailPage() {
   return (
     <>
       <main className="mx-auto w-full max-w-[760px] pb-10">
-        <section className="relative">
+        <motion.section
+          className="relative"
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.38, ease: [0.2, 0.8, 0.2, 1] }}
+        >
           <div className="overflow-hidden rounded-[32px] bg-slate-100 shadow-[0_12px_34px_rgba(15,23,42,0.07)]">
             <div className="aspect-[1.3/1] w-full">
               {mainImage ? (
@@ -333,9 +339,14 @@ export default function ItemDetailPage() {
               </div>
             </>
           )}
-        </section>
+        </motion.section>
 
-        <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+        <motion.section
+          className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.36, delay: 0.12, ease: [0.2, 0.8, 0.2, 1] }}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
@@ -437,9 +448,14 @@ export default function ItemDetailPage() {
               {description}
             </p>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+        <motion.section
+          className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.34, delay: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+        >
           {isOwner ? (
             <>
               <p className="text-[17px] font-semibold leading-relaxed text-[#081225]">
@@ -484,10 +500,15 @@ export default function ItemDetailPage() {
               </button>
             </>
           )}
-        </section>
+        </motion.section>
 
         {!isOwner && !isAmbassador(ownerProfile) && (
-          <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+          <motion.section
+            className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32, delay: 0.32, ease: [0.2, 0.8, 0.2, 1] }}
+          >
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F0FAF7] text-[#1ABEA3]">
                 <Gift size={22} strokeWidth={2.25} />
@@ -541,7 +562,7 @@ export default function ItemDetailPage() {
                 </>
               );
             })()}
-          </section>
+          </motion.section>
         )}
       </main>
 

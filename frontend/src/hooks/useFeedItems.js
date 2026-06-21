@@ -244,12 +244,39 @@ export default function useFeedItems() {
     if (!user?.uid) return;
     const unsub = onSnapshot(
       doc(db, "users", user.uid),
-      (snap) => {
+      async (snap) => {
         const data = snap.data() || {};
         const loc = getGeoPoint(data.location);
+        const enabled = Boolean(data.locationEnabled && loc);
         setFavoriteItemIds(Array.isArray(data.favoriteItemIds) ? data.favoriteItemIds : []);
-        setLocationEnabled(Boolean(data.locationEnabled && loc));
+        setLocationEnabled(enabled);
         setUserLocation(loc);
+
+        // Si pas encore activé dans Firestore mais permission navigateur déjà accordée,
+        // récupérer silencieusement la position sans afficher la bannière
+        if (!enabled && navigator.permissions && navigator.geolocation) {
+          try {
+            const result = await navigator.permissions.query({ name: "geolocation" });
+            if (result.state === "granted") {
+              navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                  const newLoc = { lat: position.coords.latitude, lng: position.coords.longitude };
+                  try {
+                    await setDoc(
+                      doc(db, "users", user.uid),
+                      { locationEnabled: true, location: newLoc, locationUpdatedAt: new Date() },
+                      { merge: true }
+                    );
+                  } catch {}
+                  setUserLocation(newLoc);
+                  setLocationEnabled(true);
+                },
+                () => {},
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+              );
+            }
+          } catch {}
+        }
       },
       (err) => console.error("Erreur profil :", err)
     );

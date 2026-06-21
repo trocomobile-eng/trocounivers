@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, BellOff, ChevronRight, FileText, Lock, LogOut, Mail, Shield, UserRound } from "lucide-react";
+import { Bell, BellOff, ChevronRight, FileText, Lock, LogOut, Mail, MapPin, Shield, UserRound } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { usePushNotifications } from "../hooks/usePushNotifications";
+import { useGeolocation } from "../hooks/useGeolocation";
 
 function Section({ title, children }) {
   return (
@@ -44,7 +45,28 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { show: showToast } = useToast();
   const { pushStatus, enablePushNotifications } = usePushNotifications(user?.uid);
+  const { status: geoStatus, requesting: geoRequesting, request: requestGeo } = useGeolocation(user?.uid);
   const [enabling, setEnabling] = useState(false);
+
+  async function handleGeo() {
+    if (geoStatus === "denied") {
+      showToast({ icon: "info", title: "Localisation bloquée", text: "Active-la dans Réglages › Navigateur › Localisation." });
+      return;
+    }
+    await requestGeo();
+  }
+
+  const geoLabel = geoStatus === "granted"
+    ? "Localisation activée"
+    : geoStatus === "denied"
+    ? "Localisation bloquée"
+    : geoRequesting ? "Activation…" : "Activer la localisation";
+
+  const geoSub = geoStatus === "granted"
+    ? "Tu vois les objets autour de toi"
+    : geoStatus === "denied"
+    ? "Autorise dans les réglages du navigateur"
+    : "Pour voir les objets près de toi";
 
   async function handleLogout() {
     await logout();
@@ -104,8 +126,21 @@ export default function SettingsPage() {
         />
       </Section>
 
-      {/* Notifications */}
-      <Section title="Notifications">
+      {/* Permissions */}
+      <Section title="Permissions">
+        <Row
+          icon={MapPin}
+          label={geoLabel}
+          sublabel={geoSub}
+          onClick={geoStatus === "granted" ? undefined : handleGeo}
+          rightEl={
+            geoStatus === "granted"
+              ? <span className="rounded-full bg-[#F0FAF7] px-2.5 py-1 text-[10px] font-black text-[#1ABEA3]">Activée</span>
+              : geoStatus === "denied"
+              ? <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-500">Bloquée</span>
+              : null
+          }
+        />
         <Row
           icon={pushStatus === "granted" ? Bell : BellOff}
           label={pushLabel}
@@ -113,13 +148,14 @@ export default function SettingsPage() {
           onClick={pushStatus === "granted" ? undefined : handleEnablePush}
           rightEl={
             pushStatus === "granted"
-              ? <span className="rounded-full bg-[#F0FAF7] px-2.5 py-1 text-[10px] font-black text-[#1ABEA3]">Activé</span>
+              ? <span className="rounded-full bg-[#F0FAF7] px-2.5 py-1 text-[10px] font-black text-[#1ABEA3]">Activées</span>
               : pushStatus === "denied"
-              ? <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-500">Bloqué</span>
+              ? <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-500">Bloquées</span>
               : null
           }
         />
       </Section>
+
 
       {/* Légal */}
       <Section title="Informations légales">

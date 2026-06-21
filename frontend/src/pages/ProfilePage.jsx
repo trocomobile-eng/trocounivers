@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { useFavoriteUsers } from "../hooks/useFavoriteUsers";
 import {
   ArrowLeft,
   Camera,
@@ -66,7 +68,8 @@ const PREFERENCE_CARDS = [
 ];
 
 function clean(value = "") {
-  return String(value || "").trim();
+  if (!value || typeof value === "object") return "";
+  return String(value).trim();
 }
 
 function splitList(value) {
@@ -162,15 +165,14 @@ function relativeDate(value) {
 function PageShell({ children, className = "", user = null, showBrandHeader = true }) {
   return (
     <div className={["w-full", className].join(" ")}>
-      <div className="mx-auto w-full max-w-[1180px] px-4 pt-[max(6px,env(safe-area-inset-top))] lg:px-10 xl:px-0">
-        {showBrandHeader && (
-          <TrocoPageHeader
-            variant="brand"
-            user={user}
-            className="mb-2 px-1 lg:hidden"
-          />
-        )}
-
+      {showBrandHeader && (
+        <TrocoPageHeader
+          variant="brand"
+          user={user}
+          className="mb-3 lg:hidden"
+        />
+      )}
+      <div className="lg:mx-auto lg:w-full lg:max-w-[1180px] lg:px-10 xl:px-0">
         {children}
       </div>
     </div>
@@ -179,7 +181,7 @@ function PageShell({ children, className = "", user = null, showBrandHeader = tr
 
 function MobileTopBar({ title, onBack, right, centered = true }) {
   return (
-    <div className="sticky top-0 z-30 -mx-6 mb-5 flex h-[60px] items-center justify-between bg-white/84 px-6 backdrop-blur-xl lg:hidden">
+    <div className="sticky top-0 z-30 -mx-3 mb-5 flex h-[60px] items-center justify-between bg-white/84 px-3 backdrop-blur-xl lg:hidden">
       <button
         type="button"
         onClick={onBack}
@@ -489,7 +491,7 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
 
   return (
     <PageShell user={user}>
-      <div className="mx-auto w-full max-w-[980px] px-6 pt-[max(12px,env(safe-area-inset-top))] lg:px-10 xl:px-0">
+      <div className="w-full lg:mx-auto lg:max-w-[980px] lg:px-10 xl:px-0">
         {screen === "menu" && (
           <>
             <MobileTopBar title="Modifier mon profil" onBack={onClose} centered />
@@ -528,7 +530,7 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
             />
 
             <section>
-              <div className="-mx-6 h-[150px] overflow-hidden bg-[#EEF7F2]">
+              <div className="-mx-3 h-[150px] overflow-hidden bg-[#EEF7F2]">
                 <img src="https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1000&q=80" alt="" className="h-full w-full object-cover opacity-70" />
               </div>
 
@@ -720,6 +722,7 @@ export default function ProfilePage() {
   }, [items, profile]);
 
   const latestItem = items[0];
+  const { favoriteProfiles, toggle: toggleFavUser } = useFavoriteUsers();
 
   function openEdit(screen = "menu") {
     setEditInitialScreen(screen);
@@ -755,18 +758,28 @@ export default function ProfilePage() {
 
   return (
     <PageShell user={user}>
-      <div className="mx-auto w-full max-w-[1180px] px-6 pt-[max(8px,env(safe-area-inset-top))] lg:px-10 lg:pt-0 xl:px-0">
+      <div className="w-full lg:pt-0">
         <div className="hidden lg:block">
           <TrocoPageHeader user={user} showLogo={false} showNotifications={false} showAvatar={false} eyebrow="Profil" title="Mon profil" subtitle="Ton univers Troco, tes objets et tes envies d’échange." compact />
         </div>
 
-        <section className=" sm:grid-cols-[140px_1fr] sm:items-center">
-            <div className="flex justify-start">
+        <section className="sm:grid-cols-[140px_1fr] sm:items-center">
+          <div className="flex justify-start gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.82 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.38, ease: [0.2, 0.8, 0.2, 1] }}
+            >
               <Avatar user={user} profile={profile} onEdit={() => navigate("/profile/edit")} />
-            
+            </motion.div>
 
-            <div className="text-left">
-              <h1 className="text-[44px] font-black leading-[0.95] tracking-[-0.065em] text-[#081225] sm:text-[58px]">
+            <motion.div
+              className="text-left"
+              initial={{ opacity: 0, x: -14 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.38, delay: 0.08, ease: [0.2, 0.8, 0.2, 1] }}
+            >
+              <h1 className="text-[28px] font-black leading-[1.1] tracking-[-0.04em] text-[#081225] lg:text-[20px]">
                 {displayName(user, profile)}
               </h1>
               <p className="mt-3 text-[16px] font-black tracking-[-0.025em] text-[#0f9f9a]">{handleName(user, profile)}</p>
@@ -777,16 +790,38 @@ export default function ProfilePage() {
               <p className="mt-5 max-w-[430px] text-[16px] font-semibold leading-relaxed tracking-[-0.025em] text-[#40545B]">
                 {bioText(profile)}
               </p>
-            </div>
+            </motion.div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <StatCapsule icon={CheckCircle2} number={profile?.completedExchanges || profile?.exchangeCount || 0} label="échanges" />
-            <StatCapsule icon={Package} number={items.length} label={items.length > 1 ? "objets" : "objet"} />
-            <StatCapsule icon={Heart} number={favoriteItems.length} label="favoris" />
-          </div>
+          <motion.div
+            className="mt-6 grid grid-cols-3 gap-3"
+            initial="hidden"
+            animate="show"
+            variants={{ show: { transition: { staggerChildren: 0.07, delayChildren: 0.18 } } }}
+          >
+            {[
+              { icon: CheckCircle2, number: profile?.completedExchanges || profile?.exchangeCount || 0, label: "échanges" },
+              { icon: Package, number: items.length, label: items.length > 1 ? "objets" : "objet" },
+              { icon: Heart, number: favoriteItems.length, label: "favoris" },
+            ].map((stat) => (
+              <motion.div
+                key={stat.label}
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.2, 0.8, 0.2, 1] } },
+                }}
+              >
+                <StatCapsule icon={stat.icon} number={stat.number} label={stat.label} />
+              </motion.div>
+            ))}
+          </motion.div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:max-w-[420px]">
+          <motion.div
+            className="mt-5 grid grid-cols-2 gap-3 sm:max-w-[420px]"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32, delay: 0.38, ease: [0.2, 0.8, 0.2, 1] }}
+          >
             <ActionButton icon={Edit3} onClick={() => navigate("/profile/edit")}>Modifier</ActionButton>
             <ActionButton
               icon={LogOut}
@@ -797,21 +832,31 @@ export default function ProfilePage() {
             >
               Déconnexion
             </ActionButton>
-          </div>
+          </motion.div>
         </section>
 
-        <section className="mt-9">
+        <motion.section
+          className="mt-9"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+        >
           <SectionTitle title="Ses objets" action={items.length > 0 ? <Link to="/library" className="flex items-center gap-1 text-[13px] font-black text-[#08755C]">Voir tout <ChevronRight size={16} /></Link> : null} />
           {items.length ? (
-            <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-3 flex gap-4 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {items.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}
             </div>
           ) : (
             <EmptyBlock icon={Package} title="Aucun objet publié" text="Ajoute ton premier objet pour commencer à échanger." />
           )}
-        </section>
+        </motion.section>
 
-        <section className="mt-9">
+        <motion.section
+          className="mt-9"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.62, ease: [0.2, 0.8, 0.2, 1] }}
+        >
           <SectionTitle title="Mes préférences d’échange" />
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -876,21 +921,65 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="mt-9">
+        <motion.section
+          className="mt-9"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.74, ease: [0.2, 0.8, 0.2, 1] }}
+        >
           <SectionTitle title="Activité récente" />
           <div className="rounded-[28px] border border-[#E8F1ED] bg-white/88 px-4 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
             {latestItem && <ActivityRow icon={Package} title="A ajouté un objet" subtitle={itemTitle(latestItem)} time={relativeDate(latestItem?.createdAt || latestItem?.updatedAt)} />}
             <ActivityRow icon={CheckCircle2} title="A confirmé un échange" subtitle="Profil actif sur Troco" time="récemment" />
             <ActivityRow icon={MessageCircle} title="Répond rapidement aux messages" subtitle="Taux de réponse élevé" time="toujours" />
           </div>
-        </section>
+        </motion.section>
+
+        {favoriteProfiles.length > 0 && (
+          <motion.section
+            className="mt-9"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.62, ease: [0.2, 0.8, 0.2, 1] }}
+          >
+            <SectionTitle
+              title="Mes troqueurs favoris"
+              action={<Link to="/favorites" className="flex items-center gap-1 text-[13px] font-black text-[#08755C]">Voir tout <ChevronRight size={16} /></Link>}
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {favoriteProfiles.slice(0, 4).map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-[18px] border border-[#E8F1ED] bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.05)]">
+                  {p.photoURL ? (
+                    <img src={p.photoURL} alt={p.displayName} className="h-11 w-11 shrink-0 rounded-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-[16px] font-black text-white">
+                      {(p.displayName || p.email || "?").charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-black text-[#0d1b2a]">{p.displayName || p.email?.split("@")[0] || "Troqueur"}</p>
+                    <p className="truncate text-[11px] font-medium text-[#94a3b8]">{p.arrondissement || p.city || "Paris"}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link to={`/users/${p.id}`} className="rounded-full border border-[#E4ECE8] bg-white px-2.5 py-1 text-[11px] font-black text-[#344256] transition hover:border-[#1ABEA3] hover:text-[#1ABEA3]">
+                      Voir
+                    </Link>
+                    <button type="button" onClick={() => toggleFavUser(p.id)} className="text-[#94a3b8] transition hover:text-rose-400" aria-label="Retirer">
+                      <Heart size={14} fill="currentColor" strokeWidth={2} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
 
         {favoriteItems.length > 0 && (
           <section className="mt-9">
             <SectionTitle title="Favoris" />
-            <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-3 flex gap-4 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {favoriteItems.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}
             </div>
           </section>

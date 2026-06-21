@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Heart, Map, Navigation, Search, SlidersHorizontal } from "lucide-react";
+import { motion } from "framer-motion";
+import { Heart, Map, Navigation, Search, SlidersHorizontal, Zap } from "lucide-react";
+import FavoriteUsersFeedSection from "../../components/FavoriteUsersFeedSection";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
@@ -99,7 +101,12 @@ function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
       as={Link}
       to={`/items/${item.id}`}
       variant="plain"
-      className="group block overflow-hidden rounded-[20px] bg-white p-0 text-left shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition hover:-translate-y-[1px] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]"
+      className={[
+        "group block overflow-hidden rounded-[20px] bg-white p-0 text-left transition hover:-translate-y-[1px]",
+        item.isMatch
+          ? "shadow-[0_2px_12px_rgba(26,190,163,0.18),0_0_0_1.5px_rgba(26,190,163,0.25)] hover:shadow-[0_8px_24px_rgba(26,190,163,0.22)]"
+          : "shadow-[0_2px_12px_rgba(15,23,42,0.07)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]",
+      ].join(" ")}
     >
       <div className="relative overflow-hidden bg-slate-100">
         <img
@@ -108,20 +115,45 @@ function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
           className="aspect-square w-full object-cover transition duration-300 group-hover:scale-[1.015]"
         />
 
-        <button
+        <motion.button
           type="button"
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
             onToggleFavorite(item.id);
           }}
+          whileTap={{ scale: 0.78 }}
           className={[
-            "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 backdrop-blur-sm shadow-[0_2px_8px_rgba(15,23,42,0.08)] transition active:scale-95",
+            "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 backdrop-blur-sm shadow-[0_2px_8px_rgba(15,23,42,0.08)]",
             favorite ? "text-[#1ABEA3]" : "text-slate-400",
           ].join(" ")}
         >
-          <Heart size={15} fill={favorite ? "currentColor" : "none"} strokeWidth={2.1} />
-        </button>
+          <motion.span
+            animate={favorite ? { scale: [1, 1.4, 0.85, 1.15, 1] } : { scale: 1 }}
+            transition={{ duration: 0.38 }}
+            className="flex"
+          >
+            <Heart size={15} fill={favorite ? "currentColor" : "none"} strokeWidth={2.1} />
+          </motion.span>
+        </motion.button>
+
+        {item.isMatch && (
+          <motion.span
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 520, damping: 18, delay: 0.05 }}
+            className="absolute bottom-2.5 right-2.5 flex items-center gap-1 rounded-full bg-[#1ABEA3] px-2 py-1 text-[10px] font-black text-white shadow-[0_2px_10px_rgba(26,190,163,0.45)]"
+          >
+            <motion.span
+              animate={{ rotate: [0, -20, 20, -10, 0] }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              className="flex"
+            >
+              <Zap size={10} strokeWidth={2.5} fill="currentColor" />
+            </motion.span>
+            Match
+          </motion.span>
+        )}
       </div>
 
       <div className="p-3">
@@ -256,19 +288,35 @@ export default function DesktopFeedPage() {
               ✨ Nouveautés
             </p>
             <div className="overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex gap-3">
+              <motion.div
+                className="flex gap-3"
+                initial="hidden"
+                animate="show"
+                variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+              >
                 {recentItems.map((item) => (
-                  <div key={item.id} className="w-[160px] shrink-0">
+                  <motion.div
+                    key={item.id}
+                    className="w-[160px] shrink-0"
+                    variants={{
+                      hidden: { opacity: 0, x: 16 },
+                      show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.2, 0.8, 0.2, 1] } },
+                    }}
+                  >
                     <DesktopFeedCard
                       item={item}
                       favorite={favoriteItemIds.includes(item.id)}
                       onToggleFavorite={toggleFavorite}
                     />
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           </section>
+        )}
+
+        {!search.trim() && activeCategory === "Tout" && (
+          <FavoriteUsersFeedSection cardWidth="w-[160px]" maxItems={6} />
         )}
 
         {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (
@@ -337,16 +385,28 @@ export default function DesktopFeedPage() {
             Aucun objet trouvé.
           </div>
         ) : (
-          <section className="mt-7 grid grid-cols-3 gap-5 xl:grid-cols-4">
+          <motion.section
+            className="mt-7 grid grid-cols-3 gap-5 xl:grid-cols-4"
+            initial="hidden"
+            animate="show"
+            variants={{ show: { transition: { staggerChildren: 0.055 } } }}
+          >
             {visibleItems.map((item) => (
-              <DesktopFeedCard
+              <motion.div
                 key={item.id}
-                item={item}
-                favorite={favoriteItemIds.includes(item.id)}
-                onToggleFavorite={toggleFavorite}
-              />
+                variants={{
+                  hidden: { opacity: 0, y: 18 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.2, 0.8, 0.2, 1] } },
+                }}
+              >
+                <DesktopFeedCard
+                  item={item}
+                  favorite={favoriteItemIds.includes(item.id)}
+                  onToggleFavorite={toggleFavorite}
+                />
+              </motion.div>
             ))}
-          </section>
+          </motion.section>
         )}
     </main>
   );

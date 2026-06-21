@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import {
   BookOpen,
   Grid2X2,
@@ -34,21 +35,32 @@ export default function CategoryPills({ activeCategory = "Tout", onChange }) {
         const active = activeCategory === label;
 
         return (
-          <button
+          <motion.button
             key={label}
             ref={active ? activeRef : null}
             type="button"
             onClick={() => onChange?.(label)}
+            whileTap={{ scale: 0.91 }}
             className={[
-              "inline-flex h-[38px] shrink-0 items-center gap-2 rounded-[16px] border px-3.5 text-[13px] font-extrabold tracking-[-0.015em] transition active:scale-[0.98]",
+              "relative inline-flex h-[38px] shrink-0 items-center gap-2 rounded-[16px] border px-3.5 text-[13px] font-extrabold tracking-[-0.015em] overflow-hidden",
               active
-                ? "border-transparent bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-white shadow-[0_12px_26px_rgba(26,190,163,0.14)]"
+                ? "border-transparent text-white shadow-[0_12px_26px_rgba(26,190,163,0.22)]"
                 : "border-[#E6EFEB] bg-white/96 text-[#233241] shadow-[0_8px_22px_rgba(15,23,42,0.045)]",
             ].join(" ")}
           >
-            <Icon size={17} strokeWidth={2.25} />
-            {label}
-          </button>
+            {active && (
+              <motion.span
+                layoutId="category-pill-bg"
+                className="absolute inset-0 bg-gradient-to-br from-[#1ABEA3] to-[#36C982]"
+                style={{ borderRadius: 16 }}
+                transition={{ type: "spring", stiffness: 400, damping: 32 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <Icon size={17} strokeWidth={2.25} />
+              {label}
+            </span>
+          </motion.button>
         );
       })}
     </div>
