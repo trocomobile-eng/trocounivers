@@ -42,7 +42,7 @@ export default function CategoryPills({ activeCategory = "Tout", onChange }) {
             onClick={() => onChange?.(label)}
             whileTap={{ scale: 0.91 }}
             className={[
-              "relative inline-flex h-[38px] shrink-0 items-center gap-2 rounded-[16px] border px-3.5 text-[13px] font-extrabold tracking-[-0.015em] overflow-hidden",
+              "relative inline-flex h-[34px] shrink-0 items-center gap-1.5 rounded-[14px] border px-3 text-[12px] font-extrabold tracking-[-0.01em] overflow-hidden",
               active
                 ? "border-transparent text-white shadow-[0_12px_26px_rgba(26,190,163,0.22)]"
                 : "border-[#E6EFEB] bg-white/96 text-[#233241] shadow-[0_8px_22px_rgba(15,23,42,0.045)]",
@@ -57,7 +57,7 @@ export default function CategoryPills({ activeCategory = "Tout", onChange }) {
               />
             )}
             <span className="relative z-10 flex items-center gap-2">
-              <Icon size={17} strokeWidth={2.25} />
+              <Icon size={14} strokeWidth={2.25} />
               {label}
             </span>
           </motion.button>

@@ -15,12 +15,6 @@ function getInitialLanguage() {
     console.log(error);
   }
 
-  const browserLanguage = navigator.language?.slice(0, 2);
-
-  if (browserLanguage === "en") {
-    return "en";
-  }
-
   return "fr";
 }
 

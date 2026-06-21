@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
 import {
   ArrowRight,
   CalendarCheck,
@@ -12,13 +14,13 @@ import {
 
 import TrocoLogo from "../components/TrocoLogo";
 import TrocoFooter from "../components/TrocoFooter";
+import { db } from "../firebase";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { getItemImage, getItemTitle, getItemLocation } from "../hooks/useFeedItems";
 
 import mockup1 from "../assets/mockups/mockup-1.png";
 import mockup2 from "../assets/mockups/mockup-2.png";
 import mockup3 from "../assets/mockups/mockup-3.png";
-import lampeVintageImg from "../assets/landing/lampe-vintage.png";
-import livreAncienImg from "../assets/landing/livre-ancien.png";
-import appareilPhotoImg from "../assets/landing/appareil-photo.png";
 
 const PROPOSER_URL = "https://tally.so/r/ob7NOb";
 
@@ -164,23 +166,16 @@ function StepCard({ icon: Icon, number, title, text }) {
 }
 
 function ObjectStorySection() {
-  const objects = [
-    {
-      title: "Lampe vintage",
-      meta: "Paris 11e · il y a 2 h",
-      image: lampeVintageImg,
-    },
-    {
-      title: "Livre ancien",
-      meta: "Paris 20e · aujourd’hui",
-      image: livreAncienImg,
-    },
-    {
-      title: "Appareil photo",
-      meta: "Paris 7e · il y a 1 j",
-      image: appareilPhotoImg,
-    },
-  ];
+  const [objects, setObjects] = useState([]);
+
+  useEffect(() => {
+    getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(3)))
+      .then((snap) => {
+        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        if (docs.length > 0) setObjects(docs);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="mx-auto mt-9 max-w-7xl px-5">
@@ -201,34 +196,47 @@ function ObjectStorySection() {
             </p>
           </div>
 
-          <div className="relative overflow-hidden rounded-[34px] border border-white/80 bg-white/88 p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8)]">
+          <div className="relative overflow-hidden rounded-[34px] border border-white/80 bg-white/88 p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8)] sm:p-6">
             <div className="absolute left-8 top-8 h-28 w-28 rounded-full bg-cyan-100/80 blur-2xl" />
             <div className="absolute bottom-8 right-8 h-32 w-32 rounded-full bg-emerald-100/80 blur-2xl" />
 
-            <div className="relative grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="relative grid grid-cols-3 gap-3 sm:gap-4">
               {objects.map((item, index) => (
                 <div
-                  key={item.title}
+                  key={item.id || index}
                   className={[
-                    "min-w-0 overflow-hidden rounded-[20px] bg-white/88 p-2 shadow-[0_14px_34px_rgba(15,23,42,0.055)] sm:rounded-[28px] sm:p-3",
-                    index === 1 ? "mt-5 sm:mt-8" : "",
-                    index === 2 ? "mt-2 sm:mt-3" : "",
+                    "min-w-0 overflow-hidden rounded-[22px] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.09)]",
+                    index === 1 ? "mt-6 sm:mt-10" : "",
+                    index === 2 ? "mt-3 sm:mt-4" : "",
                   ].join(" ")}
                 >
-                  <div className="aspect-[3/4] overflow-hidden rounded-[16px] bg-[#EEF7F3] sm:rounded-[24px]">
+                  <div className="aspect-square overflow-hidden bg-[#EEF7F3]">
                     <img
-                      src={item.image}
-                      alt={item.title}
+                      src={getItemImage(item)}
+                      alt={getItemTitle(item)}
                       className="h-full w-full object-cover object-center"
                       draggable="false"
                     />
                   </div>
-                  <p className="mt-3 text-[11px] font-black leading-tight text-[#081225] sm:mt-4 sm:text-[14px]">
-                    {item.title}
-                  </p>
-                  <p className="mt-1 text-[10px] font-semibold leading-tight text-[#64748B] sm:text-[12px]">
-                    {item.meta}
-                  </p>
+                  <div className="p-2.5 sm:p-3">
+                    <p className="line-clamp-1 text-[11px] font-black leading-tight text-[#081225] sm:text-[13px]">
+                      {getItemTitle(item)}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      {item.ownerPhotoURL ? (
+                        <img
+                          src={item.ownerPhotoURL}
+                          alt={item.ownerName}
+                          className="h-4 w-4 shrink-0 rounded-full object-cover sm:h-5 sm:w-5"
+                        />
+                      ) : (
+                        <div className="h-4 w-4 shrink-0 rounded-full bg-gradient-to-br from-[#18BFAF] to-[#2ECC8A] sm:h-5 sm:w-5" />
+                      )}
+                      <p className="line-clamp-1 text-[9px] font-semibold text-[#64748B] sm:text-[11px]">
+                        {item.ownerName?.split(" ")[0] || "Troqueur"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -242,6 +250,7 @@ function ObjectStorySection() {
 export default function LandingPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user, loading } = useAuth();
 
   return (
     <main className="troco-landing-page relative min-h-screen overflow-x-hidden bg-[var(--troco-bg)] text-[#081225]">
@@ -253,7 +262,7 @@ export default function LandingPage() {
 
       <LanguageSwitcher />
 
-      <section className="relative px-5 pb-10 pt-2 md:pb-16 md:pt-8">
+      <section className="relative px-5 pb-10 pt-16 md:pb-16 md:pt-8">
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="relative z-20 mx-auto w-full max-w-[410px] text-center lg:mx-0 lg:max-w-[360px] lg:text-left">
             <div className="mb-3 flex justify-center lg:mb-5 lg:justify-start">
@@ -284,14 +293,6 @@ export default function LandingPage() {
                 <ArrowRight size={20} strokeWidth={2.5} />
               </button>
 
-              <a
-                href={PROPOSER_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex min-h-[54px] w-full items-center justify-center rounded-[22px] border border-[#E4ECE8] bg-white/88 px-6 py-3 text-center text-[16px] font-black text-[#081225] shadow-[0_10px_28px_rgba(15,23,42,0.045)] backdrop-blur-xl transition active:scale-[0.98] lg:w-auto"
-              >
-                Accès anticipé
-              </a>
             </div>
           </div>
 

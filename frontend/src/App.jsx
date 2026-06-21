@@ -67,6 +67,16 @@ function PublicRoute({ children }) {
   return !user ? children : <Navigate to="/feed" replace />;
 }
 
+function GuestRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  usePushNotifications(user?.uid);
+
+  if (loading) return null;
+
+  return <PageLayout>{children}</PageLayout>;
+}
+
 
 
 export default function App() {
@@ -89,7 +99,7 @@ export default function App() {
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#18A98E] border-t-transparent"></div>
     </div>}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
 
       <Route path="/about" element={<InfoPage type="about" />} />
       <Route path="/contact" element={<InfoPage type="contact" />} />
@@ -124,18 +134,18 @@ export default function App() {
       <Route
         path="/feed"
         element={
-          <PrivateRoute>
+          <GuestRoute>
             <FeedPage />
-          </PrivateRoute>
+          </GuestRoute>
         }
       />
 
       <Route
         path="/feed/all"
         element={
-          <PrivateRoute>
+          <GuestRoute>
             <FeedPage />
-          </PrivateRoute>
+          </GuestRoute>
         }
       />
 

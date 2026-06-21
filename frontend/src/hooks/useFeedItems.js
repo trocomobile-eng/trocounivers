@@ -14,6 +14,7 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 // ─── Géo ────────────────────────────────────────────────────────────────────
 
@@ -213,6 +214,18 @@ export function getItemLocation(item) {
   );
 }
 
+export function getItemCondition(item) {
+  const raw = item?.conditionLabel || item?.condition || item?.state || item?.itemCondition || "";
+  const map = {
+    excellent: "Excellent état", like_new: "Excellent état", neuf: "Neuf", new: "Neuf",
+    very_good: "Très bon état", tres_bon: "Très bon état",
+    good: "Bon état", bon: "Bon état",
+    fair: "Correct", passable: "Correct",
+    poor: "À restaurer", used: "Bon état",
+  };
+  return map[raw?.toLowerCase?.()] || (raw && raw.length < 30 ? raw : null) || null;
+}
+
 // ─── Constantes ─────────────────────────────────────────────────────────────
 
 export const RADIUS_OPTIONS = [
@@ -226,6 +239,7 @@ export const RADIUS_OPTIONS = [
 
 export default function useFeedItems() {
   const { user } = useAuth();
+  const { show: showToast } = useToast();
 
   const [items, setItems] = useState([]);
   const [myItems, setMyItems] = useState([]);
@@ -355,7 +369,7 @@ export default function useFeedItems() {
   // Toggle favori avec optimistic update
   const toggleFavorite = useCallback(async (itemId) => {
     if (!user?.uid) {
-      alert("Connecte-toi pour ajouter un favori.");
+      showToast({ icon: "message", title: "Connecte-toi pour ajouter aux favoris", to: "/login" });
       return;
     }
     const isFav = favoriteItemIds.includes(itemId);
