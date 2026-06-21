@@ -42,16 +42,16 @@ export default function CategoryPills({ activeCategory = "Tout", onChange }) {
             onClick={() => onChange?.(label)}
             whileTap={{ scale: 0.91 }}
             className={[
-              "relative inline-flex h-[34px] shrink-0 items-center gap-1.5 rounded-[14px] border px-3 text-[12px] font-extrabold tracking-[-0.01em] overflow-hidden",
+              "relative inline-flex h-[32px] shrink-0 items-center gap-1.5 rounded-[12px] border px-2.5 text-[11.5px] font-bold tracking-[-0.01em] overflow-hidden",
               active
-                ? "border-transparent text-white shadow-[0_12px_26px_rgba(26,190,163,0.22)]"
-                : "border-[#E6EFEB] bg-white/96 text-[#233241] shadow-[0_8px_22px_rgba(15,23,42,0.045)]",
+                ? "border-transparent text-white shadow-[0_4px_12px_rgba(34,197,139,0.20)]"
+                : "border-[#E8ECEC] bg-white text-[#17212B]",
             ].join(" ")}
           >
             {active && (
               <motion.span
                 layoutId="category-pill-bg"
-                className="absolute inset-0 bg-gradient-to-br from-[#1ABEA3] to-[#36C982]"
+                className="absolute inset-0 bg-[#22C58B]"
                 style={{ borderRadius: 16 }}
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
               />

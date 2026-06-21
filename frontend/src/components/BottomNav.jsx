@@ -71,7 +71,7 @@ function NavItem({ to, label, icon: Icon, badge = 0 }) {
           className={[
             "relative flex h-[46px] min-w-[54px] flex-col items-center justify-center rounded-[18px] px-2 text-[11px] font-extrabold",
             isActive
-              ? "bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-white shadow-[0_6px_16px_rgba(26,190,163,0.22)]"
+              ? "bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.20)]"
               : "text-slate-400",
           ].join(" ")}
         >
@@ -101,14 +101,14 @@ export default function BottomNav() {
       aria-label="Navigation principale"
       className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[520px] items-end justify-center px-3 pb-[max(8px,env(safe-area-inset-bottom))] lg:hidden"
     >
-      <div className="flex h-[62px] w-full items-center justify-between rounded-[26px] border border-[#E4ECE8] bg-white px-4 shadow-[0_-2px_16px_rgba(15,23,42,0.07)]">
+      <div className="flex h-[60px] w-full items-center justify-between rounded-[24px] border border-[#EEF2F2] bg-white px-4 shadow-[0_-2px_12px_rgba(0,0,0,0.05)]">
         <NavItem to="/feed"      label="Explorer" icon={Compass}       />
         <NavItem to="/exchanges" label="Trocs"    icon={Repeat2}       badge={exchangesBadge} />
 
         <button
           type="button"
           onClick={() => navigate("/add")}
-          className="mx-1 flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-white shadow-[0_4px_14px_rgba(26,190,163,0.26)] transition active:scale-95"
+          className="mx-1 flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[14px] bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.24)] transition active:scale-95"
           aria-label="Publier"
         >
           <Plus size={24} strokeWidth={2.6} />

@@ -83,7 +83,7 @@ export default function TrocoPageHeader({
           <img
             src="/logo.png"
             alt="Troco"
-            className="h-auto w-[102px] object-contain"
+            className="h-auto w-[88px] object-contain"
           />
         </Link>
 
