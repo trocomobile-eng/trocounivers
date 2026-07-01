@@ -18,6 +18,8 @@ const FeedPage = lazy(() => import("./pages/FeedPage"));
 // Pages lazy (chargées à la demande)
 const UniversPage = lazy(() => import("./pages/UniversPage"));
 const UniversDetailPage = lazy(() => import("./pages/UniversDetailPage"));
+const CommunautesPage = lazy(() => import("./pages/CommunautesPage"));
+const CommunauteDetailPage = lazy(() => import("./pages/CommunauteDetailPage"));
 const ItemDetailPage = lazy(() => import("./pages/ItemDetailPage"));
 const AddItemPage = lazy(() => import("./pages/AddItemPage"));
 const EditItemPage = lazy(() => import("./pages/EditItemPage"));
@@ -191,6 +193,24 @@ export default function App() {
         element={
           <PrivateRoute>
             <UniversDetailPage />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/communautes"
+        element={
+          <PrivateRoute>
+            <CommunautesPage />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/communautes/:id"
+        element={
+          <PrivateRoute>
+            <CommunauteDetailPage />
           </PrivateRoute>
         }
       />

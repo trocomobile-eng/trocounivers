@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import FavoriteUsersFeedSection from "../../components/FavoriteUsersFeedSection";
+import CommunautesStrip from "../../components/CommunautesStrip";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { SkeletonGrid } from "../../components/SkeletonCard";
 import { Heart, List, Map, Navigation, Search, SlidersHorizontal, Zap } from "lucide-react";
@@ -432,6 +433,13 @@ export default function MobileFeedPage() {
       {/* Troqueurs favoris */}
       {!isFiltered && viewMode !== "map" && (
         <FavoriteUsersFeedSection cardWidth="w-[120px]" maxItems={6} />
+      )}
+
+      {/* Communautés */}
+      {!isFiltered && viewMode !== "map" && (
+        <div className="mt-5">
+          <CommunautesStrip />
+        </div>
       )}
 
       {/* Carrousel Nouveautés */}

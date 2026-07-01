@@ -32,7 +32,7 @@ export default function ProfileAboutSection({ profile }) {
 
         <ContextItem
           icon={Heart}
-          title="Univers personnel"
+          title="Communautés"
           subtitle="objets choisis"
         />
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Map, Navigation, Search, SlidersHorizontal, Zap } from "lucide-react";
 import FavoriteUsersFeedSection from "../../components/FavoriteUsersFeedSection";
+import CommunautesStrip from "../../components/CommunautesStrip";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
@@ -320,6 +321,12 @@ export default function DesktopFeedPage() {
 
         {!search.trim() && activeCategory === "Tout" && (
           <FavoriteUsersFeedSection cardWidth="w-[160px]" maxItems={6} />
+        )}
+
+        {!search.trim() && activeCategory === "Tout" && (
+          <div className="mt-6">
+            <CommunautesStrip large />
+          </div>
         )}
 
         {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (

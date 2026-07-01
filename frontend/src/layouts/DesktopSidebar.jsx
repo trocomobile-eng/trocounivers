@@ -9,17 +9,19 @@ import {
   Repeat2,
   Settings,
   UserRound,
+  Users,
 } from "lucide-react";
 
 const LINKS = [
-  { to: "/feed",      label: "Explorer",        icon: Home          },
-  { to: "/library",   label: "Ma bibliothèque", icon: BookOpen      },
-  { to: "/wishlist",  label: "Ma wishlist",     icon: BookMarked    },
-  { to: "/favorites", label: "Favoris",          icon: Heart         },
-  { to: "/exchanges", label: "Trocs",            icon: Repeat2       },
-  { to: "/messages",  label: "Messages",         icon: MessageCircle },
-  { to: "/profile",   label: "Profil",           icon: UserRound     },
-  { to: "/settings",  label: "Paramètres",       icon: Settings      },
+  { to: "/feed",        label: "Explorer",        icon: Home          },
+  { to: "/communautes", label: "Communautés",     icon: Users         },
+  { to: "/library",     label: "Ma bibliothèque", icon: BookOpen      },
+  { to: "/wishlist",    label: "Ma wishlist",     icon: BookMarked    },
+  { to: "/favorites",   label: "Favoris",          icon: Heart         },
+  { to: "/exchanges",   label: "Trocs",            icon: Repeat2       },
+  { to: "/messages",    label: "Messages",         icon: MessageCircle },
+  { to: "/profile",     label: "Profil",           icon: UserRound     },
+  { to: "/settings",    label: "Paramètres",       icon: Settings      },
 ];
 
 export default function DesktopSidebar() {
