@@ -14,6 +14,7 @@ import useFeedItems, {
   getItemTitle,
   getItemLocation,
 } from "../../hooks/useFeedItems";
+import { useRecommendations } from "../../hooks/useRecommendations";
 
 const DESKTOP_RADIUS_OPTIONS = [
   { label: "Autour de moi", value: 500, icon: Navigation },
@@ -205,6 +206,7 @@ export default function DesktopFeedPage() {
   } = useFeedItems();
 
   const MIN_SECTION = 5;
+  const recommendations = useRecommendations(visibleItems);
 
   return (
     <main className="mx-auto w-full max-w-[1480px] px-8 py-6">
@@ -248,6 +250,40 @@ export default function DesktopFeedPage() {
         <section className="mt-2 overflow-x-auto pb-1 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
         </section>
+
+        {!search.trim() && activeCategory === "Tout" && recommendations.length > 0 && (
+          <section className="mt-6">
+            <div className="mb-3">
+              <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">Pour toi</p>
+              <p className="text-[10px] font-medium text-[#6F7782]">D'après ta wishlist</p>
+            </div>
+            <div className="overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <motion.div
+                className="flex gap-3"
+                initial="hidden"
+                animate="show"
+                variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+              >
+                {recommendations.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    className="w-[160px] shrink-0"
+                    variants={{
+                      hidden: { opacity: 0, x: 16 },
+                      show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.2, 0.8, 0.2, 1] } },
+                    }}
+                  >
+                    <DesktopFeedCard
+                      item={item}
+                      favorite={favoriteItemIds.includes(item.id)}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </section>
+        )}
 
         {!search.trim() && activeCategory === "Tout" && recentItems.length >= MIN_SECTION && (
           <section className="mt-6">

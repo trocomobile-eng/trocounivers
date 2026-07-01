@@ -11,6 +11,7 @@ import { useAuth } from "../../context/AuthContext";
 import CategoryPills from "../../components/CategoryPills";
 import TrocoPageHeader from "../../components/TrocoPageHeader";
 import useFeedItems, { getItemImage, getItemTitle, getItemLocation, getItemCondition } from "../../hooks/useFeedItems";
+import { useRecommendations } from "../../hooks/useRecommendations";
 
 const RADIUS_OPTIONS = [
   { label: "500 m", value: 500 },
@@ -243,6 +244,7 @@ export default function MobileFeedPage() {
   } = useFeedItems();
 
   const MIN_SECTION = 5;
+  const recommendations = useRecommendations(visibleItems);
 
   const [showFilters, setShowFilters] = useState(false);
 
@@ -387,6 +389,44 @@ export default function MobileFeedPage() {
         <div className="mt-3">
           <SocialProofBlock items={visibleItems} />
         </div>
+      )}
+
+      {/* Pour toi — recommandations wishlist */}
+      {!isFiltered && viewMode !== "map" && recommendations.length > 0 && (
+        <section className="mt-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-[12px] font-black tracking-[-0.01em] text-[#17212B]">Pour toi</p>
+              <p className="text-[10px] font-medium text-[#6F7782]">D'après ta wishlist</p>
+            </div>
+          </div>
+          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <motion.div
+              className="flex gap-3"
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+            >
+              {recommendations.map((item) => (
+                <motion.div
+                  key={item.id}
+                  className="w-[128px] shrink-0"
+                  variants={{
+                    hidden: { opacity: 0, x: 12 },
+                    show: { opacity: 1, x: 0, transition: { duration: 0.26, ease: [0.2, 0.8, 0.2, 1] } },
+                  }}
+                >
+                  <MobileItemCard
+                    item={item}
+                    favorite={favoriteItemIds.includes(item.id)}
+                    onToggleFavorite={toggleFavorite}
+                    carouselMode
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
       )}
 
       {/* Troqueurs favoris */}
