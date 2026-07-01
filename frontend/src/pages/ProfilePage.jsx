@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useWishlist } from "../context/WishlistContext";
 import { useFavoriteUsers } from "../hooks/useFavoriteUsers";
 import {
   ArrowLeft,
+  BookMarked,
   Camera,
   Car,
   Check,
@@ -16,6 +18,7 @@ import {
   Mail,
   MapPin,
   MessageCircle,
+  Navigation,
   Music,
   Package,
   Phone,
@@ -236,13 +239,13 @@ function Avatar({ user, profile, onEdit }) {
 
 function StatCapsule({ icon: Icon, number, label }) {
   return (
-    <span className="inline-flex min-h-[54px] min-w-[96px] items-center justify-center gap-2 rounded-[22px] border border-[#E5F1EC] bg-white/88 px-3 text-[#315F51] shadow-[0_8px_24px_rgba(15,23,42,0.035)]">
-      <Icon size={18} strokeWidth={2.2} />
+    <div className="flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border border-[#E7ECEB] bg-white px-3 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
+      <Icon size={16} strokeWidth={2.2} className="shrink-0 text-[#22C58B]" />
       <span className="text-left leading-tight">
-        <span className="block text-[17px] font-black tracking-[-0.03em]">{number}</span>
-        <span className="block text-[11.5px] font-bold text-[#40545B]">{label}</span>
+        <span className="block text-[16px] font-black tracking-[-0.03em] text-[#17212B]">{number}</span>
+        <span className="block text-[11px] font-medium text-[#6F7782]">{label}</span>
       </span>
-    </span>
+    </div>
   );
 }
 
@@ -251,9 +254,9 @@ function ActionButton({ icon: Icon, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-[18px] border border-[#E5F1EC] bg-white/90 px-4 text-[13px] font-black text-[#253841] shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition active:scale-[0.98]"
+      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[18px] border border-[#E7ECEB] bg-white px-4 text-[13px] font-bold text-[#17212B] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition active:scale-[0.97]"
     >
-      <Icon size={16} strokeWidth={2.2} />
+      <Icon size={15} strokeWidth={2.2} />
       {children}
     </button>
   );
@@ -277,7 +280,7 @@ function ObjectCard({ item, profile }) {
   return (
     <Link
       to={`/items/${item.id}/edit`}
-      className="group relative block w-[168px] shrink-0 overflow-hidden rounded-[22px] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.085)] transition active:scale-[0.985] sm:w-[268px] sm:rounded-[30px]"
+      className="group relative block w-[160px] shrink-0 overflow-hidden rounded-[20px] bg-white shadow-[0_4px_16px_rgba(15,23,42,0.08)] transition active:scale-[0.97] sm:w-[240px]"
     >
       <div className="relative aspect-[0.82/1] bg-[#F4F8F6] sm:aspect-[1.18/1]">
         {image ? (
@@ -424,6 +427,43 @@ function EmptyBlock({ icon: Icon = Package, title, text }) {
   );
 }
 
+function WishlistSection() {
+  const { items } = useWishlist();
+  return (
+    <motion.section
+      className="mt-8"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0.56, ease: [0.2, 0.8, 0.2, 1] }}
+    >
+      <SectionTitle
+        title="Ma wishlist"
+        action={<Link to="/wishlist" className="flex items-center gap-1 text-[13px] font-bold text-[#22C58B]">{items.length > 0 ? "Gérer" : "Ajouter"} <ChevronRight size={14} /></Link>}
+      />
+      {items.length > 0 ? (
+        <div className="space-y-2">
+          {items.slice(0, 4).map((item) => (
+            <div key={item.id} className="flex items-center gap-3 rounded-[16px] border border-[#E7ECEB] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+              <BookMarked size={15} className="shrink-0 text-[#22C58B]" />
+              <span className="flex-1 truncate text-[13.5px] font-bold text-[#17212B]">{item.title}</span>
+              {item.category && (
+                <span className="shrink-0 rounded-full bg-[#EAF8F4] px-2.5 py-0.5 text-[11px] font-bold text-[#08755C]">{item.category}</span>
+              )}
+            </div>
+          ))}
+          {items.length > 4 && (
+            <Link to="/wishlist" className="block pt-1 text-center text-[13px] font-bold text-[#22C58B]">
+              + {items.length - 4} autre{items.length - 4 > 1 ? "s" : ""}
+            </Link>
+          )}
+        </div>
+      ) : (
+        <EmptyBlock icon={BookMarked} title="Wishlist vide" text="Ajoute les objets que tu cherches pour que les autres puissent te proposer un troc." />
+      )}
+    </motion.section>
+  );
+}
+
 function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSettings, initialScreen = "menu" }) {
   const [screen, setScreen] = useState(initialScreen);
   const [form, setForm] = useState({
@@ -437,6 +477,32 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
     photoURL: "",
   });
   const [saving, setSaving] = useState(false);
+  const [locationEnabled, setLocationEnabled] = useState(Boolean(profile?.locationEnabled));
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  const requestLocation = useCallback(async () => {
+    if (!navigator.geolocation) return;
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
+        try {
+          await setDoc(doc(db, "users", user.uid), { locationEnabled: true, location: loc, locationUpdatedAt: new Date() }, { merge: true });
+          setLocationEnabled(true);
+        } catch {}
+        setLocationLoading(false);
+      },
+      () => { setLocationLoading(false); },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  }, [user?.uid]);
+
+  const disableLocation = useCallback(async () => {
+    try {
+      await setDoc(doc(db, "users", user.uid), { locationEnabled: false }, { merge: true });
+      setLocationEnabled(false);
+    } catch {}
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!open) return;
@@ -511,6 +577,25 @@ function EditProfileSheet({ user, profile, open, onClose, onSaved, onOpenSetting
               <div className="mt-10 overflow-hidden rounded-[28px] border border-[#E8F1ED] bg-white/92 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
                 <MenuRow icon={UserRound} title="Photo & identité" subtitle="Nom, pseudo, bio..." onClick={() => setScreen("identity")} />
                 <MenuRow icon={MapPin} title="Localisation" subtitle={`${form.arrondissement || form.city || "Paris"}`} onClick={() => setScreen("identity")} />
+                <button
+                  type="button"
+                  onClick={locationEnabled ? disableLocation : requestLocation}
+                  disabled={locationLoading}
+                  className="flex w-full items-center gap-3 border-b border-[#EEF4F1] px-4 py-4 text-left last:border-b-0"
+                >
+                  <span className={["flex h-10 w-10 shrink-0 items-center justify-center rounded-full", locationEnabled ? "bg-[#EBF8F3] text-[#22C58B]" : "bg-[#F3F8F5] text-[#315F51]"].join(" ")}>
+                    <Navigation size={18} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-black text-[#081225]">Ma position GPS</span>
+                    <span className="mt-0.5 block text-[12.5px] font-medium text-slate-500">
+                      {locationLoading ? "Récupération…" : locationEnabled ? "Activée — distances visibles dans le feed" : "Désactivée — active pour voir les distances"}
+                    </span>
+                  </span>
+                  <span className={["relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors", locationEnabled ? "bg-[#22C58B]" : "bg-slate-200"].join(" ")}>
+                    <span className={["inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow transition-transform", locationEnabled ? "translate-x-6" : ""].join(" ")} />
+                  </span>
+                </button>
                 <MenuRow icon={Settings} title="Notifications & confidentialité" subtitle="Notifications push, réglages et préférences" onClick={onOpenSettings} />
               </div>
             </section>
@@ -779,15 +864,15 @@ export default function ProfilePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.38, delay: 0.08, ease: [0.2, 0.8, 0.2, 1] }}
             >
-              <h1 className="text-[28px] font-black leading-[1.1] tracking-[-0.04em] text-[#081225] lg:text-[20px]">
+              <h1 className="text-[26px] font-black leading-[1.05] tracking-[-0.04em] text-[#17212B] lg:text-[20px]">
                 {displayName(user, profile)}
               </h1>
-              <p className="mt-3 text-[16px] font-black tracking-[-0.025em] text-[#0f9f9a]">{handleName(user, profile)}</p>
-              <p className="mt-3 flex items-center gap-2 text-[16px] font-black text-slate-500">
-                <MapPin size={19} className="text-[#4B9D8D]" />
+              <p className="mt-1.5 text-[14px] font-semibold tracking-[-0.01em] text-[#1ABEA3]">{handleName(user, profile)}</p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#6F7782]">
+                <MapPin size={14} className="text-[#22C58B]" />
                 {locationName(profile)}
               </p>
-              <p className="mt-5 max-w-[430px] text-[16px] font-semibold leading-relaxed tracking-[-0.025em] text-[#40545B]">
+              <p className="mt-3 max-w-[380px] text-[13.5px] font-medium leading-relaxed text-[#6F7782]">
                 {bioText(profile)}
               </p>
             </motion.div>
@@ -836,14 +921,14 @@ export default function ProfilePage() {
         </section>
 
         <motion.section
-          className="mt-9"
+          className="mt-8"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <SectionTitle title="Ses objets" action={items.length > 0 ? <Link to="/library" className="flex items-center gap-1 text-[13px] font-black text-[#08755C]">Voir tout <ChevronRight size={16} /></Link> : null} />
+          <SectionTitle title="Mes objets" action={items.length > 0 ? <Link to="/library" className="flex items-center gap-1 text-[13px] font-bold text-[#22C58B]">Voir tout <ChevronRight size={14} /></Link> : null} />
           {items.length ? (
-            <div className="-mx-3 flex gap-4 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {items.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}
             </div>
           ) : (
@@ -851,28 +936,26 @@ export default function ProfilePage() {
           )}
         </motion.section>
 
+        <WishlistSection />
+
         <motion.section
-          className="mt-9"
+          className="mt-8"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.62, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <SectionTitle title="Mes préférences d’échange" />
+          <SectionTitle title="Mes envies d’échange" />
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-[28px] border border-[#E8F1ED] bg-white/88 p-5 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-[20px] border border-[#E7ECEB] bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)]">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#08755C]">
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#22C58B]">
                   Je recherche
                 </p>
-
                 <button
                   type="button"
-                  onClick={() => {
-                    setPreferenceMode("looking");
-                    setPreferencesOpen(true);
-                  }}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#16C7C1] to-[#31D67B] text-white shadow-[0_10px_22px_rgba(20,184,166,0.16)] transition active:scale-95"
+                  onClick={() => { setPreferenceMode("looking"); setPreferencesOpen(true); }}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.22)] transition active:scale-95 text-[18px] font-black leading-none"
                   aria-label="Modifier ce que je recherche"
                 >
                   +
@@ -880,7 +963,7 @@ export default function ProfilePage() {
               </div>
 
               {lookingFor.length ? (
-                <div className="mt-4 flex flex-wrap gap-2.5">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {lookingFor.map((item, index) => {
                     const icons = [Car, Zap, Home, Tag, Music, Sparkles];
                     return <Chip key={item} icon={icons[index % icons.length]} active>{item}</Chip>;
@@ -891,19 +974,15 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="rounded-[28px] border border-[#E8F1ED] bg-white/88 p-5 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
+            <div className="rounded-[20px] border border-[#E7ECEB] bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)]">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#40545B]">
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#6F7782]">
                   Je ne recherche pas
                 </p>
-
                 <button
                   type="button"
-                  onClick={() => {
-                    setPreferenceMode("not");
-                    setPreferencesOpen(true);
-                  }}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E4EAEA] bg-white text-[#40545B] shadow-[0_10px_22px_rgba(15,23,42,0.055)] transition active:scale-95"
+                  onClick={() => { setPreferenceMode("not"); setPreferencesOpen(true); }}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E7ECEB] bg-white text-[#6F7782] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition active:scale-95 text-[18px] font-black leading-none"
                   aria-label="Modifier ce que je ne recherche pas"
                 >
                   +
@@ -911,7 +990,7 @@ export default function ProfilePage() {
               </div>
 
               {notLookingFor.length ? (
-                <div className="mt-4 flex flex-wrap gap-2.5">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {notLookingFor.map((item) => (
                     <Chip key={item}>{item}</Chip>
                   ))}
@@ -924,49 +1003,49 @@ export default function ProfilePage() {
         </motion.section>
 
         <motion.section
-          className="mt-9"
+          className="mt-8"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.74, ease: [0.2, 0.8, 0.2, 1] }}
         >
           <SectionTitle title="Activité récente" />
-          <div className="rounded-[28px] border border-[#E8F1ED] bg-white/88 px-4 shadow-[0_12px_34px_rgba(15,23,42,0.04)]">
+          <div className="rounded-[20px] border border-[#E7ECEB] bg-white px-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)]">
             {latestItem && <ActivityRow icon={Package} title="A ajouté un objet" subtitle={itemTitle(latestItem)} time={relativeDate(latestItem?.createdAt || latestItem?.updatedAt)} />}
             <ActivityRow icon={CheckCircle2} title="A confirmé un échange" subtitle="Profil actif sur Troco" time="récemment" />
-            <ActivityRow icon={MessageCircle} title="Répond rapidement aux messages" subtitle="Taux de réponse élevé" time="toujours" />
+            <ActivityRow icon={MessageCircle} title="Répond rapidement" subtitle="Taux de réponse élevé" time="toujours" />
           </div>
         </motion.section>
 
         {favoriteProfiles.length > 0 && (
           <motion.section
-            className="mt-9"
+            className="mt-8"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.62, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <SectionTitle
               title="Mes troqueurs favoris"
-              action={<Link to="/favorites" className="flex items-center gap-1 text-[13px] font-black text-[#08755C]">Voir tout <ChevronRight size={16} /></Link>}
+              action={<Link to="/favorites" className="flex items-center gap-1 text-[13px] font-bold text-[#22C58B]">Voir tout <ChevronRight size={14} /></Link>}
             />
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2.5 sm:grid-cols-2">
               {favoriteProfiles.slice(0, 4).map((p) => (
-                <div key={p.id} className="flex items-center gap-3 rounded-[18px] border border-[#E8F1ED] bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.05)]">
+                <div key={p.id} className="flex items-center gap-3 rounded-[18px] border border-[#E7ECEB] bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,0.05)]">
                   {p.photoURL ? (
-                    <img src={p.photoURL} alt={p.displayName} className="h-11 w-11 shrink-0 rounded-full object-cover" referrerPolicy="no-referrer" />
+                    <img src={p.photoURL} alt={p.displayName} className="h-10 w-10 shrink-0 rounded-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1ABEA3] to-[#36C982] text-[16px] font-black text-white">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#22C58B] to-[#1ABEA3] text-[15px] font-black text-white">
                       {(p.displayName || p.email || "?").charAt(0).toUpperCase()}
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-black text-[#0d1b2a]">{p.displayName || p.email?.split("@")[0] || "Troqueur"}</p>
-                    <p className="truncate text-[11px] font-medium text-[#94a3b8]">{p.arrondissement || p.city || "Paris"}</p>
+                    <p className="truncate text-[13px] font-bold text-[#17212B]">{p.displayName || p.email?.split("@")[0] || "Troqueur"}</p>
+                    <p className="truncate text-[11px] font-medium text-[#6F7782]">{p.arrondissement || p.city || "Paris"}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Link to={`/users/${p.id}`} className="rounded-full border border-[#E4ECE8] bg-white px-2.5 py-1 text-[11px] font-black text-[#344256] transition hover:border-[#1ABEA3] hover:text-[#1ABEA3]">
+                    <Link to={`/users/${p.id}`} className="rounded-full border border-[#E7ECEB] bg-white px-2.5 py-1 text-[11px] font-bold text-[#17212B] transition hover:border-[#22C58B] hover:text-[#22C58B]">
                       Voir
                     </Link>
-                    <button type="button" onClick={() => toggleFavUser(p.id)} className="text-[#94a3b8] transition hover:text-rose-400" aria-label="Retirer">
+                    <button type="button" onClick={() => toggleFavUser(p.id)} className="text-rose-300 transition hover:text-rose-500" aria-label="Retirer">
                       <Heart size={14} fill="currentColor" strokeWidth={2} />
                     </button>
                   </div>
@@ -977,9 +1056,9 @@ export default function ProfilePage() {
         )}
 
         {favoriteItems.length > 0 && (
-          <section className="mt-9">
-            <SectionTitle title="Favoris" />
-            <div className="-mx-3 flex gap-4 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <section className="mt-8">
+            <SectionTitle title="Mes favoris" />
+            <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {favoriteItems.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}
             </div>
           </section>

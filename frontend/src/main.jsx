@@ -6,6 +6,7 @@ import "./i18n";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { FavoritesProvider } from "./context/FavoritesContext";
+import { WishlistProvider } from "./context/WishlistContext";
 import { ToastProvider } from "./context/ToastContext";
 
 import "./index.css";
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <AuthProvider>
       <BrowserRouter>
         <FavoritesProvider>
-          <App />
+          <WishlistProvider>
+            <App />
+          </WishlistProvider>
         </FavoritesProvider>
       </BrowserRouter>
     </AuthProvider>

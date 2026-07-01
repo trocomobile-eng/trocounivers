@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
+import { BookMarked, Heart } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   collection,
@@ -188,6 +188,23 @@ export default function UserProfilePage() {
           )}
 
           <ProfileLibraryGrid profile={profile} items={items} />
+
+          {Array.isArray(profile.wishlist) && profile.wishlist.length > 0 && (
+            <div className="rounded-[20px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+              <h3 className="mb-3 text-[15px] font-black text-[#081225]">Ce qu'il/elle recherche</h3>
+              <div className="space-y-2">
+                {profile.wishlist.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 rounded-[14px] border border-[#E7ECEB] px-3.5 py-2.5">
+                    <BookMarked size={14} className="shrink-0 text-[#22C58B]" />
+                    <span className="flex-1 truncate text-[13px] font-bold text-[#17212B]">{item.title}</span>
+                    {item.category && (
+                      <span className="shrink-0 rounded-full bg-[#EAF8F4] px-2 py-0.5 text-[11px] font-bold text-[#08755C]">{item.category}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <ProfilePreferenceSection
             profile={profile}

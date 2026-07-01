@@ -33,6 +33,7 @@ const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
 const UserItemsPage = lazy(() => import("./pages/UserItemsPage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
+const WishlistPage = lazy(() => import("./pages/WishlistPage"));
 const InfoPage = lazy(() => import("./pages/InfoPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const TrocoDossierPage = lazy(() => import("./pages/TrocoDossierPage"));
@@ -45,6 +46,14 @@ const AdminPage = lazy(() => import("./pages/AdminPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ExchangeShowcasePage = lazy(() => import("./pages/ExchangeShowcasePage"));
 const TestReviewsPage = lazy(() => import("./pages/TestReviewsPage"));
+
+// Pages SEO
+const QuestCeQueTrocoPage = lazy(() => import("./pages/seo/QuestCeQueTrocoPage"));
+const CommentCaMarchePage = lazy(() => import("./pages/seo/CommentCaMarchePage"));
+const TrocLocalParisPage = lazy(() => import("./pages/seo/TrocLocalParisPage"));
+const ApplicationTrocObjetsPage = lazy(() => import("./pages/seo/ApplicationTrocObjetsPage"));
+const EchangerSansArgentPage = lazy(() => import("./pages/seo/EchangerSansArgentPage"));
+const TrocoVsPage = lazy(() => import("./pages/seo/TrocoVsPage"));
 
 import { useAuth } from "./context/AuthContext";
 import { usePushNotifications } from "./hooks/usePushNotifications";
@@ -75,6 +84,16 @@ function GuestRoute({ children }) {
   if (loading) return null;
 
   return <PageLayout>{children}</PageLayout>;
+}
+
+const ADMIN_UID = "wXeLxwSQaqPjvyzsWTjvftYvt972";
+
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+
+  return user?.uid === ADMIN_UID ? children : <Navigate to="/feed" replace />;
 }
 
 
@@ -108,6 +127,13 @@ export default function App() {
       <Route path="/terms" element={<LegalPage type="cgu" />} />
       <Route path="/mentions" element={<LegalPage type="mentions" />} />
       <Route path="/troco-dossier" element={<TrocoDossierPage />} />
+
+      <Route path="/quest-ce-que-troco" element={<QuestCeQueTrocoPage />} />
+      <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
+      <Route path="/troc-local-paris" element={<TrocLocalParisPage />} />
+      <Route path="/application-troc-objets" element={<ApplicationTrocObjetsPage />} />
+      <Route path="/echanger-sans-argent" element={<EchangerSansArgentPage />} />
+      <Route path="/troco-vs-vinted-leboncoin-geev" element={<TrocoVsPage />} />
 
       <Route path="/onboarding" element={<OnboardingPage />} />
 
@@ -205,6 +231,15 @@ export default function App() {
         element={
           <PrivateRoute>
             <FavoritesPage />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/wishlist"
+        element={
+          <PrivateRoute>
+            <WishlistPage />
           </PrivateRoute>
         }
       />
@@ -436,10 +471,10 @@ export default function App() {
         }
       />
 
-      <Route path="/admin" element={<AdminPage />} />
-      <Route path="/admin/feedback" element={<AdminPage />} />
-      
-      <Route path="/test-reviews" element={<TestReviewsPage />} />
+      <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+      <Route path="/admin/feedback" element={<AdminRoute><AdminPage /></AdminRoute>} />
+
+      <Route path="/test-reviews" element={<AdminRoute><TestReviewsPage /></AdminRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
+  BookMarked,
   BookOpen,
   Heart,
   Home,
@@ -13,6 +14,7 @@ import {
 const LINKS = [
   { to: "/feed",      label: "Explorer",        icon: Home          },
   { to: "/library",   label: "Ma bibliothèque", icon: BookOpen      },
+  { to: "/wishlist",  label: "Ma wishlist",     icon: BookMarked    },
   { to: "/favorites", label: "Favoris",          icon: Heart         },
   { to: "/exchanges", label: "Trocs",            icon: Repeat2       },
   { to: "/messages",  label: "Messages",         icon: MessageCircle },
