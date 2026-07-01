@@ -29,13 +29,13 @@ function DesktopFilterPill({ active, children, icon: Icon, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "inline-flex h-[38px] shrink-0 items-center gap-2 rounded-[14px] border px-3.5 text-[12px] font-extrabold transition active:scale-[0.98]",
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[12px] font-semibold transition active:scale-[0.97]",
         active
-          ? "border-transparent bg-[#18A98E] text-white shadow-[0_10px_22px_rgba(24,169,142,0.18)]"
-          : "border-[#E4ECE8] bg-white text-[#102033] shadow-[0_6px_16px_rgba(15,23,42,0.035)]",
+          ? "border-transparent bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.22)]"
+          : "border-[#E7ECEB] bg-white text-[#17212B]",
       ].join(" ")}
     >
-      {Icon && <Icon size={16} strokeWidth={2.25} />}
+      {Icon && <Icon size={14} strokeWidth={2.2} />}
       {children}
     </button>
   );
@@ -81,8 +81,8 @@ function formatRelativeTime(value) {
 }
 
 const AVATAR_COLORS = [
-  "bg-emerald-500", "bg-teal-500", "bg-cyan-500", "bg-sky-500",
-  "bg-violet-500", "bg-pink-500", "bg-orange-500", "bg-amber-500",
+  "bg-emerald-500", "bg-teal-500", "bg-cyan-500", "bg-sky-400",
+  "bg-green-500", "bg-rose-400", "bg-orange-400", "bg-amber-500",
 ];
 function getAvatarColor(name = "") {
   return AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length];
@@ -102,17 +102,17 @@ function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
       to={`/items/${item.id}`}
       variant="plain"
       className={[
-        "group block overflow-hidden rounded-[20px] bg-white p-0 text-left transition hover:-translate-y-[1px]",
-        item.isMatch
-          ? "shadow-[0_2px_12px_rgba(26,190,163,0.18),0_0_0_1.5px_rgba(26,190,163,0.25)] hover:shadow-[0_8px_24px_rgba(26,190,163,0.22)]"
-          : "shadow-[0_2px_12px_rgba(15,23,42,0.07)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]",
+        "group block overflow-hidden rounded-[20px] bg-white p-0 text-left transition hover:-translate-y-0.5",
+        "shadow-[0_2px_14px_rgba(15,23,42,0.07)] hover:shadow-[0_6px_22px_rgba(15,23,42,0.11)]",
       ].join(" ")}
     >
-      <div className="relative overflow-hidden bg-slate-100">
+      <div className="relative overflow-hidden bg-[#F2F4F3]">
         <img
           src={getItemImage(item)}
           alt={title}
-          className="aspect-square w-full object-cover transition duration-300 group-hover:scale-[1.015]"
+          loading="lazy"
+          decoding="async"
+          className="aspect-square w-full object-cover transition duration-300 group-hover:scale-[1.012]"
         />
 
         <motion.button
@@ -124,8 +124,8 @@ function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
           }}
           whileTap={{ scale: 0.78 }}
           className={[
-            "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 backdrop-blur-sm shadow-[0_2px_8px_rgba(15,23,42,0.08)]",
-            favorite ? "text-[#1ABEA3]" : "text-slate-400",
+            "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgba(15,23,42,0.10)]",
+            favorite ? "text-[#22C58B]" : "text-[#6F7782]",
           ].join(" ")}
         >
           <motion.span
@@ -133,31 +133,13 @@ function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
             transition={{ duration: 0.38 }}
             className="flex"
           >
-            <Heart size={15} fill={favorite ? "currentColor" : "none"} strokeWidth={2.1} />
+            <Heart size={14} fill={favorite ? "currentColor" : "none"} strokeWidth={2.1} />
           </motion.span>
         </motion.button>
-
-        {item.isMatch && (
-          <motion.span
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 520, damping: 18, delay: 0.05 }}
-            className="absolute bottom-2.5 right-2.5 flex items-center gap-1 rounded-full bg-[#1ABEA3] px-2 py-1 text-[10px] font-black text-white shadow-[0_2px_10px_rgba(26,190,163,0.45)]"
-          >
-            <motion.span
-              animate={{ rotate: [0, -20, 20, -10, 0] }}
-              transition={{ duration: 0.5, delay: 0.25 }}
-              className="flex"
-            >
-              <Zap size={10} strokeWidth={2.5} fill="currentColor" />
-            </motion.span>
-            Match
-          </motion.span>
-        )}
       </div>
 
       <div className="p-3">
-        <h2 className="line-clamp-2 text-[15px] font-extrabold leading-snug tracking-[-0.02em] text-[#0d1b2a]">
+        <h2 className="line-clamp-2 text-[14px] font-bold leading-snug tracking-[-0.02em] text-[#17212B]">
           {title}
         </h2>
 
@@ -170,25 +152,26 @@ function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
           }}
           className="mt-2 flex min-w-0 items-center gap-1.5"
         >
-          <span className={["flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-full text-[9px] font-black text-white", getAvatarColor(ownerName)].join(" ")}>
+          <span className={["flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-black text-white", getAvatarColor(ownerName)].join(" ")}>
             {(ownerName || "?").charAt(0).toUpperCase()}
           </span>
-          <span className="min-w-0 truncate text-[12px] font-bold text-[#1ABEA3]">
+          <span className="min-w-0 truncate text-[11.5px] font-semibold text-[#6F7782]">
             {ownerName || "Utilisateur"}
           </span>
         </button>
 
-        <p className="mt-1.5 truncate text-[11.5px] font-medium text-[#94a3b8]">
-          {[location, relativeTime].filter(Boolean).join(" · ")}
-        </p>
-
-        {condition && (
-          <div className="mt-2.5">
-            <span className="inline-flex items-center rounded-full bg-[#F0FAF7] px-2.5 py-0.5 text-[11px] font-bold text-[#1ABEA3]">
+        <div className="mt-2 flex items-center justify-between gap-2">
+          {condition && (
+            <span className="inline-flex items-center rounded-full bg-[#F0FAF7] px-2.5 py-0.5 text-[10.5px] font-bold text-[#1ABEA3]">
               {condition}
             </span>
-          </div>
-        )}
+          )}
+          {relativeTime && (
+            <p className="ml-auto truncate text-[10.5px] font-medium text-[#b0bec5]">
+              {relativeTime}
+            </p>
+          )}
+        </div>
       </div>
     </TrocoCard>
   );
@@ -212,9 +195,6 @@ export default function DesktopFeedPage() {
     setRadius,
     toggleFavorite,
     locationEnabled,
-    requestLocation,
-    locationError,
-    clearLocationError,
   } = useFeedItems();
 
   const MIN_SECTION = 5;
@@ -222,26 +202,6 @@ export default function DesktopFeedPage() {
   return (
     <main className="mx-auto w-full max-w-[1480px] px-8 py-6">
         <section>
-          {locationError === "denied" ? (
-            <div className="mb-4 flex items-center gap-3 rounded-[14px] border border-amber-100 bg-amber-50 px-4 py-3">
-              <Navigation size={15} strokeWidth={2.3} className="shrink-0 text-amber-500" />
-              <p className="flex-1 text-[13px] font-bold text-amber-700">
-                Localisation refusée — Pour l'activer : Réglages → Chrome/Safari → Localisation → Autoriser
-              </p>
-              <button type="button" onClick={clearLocationError} className="shrink-0 text-amber-400 text-lg leading-none">×</button>
-            </div>
-          ) : !locationEnabled && (
-            <button
-              type="button"
-              onClick={requestLocation}
-              className="mb-4 flex w-full items-center gap-3 rounded-[14px] border border-[#D4EFE9] bg-[#F0FAF7] px-4 py-3 text-left transition hover:bg-[#E6F7F2] active:scale-[0.99]"
-            >
-              <Navigation size={15} strokeWidth={2.3} className="shrink-0 text-[#1ABEA3]" />
-              <p className="text-[13px] font-bold text-[#0f9f9a]">
-                Activer ma position pour voir les distances
-              </p>
-            </button>
-          )}
 
           <div className="grid items-end gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]">
             <div className="min-w-0">

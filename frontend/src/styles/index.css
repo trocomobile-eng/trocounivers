@@ -5,34 +5,60 @@
 :root {
   color-scheme: light;
 
-  --troco-title: #0b1324;
-  --troco-text: #64748b;
-  --troco-muted: #94a3b8;
+  /* ── Design Tokens ──────────────────────────────────────── */
 
-  --troco-accent: #2ecc8a;
-  --troco-teal: #0f9f9a;
-  --troco-cyan: #22d3ee;
+  /* Text */
+  --t-ink:   #17212B;
+  --t-muted: #6F7782;
+  --t-faint: #94a3b8;
 
-  --troco-bg:
-    radial-gradient(circle at 18% 8%, rgba(186, 230, 253, 0.18), transparent 30%),
-    radial-gradient(circle at 82% 14%, rgba(187, 247, 208, 0.13), transparent 32%),
-    radial-gradient(circle at 50% 92%, rgba(16, 185, 129, 0.08), transparent 42%),
-    linear-gradient(180deg, #f9fffd 0%, #f3fcf8 52%, #ffffff 100%);
+  /* Brand */
+  --t-green:       #22C58B;
+  --t-teal:        #1ABEA3;
+  --t-green-light: #F0FAF7;
+  --t-green-dim:   #E6F9F3;
 
-  --troco-card: rgba(255, 255, 255, 0.84);
-  --troco-card-strong: rgba(255, 255, 255, 0.92);
-  --troco-border: rgba(255, 255, 255, 0.82);
+  /* Surface */
+  --t-bg:     #F6F9F8;
+  --t-card:   #FFFFFF;
+  --t-border: #E7ECEB;
+
+  /* Radius */
+  --r-sm:  14px;
+  --r-md:  20px;
+  --r-lg:  24px;
+  --r-xl:  28px;
+
+  /* Shadows */
+  --s-soft:   0 2px 12px rgba(15, 23, 42, 0.06);
+  --s-card:   0 4px 20px rgba(15, 23, 42, 0.08);
+  --s-strong: 0 8px 32px rgba(15, 23, 42, 0.10);
+  --s-green:  0 6px 20px rgba(34, 197, 139, 0.22);
+
+  /* Legacy aliases (keep for gradual migration) */
+  --troco-title: var(--t-ink);
+  --troco-text:  var(--t-muted);
+  --troco-muted: var(--t-faint);
+  --troco-accent: var(--t-green);
+  --troco-teal:   var(--t-teal);
+  --troco-cyan:   #22d3ee;
+
+  --troco-bg: #F6F9F8;
+
+  --troco-card: #ffffff;
+  --troco-card-strong: #ffffff;
+  --troco-border: var(--t-border);
 
   --troco-universe-bg: var(--troco-bg);
-  --troco-universe-card: rgba(255, 255, 255, 0.9);
-  --troco-universe-card-soft: rgba(255, 255, 255, 0.74);
+  --troco-universe-card: rgba(255, 255, 255, 0.95);
+  --troco-universe-card-soft: rgba(255, 255, 255, 0.80);
   --troco-universe-overlay: rgba(8, 18, 37, 0.14);
-  --troco-universe-title: #0b1324;
-  --troco-universe-text: #64748b;
-  --troco-universe-muted: #94a3b8;
+  --troco-universe-title: var(--t-ink);
+  --troco-universe-text: var(--t-muted);
+  --troco-universe-muted: var(--t-faint);
 
-  --troco-shadow-soft: 0 12px 34px rgba(15, 23, 42, 0.05);
-  --troco-shadow-card: 0 16px 44px rgba(15, 23, 42, 0.055);
+  --troco-shadow-soft: var(--s-soft);
+  --troco-shadow-card: var(--s-card);
 }
 
 html,
@@ -42,7 +68,7 @@ body,
 }
 
 html {
-  background: #ffffff;
+  background: #F6F9F8;
 }
 
 body {
@@ -110,59 +136,56 @@ a {
 }
 
 @layer components {
+  /* ── Cards ────────────────────────────────────────────────── */
   .card,
   .troco-card {
-    @apply rounded-[28px] border border-white/80 shadow-[0_12px_34px_rgba(15,23,42,0.05)] backdrop-blur-xl;
-    background: var(--troco-card);
+    @apply rounded-[24px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.08)];
   }
 
   .troco-card-strong {
-    @apply rounded-[32px] border border-white/85 shadow-[0_16px_44px_rgba(15,23,42,0.055)] backdrop-blur-xl;
-    background: var(--troco-card-strong);
+    @apply rounded-[24px] bg-white shadow-[0_8px_32px_rgba(15,23,42,0.10)];
   }
 
   .troco-glass {
-    @apply border border-white/80 backdrop-blur-xl shadow-[0_8px_24px_rgba(15,23,42,0.03)];
-    background: rgba(255, 255, 255, 0.76);
+    @apply rounded-[24px] border border-[#E7ECEB] bg-white/85 backdrop-blur-xl;
   }
 
+  /* ── Typography ───────────────────────────────────────────── */
   .troco-section-title {
-    @apply font-extrabold tracking-[-0.045em] text-[#081225];
+    @apply font-extrabold tracking-[-0.045em] text-[#17212B];
   }
 
   .troco-caption {
-    @apply text-[11px] font-black uppercase tracking-[0.18em] text-[#0f9f9a];
+    @apply text-[11px] font-black uppercase tracking-[0.18em] text-[#1ABEA3];
   }
 
   .troco-body {
-    @apply font-medium leading-relaxed text-[#64748b];
+    @apply font-medium leading-relaxed text-[#6F7782];
   }
 
+  /* ── Search bar ───────────────────────────────────────────── */
   .troco-search {
-    @apply flex items-center rounded-full border border-white/90 backdrop-blur-xl;
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow:
-      0 8px 24px rgba(15, 23, 42, 0.028),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    @apply flex items-center rounded-full border border-[#E7ECEB] bg-white;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
   }
 
+  /* ── Buttons ──────────────────────────────────────────────── */
   .btn-primary,
   .troco-primary-button,
   .troco-primary-btn {
-    @apply rounded-[20px] bg-gradient-to-r from-[#2ECC8A] to-cyan-400 px-4 py-3 font-black text-white shadow-[0_12px_30px_rgba(46,204,138,0.14)] transition active:scale-95 disabled:opacity-50 disabled:shadow-none;
+    @apply rounded-[20px] bg-[#22C58B] px-5 py-3 font-black text-white shadow-[0_6px_20px_rgba(34,197,139,0.22)] transition active:scale-[0.97] disabled:opacity-50 disabled:shadow-none;
   }
 
   .btn-secondary,
   .troco-secondary-button,
   .troco-secondary-btn {
-    @apply rounded-[20px] border border-white/85 px-4 py-3 font-black text-slate-700 shadow-[0_8px_22px_rgba(15,23,42,0.03)] transition active:scale-95;
-    background: rgba(255, 255, 255, 0.9);
+    @apply rounded-[20px] border border-[#E7ECEB] bg-white px-5 py-3 font-black text-[#17212B] shadow-[0_2px_10px_rgba(15,23,42,0.05)] transition active:scale-[0.97];
   }
 
+  /* ── Badges ───────────────────────────────────────────────── */
   .tag,
   .troco-badge {
-    @apply inline-flex items-center justify-center rounded-full border border-white/75 px-3 py-1 font-semibold backdrop-blur-md;
-    background: rgba(255, 255, 255, 0.9);
+    @apply inline-flex items-center justify-center rounded-full bg-[#F0FAF7] px-3 py-1 text-[11px] font-bold text-[#1ABEA3];
   }
 
   .troco-shell {
@@ -170,64 +193,60 @@ a {
   }
 
   .troco-page-title {
-    @apply text-[42px] font-semibold leading-[0.98] tracking-[-0.034em] text-slate-900 md:text-[54px];
+    @apply text-[42px] font-semibold leading-[0.98] tracking-[-0.034em] text-[#17212B] md:text-[54px];
   }
 
   .troco-soft-pill {
-    @apply inline-flex items-center justify-center rounded-full border border-emerald-100/80 bg-[#E8F7EF]/90 px-4 py-2 font-black text-[#0f9f9a] shadow-[0_10px_24px_rgba(16,185,129,0.07)] backdrop-blur-xl;
+    @apply inline-flex items-center justify-center rounded-full bg-[#F0FAF7] px-4 py-2 font-black text-[#1ABEA3];
   }
 
   .troco-floating-action {
-    @apply rounded-full border border-white/80 shadow-[0_12px_28px_rgba(15,23,42,0.045)] backdrop-blur-xl transition active:scale-[0.98];
-    background: rgba(255, 255, 255, 0.82);
+    @apply rounded-full border border-[#E7ECEB] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.06)] transition active:scale-[0.97];
   }
 
+  /* ── Universe (content-universe pages) ───────────────────── */
   .troco-universe-page {
     min-height: 100vh;
-    background: var(--troco-universe-bg);
-    color: var(--troco-universe-title);
+    background: var(--troco-bg);
+    color: var(--t-ink);
   }
 
   .troco-universe-card {
-    @apply rounded-[28px] border border-white/80 shadow-[0_16px_44px_rgba(15,23,42,0.055)] backdrop-blur-xl;
-    background: var(--troco-universe-card);
+    @apply rounded-[24px] border border-[#E7ECEB] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.07)];
   }
 
   .troco-universe-card-soft {
-    @apply rounded-[24px] border border-white/70 shadow-[0_10px_28px_rgba(15,23,42,0.04)] backdrop-blur-xl;
-    background: var(--troco-universe-card-soft);
+    @apply rounded-[20px] border border-[#E7ECEB] bg-white/90 shadow-[0_4px_16px_rgba(15,23,42,0.05)];
   }
 
   .troco-universe-image-overlay {
-    background:
-      linear-gradient(
-        180deg,
-        rgba(8, 18, 37, 0.02) 0%,
-        rgba(8, 18, 37, 0.08) 48%,
-        rgba(8, 18, 37, 0.34) 100%
-      );
+    background: linear-gradient(
+      180deg,
+      rgba(8, 18, 37, 0.02) 0%,
+      rgba(8, 18, 37, 0.08) 48%,
+      rgba(8, 18, 37, 0.36) 100%
+    );
   }
 
   .troco-universe-image-overlay-side {
-    background:
-      linear-gradient(
-        90deg,
-        rgba(8, 18, 37, 0.56) 0%,
-        rgba(8, 18, 37, 0.22) 48%,
-        rgba(8, 18, 37, 0.04) 100%
-      );
+    background: linear-gradient(
+      90deg,
+      rgba(8, 18, 37, 0.56) 0%,
+      rgba(8, 18, 37, 0.22) 48%,
+      rgba(8, 18, 37, 0.04) 100%
+    );
   }
 
   .troco-universe-title {
-    color: var(--troco-universe-title);
+    color: var(--t-ink);
   }
 
   .troco-universe-text {
-    color: var(--troco-universe-text);
+    color: var(--t-muted);
   }
 
   .troco-universe-muted {
-    color: var(--troco-universe-muted);
+    color: var(--t-faint);
   }
 }
 

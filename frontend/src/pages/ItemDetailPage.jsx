@@ -7,7 +7,6 @@ import {
   Gift,
   Heart,
   MapPin,
-  MessageCircle,
   PenLine,
   Repeat2,
   Share2,
@@ -145,7 +144,7 @@ function shortName(name = "") {
 
 function PreferenceChip({ children }) {
   return (
-    <span className="rounded-[14px] bg-slate-50 px-4 py-2 text-[14px] font-bold text-slate-700">
+    <span className="rounded-full border border-[#E7ECEB] bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#17212B]">
       {children}
     </span>
   );
@@ -279,7 +278,7 @@ export default function ItemDetailPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.38, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <div className="overflow-hidden rounded-[32px] bg-slate-100 shadow-[0_12px_34px_rgba(15,23,42,0.07)]">
+          <div className="overflow-hidden rounded-[24px] bg-[#F2F4F3] shadow-[0_4px_20px_rgba(15,23,42,0.08)]">
             <div className="aspect-[1.3/1] w-full">
               {mainImage ? (
                 <img
@@ -342,18 +341,15 @@ export default function ItemDetailPage() {
         </motion.section>
 
         <motion.section
-          className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]"
+          className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.08)]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.36, delay: 0.12, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <div className="flex items-start justify-between gap-4">
+          {/* Titre + action */}
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
-                {isOwner ? "Ton objet" : "Objet proposé"}
-              </p>
-
-              <h1 className="mt-2 text-[24px] font-black leading-[0.98] tracking-[-0.055em] text-[#081225] sm:text-[28px]">
+              <h1 className="text-[22px] font-black leading-[1.05] tracking-[-0.05em] text-[#17212B] sm:text-[26px]">
                 {title}
               </h1>
             </div>
@@ -361,142 +357,139 @@ export default function ItemDetailPage() {
             <button
               type="button"
               onClick={isOwner ? goToEdit : undefined}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#1ABEA3] shadow-[0_8px_22px_rgba(15,23,42,0.05)]"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E7ECEB] bg-white text-[#6F7782] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition active:scale-95"
               aria-label={isOwner ? "Modifier l’objet" : "Partager"}
             >
               {isOwner ? (
-                <PenLine size={20} strokeWidth={2.25} />
+                <PenLine size={17} strokeWidth={2.25} />
               ) : (
-                <Share2 size={20} strokeWidth={2.25} />
+                <Share2 size={17} strokeWidth={2.25} />
               )}
             </button>
           </div>
 
-          <div className="mt-3 flex items-center gap-2 text-[14px] font-semibold text-slate-500">
+          {/* Owner row */}
+          <div className="mt-3 flex items-center gap-2.5">
             {ownerAvatar ? (
               <img
                 src={ownerAvatar}
                 alt={ownerName}
-                className="h-7 w-7 rounded-full object-cover"
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-white shadow-sm"
               />
             ) : (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[12px] font-black text-slate-500">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#22C58B] to-[#1ABEA3] text-[12px] font-black text-white">
                 {ownerName.charAt(0).toUpperCase()}
               </span>
             )}
 
-            <span>
-              {postedDate} par{" "}
-              {isOwner ? (
-                <span className="font-black text-slate-700">toi</span>
-              ) : (
-                <Link
-                  to={`/u/${getOwnerId(item)}`}
-                  className="font-black text-[#1ABEA3] underline-offset-2 hover:underline"
-                >
-                  {shortName(ownerName)}
-                </Link>
-              )}
-            </span>
-            {isAmbassador(ownerProfile) && <AmbassadorBadge className="ml-1" />}
+            <div className="min-w-0">
+              <p className="text-[13px] font-bold text-[#17212B]">
+                {isOwner ? (
+                  "Ton objet"
+                ) : (
+                  <>
+                    Par{" "}
+                    <Link
+                      to={`/u/${getOwnerId(item)}`}
+                      className="text-[#1ABEA3] hover:underline"
+                    >
+                      {shortName(ownerName)}
+                    </Link>
+                    {isAmbassador(ownerProfile) && <AmbassadorBadge className="ml-1" />}
+                  </>
+                )}
+              </p>
+              <p className="text-[11px] font-medium text-[#6F7782]">{postedDate}</p>
+            </div>
           </div>
 
           {isAmbassador(ownerProfile) && (
-            <p className="mt-2 text-[12px] font-medium text-slate-400">
-              Compte créé par l'équipe Troco pour présenter des exemples d'objets.
+            <p className="mt-2 text-[11.5px] font-medium text-[#94a3b8]">
+              Compte créé par l’équipe Troco à titre d’exemple.
             </p>
           )}
 
+          {/* Badges état + détails */}
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-[14px] bg-[#F0FAF7] px-3 py-1.5 text-[14px] font-black text-[#1ABEA3]">
+            <span className="rounded-full bg-[#F0FAF7] px-3 py-1.5 text-[12.5px] font-bold text-[#1ABEA3]">
               {condition}
             </span>
 
             {details && (
-              <span className="rounded-[14px] bg-slate-50 px-3 py-1.5 text-[14px] font-bold text-slate-600">
+              <span className="rounded-full bg-[#F6F9F8] px-3 py-1.5 text-[12.5px] font-medium text-[#6F7782]">
                 {details}
               </span>
             )}
 
             {isOwner && (
-              <span className="rounded-[14px] bg-sky-50 px-3 py-1.5 text-[14px] font-black text-sky-700">
-                Visible dans ta bibliothèque
+              <span className="rounded-full bg-sky-50 px-3 py-1.5 text-[12.5px] font-bold text-sky-600">
+                Dans ta bibliothèque
               </span>
             )}
           </div>
 
-          {/* Affichage de la vérification IA */}
+          {/* Vérification IA */}
           {item?.aiVerification && (
             <div className="mt-4">
               <AIVerificationStatus verificationData={item.aiVerification} />
             </div>
           )}
 
-          <p className="mt-5 flex items-center gap-3 text-[17px] font-semibold text-slate-500">
-            <MapPin size={21} className="text-[#1ABEA3]" strokeWidth={2.25} />
+          {/* Lieu */}
+          <p className="mt-4 flex items-center gap-2 text-[14px] font-medium text-[#6F7782]">
+            <MapPin size={16} className="text-[#1ABEA3]" strokeWidth={2.25} />
             {itemLocation}
           </p>
 
-          <div className="mt-6 h-px bg-slate-100" />
+          <div className="mt-5 h-px bg-[#F0F3F2]" />
 
-          <div className="mt-5">
-            <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
+          {/* Description */}
+          <div className="mt-4">
+            <p className="text-[11px] font-black uppercase tracking-[0.20em] text-[#1ABEA3]">
               Description
             </p>
-
-            <p className="mt-3 text-[16px] font-medium leading-relaxed text-slate-600">
+            <p className="mt-2.5 text-[15px] font-medium leading-relaxed text-[#6F7782]">
               {description}
             </p>
           </div>
         </motion.section>
 
         <motion.section
-          className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]"
+          className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.08)]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.34, delay: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
         >
           {isOwner ? (
             <>
-              <p className="text-[17px] font-semibold leading-relaxed text-[#081225]">
-                C’est ton objet. Tu peux modifier les photos, le titre, la catégorie ou le retirer de Troco.
+              <p className="text-[15px] font-medium leading-relaxed text-[#6F7782]">
+                C’est ton objet. Tu peux modifier les photos, le titre ou le retirer de Troco.
               </p>
-
               <button
                 type="button"
                 onClick={goToEdit}
-                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
+                className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[20px] bg-[#17212B] text-[15px] font-black text-white shadow-[0_6px_18px_rgba(23,33,43,0.18)] transition active:scale-[0.97]"
               >
-                <PenLine size={20} strokeWidth={2.4} />
+                <PenLine size={18} strokeWidth={2.4} />
                 Modifier mon objet
               </button>
             </>
           ) : isAmbassador(ownerProfile) ? (
-            <p className="text-[15px] font-medium leading-relaxed text-slate-400">
-              Cet objet est présenté par l'équipe Troco à titre d'exemple. Il n'est pas disponible à l'échange.
+            <p className="text-[14px] font-medium leading-relaxed text-[#94a3b8]">
+              Cet objet est présenté par l’équipe Troco à titre d’exemple. Il n’est pas disponible à l’échange.
             </p>
           ) : (
             <>
-              <p className="text-[17px] font-semibold leading-relaxed text-[#081225]">
-                Tu as un objet qui pourrait plaire à {shortName(ownerName)} ?
+              <p className="text-[15px] font-semibold leading-relaxed text-[#17212B]">
+                Tu as quelque chose qui pourrait plaire à {shortName(ownerName)} ?
               </p>
-
               <button
                 type="button"
                 onClick={proposeExchange}
-                className="mt-4 flex h-[58px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1ABEA3] to-[#36C982] text-[17px] font-black text-white shadow-[0_14px_30px_rgba(16,185,129,0.18)] transition active:scale-[0.98]"
+                className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-[20px] bg-[#22C58B] text-[15px] font-black text-white shadow-[0_6px_20px_rgba(34,197,139,0.25)] transition active:scale-[0.97]"
               >
-                <Repeat2 size={20} strokeWidth={2.4} />
+                <Repeat2 size={18} strokeWidth={2.4} />
                 Proposer un troc
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate("/messages")}
-                className="mt-4 flex w-full items-center justify-center gap-2 text-[16px] font-black text-[#1ABEA3]"
-              >
-                <MessageCircle size={20} strokeWidth={2.3} />
-                Ou envoyer un message
               </button>
             </>
           )}
@@ -504,22 +497,18 @@ export default function ItemDetailPage() {
 
         {!isOwner && !isAmbassador(ownerProfile) && (
           <motion.section
-            className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.07)]"
+            className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_4px_20px_rgba(15,23,42,0.08)]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.32, delay: 0.32, ease: [0.2, 0.8, 0.2, 1] }}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F0FAF7] text-[#1ABEA3]">
-                <Gift size={22} strokeWidth={2.25} />
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#F0FAF7] text-[#1ABEA3]">
+                <Gift size={18} strokeWidth={2.25} />
               </div>
-
               <div>
-                <p className="text-[12px] font-black uppercase tracking-[0.22em] text-[#1ABEA3]">
-                  Ses envies
-                </p>
-
-                <h3 className="mt-1 text-[24px] font-black leading-[1] tracking-[-0.04em] text-[#081225]">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#1ABEA3]">Ses envies</p>
+                <h3 className="text-[18px] font-black leading-tight tracking-[-0.04em] text-[#17212B]">
                   Ce qu’il recherche
                 </h3>
               </div>

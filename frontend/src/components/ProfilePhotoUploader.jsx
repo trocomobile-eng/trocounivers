@@ -24,10 +24,11 @@ export default function ProfilePhotoUploader({ className = "", onUploaded }) {
     setUploading(true);
 
     try {
-      const extension = file.name.split(".").pop() || "jpg";
-      const storageRef = ref(storage, `users/${user.uid}/profile/avatar-${Date.now()}.${extension}`);
+      const { compressImage } = await import("../utils/compressImage");
+      const compressed = await compressImage(file);
+      const storageRef = ref(storage, `users/${user.uid}/profile/avatar-${Date.now()}.jpg`);
 
-      await uploadBytes(storageRef, file);
+      await uploadBytes(storageRef, compressed);
       const photoURL = await getDownloadURL(storageRef);
 
       if (auth.currentUser) {

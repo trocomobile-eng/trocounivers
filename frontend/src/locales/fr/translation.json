@@ -1,8 +1,9 @@
 {
   "landing": {
     "badge": "Le troc local, simple et humain",
-    "title": "Le troc autour de toi.",
-    "description": "Découvre, échange et rencontre localement. Troco transforme les objets oubliés en vraies rencontres près de chez toi.",
+    "title": "Troco, l'application de troc local",
+    "description": "Échangez vos objets simplement autour de vous, sans achat, sans vente, sans livraison.",
+    "subDescription": "Publiez ce que vous n'utilisez plus, découvrez les objets disponibles près de chez vous, et proposez un échange simple avec votre communauté locale.",
     "help": "Aide-nous à construire Troco",
     "prototype": "Voir le prototype"
   },
@@ -42,7 +43,7 @@
   "why": {
     "badge": "Pourquoi Troco ?",
     "title": "Vendre prend du temps. Donner n’est pas toujours simple.",
-    "text": "Beaucoup d’objets restent dans nos placards parce qu’on n’a pas envie de négocier un prix, gérer des messages sans réponse ou organiser un rendez-vous compliqué. Troco transforme ces objets en opportunités d’échange et en moments locaux."
+    "text": "Beaucoup d’objets restent dans nos placards parce qu’on n’a pas envie de négocier un prix, gérer des messages sans réponse ou organiser un rendez-vous compliqué. Avec Troco, le troc local redevient simple : échangez des objets sans argent, autour de chez vous, avec votre communauté locale."
   },
   "onboarding": {
     "skip": "Passer",

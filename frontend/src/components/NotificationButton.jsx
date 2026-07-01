@@ -35,10 +35,10 @@ function getPreciseNotification(ex, uid) {
   if (ex?.placeOptions?.length > 0 && ex?.placeProposedBy !== uid && !ex?.selectedPlace)
     return { icon: MapPin, title: `${name} propose un lieu`, text: title, to: "/choose-place", state: { exchangeId: ex.id, exchange: ex } };
 
-  if (ex?.status === "chat_open" || ex?.chatOpened)
+  if (ex?.status === "chat_open" || ex?.chatOpened || ex?.chatOpen)
     return { icon: MessageCircle, title: "Message à finaliser", text: title, to: `/exchanges/${ex.id}/chat` };
 
-  if (ex?.status === "meeting_confirmed" || ex?.meetingConfirmed)
+  if (ex?.status === "meeting_confirmed" || ex?.meetingConfirmed || (ex?.selectedAvailability && ex?.selectedPlace))
     return { icon: CheckCircle2, title: "Rencontre confirmée ✓", text: title, to: `/exchanges/${ex.id}` };
 
   if (ex?.status === "accepted")
@@ -65,14 +65,14 @@ function NotificationRow({ item, onNavigate }) {
     <button
       type="button"
       onClick={onNavigate}
-      className="flex w-full items-start gap-3 rounded-[16px] bg-[#F5F5F3] p-3 text-left transition hover:bg-[#F0FAF7] active:scale-[0.99]"
+      className="relative flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-left transition hover:bg-[#F6F9F8] active:scale-[0.99]"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F0FAF7] text-[#1ABEA3]">
-        <Icon size={17} strokeWidth={2.2} />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F0FAF7] text-[#22C58B]">
+        <Icon size={15} strokeWidth={2.2} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-extrabold leading-tight text-[#0d1b2a]">{item.title}</span>
-        <span className="mt-0.5 line-clamp-1 block text-[12px] font-medium text-slate-500">{item.text}</span>
+        <span className="block truncate text-[12.5px] font-bold leading-tight text-[#17212B]">{item.title}</span>
+        <span className="mt-0.5 block truncate text-[11.5px] font-medium text-[#6F7782]">{item.text}</span>
       </span>
     </button>
   );
@@ -143,101 +143,61 @@ export default function NotificationButton({ className = "" }) {
         )}
       </button>
 
-      {/* Panneau */}
+      {/* Panneau — popover unifié mobile + desktop */}
       {open && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] lg:bg-transparent lg:backdrop-blur-none" onClick={() => setOpen(false)} />
+          {/* Overlay transparent pour fermer au clic extérieur */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
 
-          {/* Mobile : bottom sheet */}
-          <div className="fixed inset-x-0 bottom-[68px] z-50 flex flex-col rounded-t-[28px] bg-white shadow-[0_-16px_48px_rgba(15,23,42,0.16)] lg:hidden" style={{maxHeight: "calc(75vh - 68px)"}}>
-            <div className="shrink-0 px-5 pt-4 pb-3">
-              <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#D7E4DF]" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[16px] font-extrabold text-[#0d1b2a]">Notifications</p>
-                  <p className="text-[11px] font-medium text-slate-400">
-                    {count > 0 ? `${count} action${count > 1 ? "s" : ""} en attente` : "Tout est à jour"}
-                  </p>
-                </div>
-                <button type="button" onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F3] text-slate-500">
-                  <X size={15} />
-                </button>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
-              {pushStatus !== "granted" && pushStatus !== "unsupported" && (
-                <button
-                  type="button"
-                  onClick={handleEnablePush}
-                  disabled={enabling || pushStatus === "denied"}
-                  className="mb-3 flex w-full items-center gap-3 rounded-[14px] border border-[#D4EFE9] bg-[#F0FAF7] px-4 py-3 text-left transition active:scale-[0.98] disabled:opacity-50"
-                >
-                  <BellOff size={15} strokeWidth={2.3} className="shrink-0 text-[#1ABEA3]" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-black text-[#0d1b2a]">
-                      {pushStatus === "denied" ? "Notifications bloquées" : enabling ? "Activation…" : "Activer les notifications push"}
-                    </p>
-                    <p className="text-[10px] font-medium text-[#94a3b8]">
-                      {pushStatus === "denied" ? "Autorise dans les réglages du navigateur" : "Sois alerté en temps réel pour tes trocs"}
-                    </p>
-                  </div>
-                </button>
-              )}
-              <div className="space-y-1.5">
-                {count === 0 ? (
-                  <div className="rounded-[14px] bg-[#F0FAF7] p-4 text-[13px] font-medium text-[#0f9f9a]">
-                    Aucune action en attente. Tes prochains trocs apparaîtront ici.
-                  </div>
-                ) : (
-                  notifications.map((item, i) => (
-                    <NotificationRow key={i} item={item} onNavigate={() => goTo(item)} />
-                  ))
-                )}
-              </div>
-              <Link
-                to="/exchanges"
-                onClick={() => setOpen(false)}
-                className="troco-primary-btn mt-3 flex h-10 w-full items-center justify-center rounded-full text-[13px]"
-              >
-                Voir tous les trocs
-              </Link>
-            </div>
-          </div>
+          {/* Popover — positionné par rapport à la cloche */}
+          <div
+            className="absolute right-0 top-[calc(100%+8px)] z-50 w-[320px] max-w-[calc(100vw-24px)] rounded-[22px] border border-[#E7ECEB] bg-white shadow-[0_12px_48px_rgba(15,23,42,0.14)]"
+            style={{ animation: "notifSlideDown 0.20s cubic-bezier(0.16, 1, 0.3, 1)" }}
+          >
+            <style>{`
+              @keyframes notifSlideDown {
+                from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+                to   { opacity: 1; transform: translateY(0) scale(1); }
+              }
+            `}</style>
 
-          {/* Desktop : dropdown */}
-          <div className="absolute right-0 top-12 z-50 hidden w-[320px] rounded-[20px] border border-[#E4ECE8] bg-white p-3 shadow-[0_8px_32px_rgba(15,23,42,0.12)] lg:block">
-            <div className="mb-3 flex items-center justify-between px-1">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#F0F3F2] px-4 py-3.5">
               <div>
-                <p className="text-[14px] font-extrabold text-[#0d1b2a]">Notifications</p>
-                <p className="text-[11px] font-medium text-slate-400">
+                <p className="text-[13.5px] font-black text-[#17212B]">Notifications</p>
+                <p className="text-[11px] font-medium text-[#6F7782]">
                   {count > 0 ? `${count} action${count > 1 ? "s" : ""} en attente` : "Tout est à jour"}
                 </p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F3] text-slate-500">
-                <X size={15} />
+              <button type="button" onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F6F9F8] text-[#6F7782] transition hover:bg-[#E7ECEB]">
+                <X size={13} />
               </button>
             </div>
+
+            {/* Push notif banner */}
             {pushStatus !== "granted" && pushStatus !== "unsupported" && (
               <button
                 type="button"
                 onClick={handleEnablePush}
                 disabled={enabling || pushStatus === "denied"}
-                className="mb-3 flex w-full items-center gap-3 rounded-[14px] border border-[#D4EFE9] bg-[#F0FAF7] px-4 py-3 text-left transition active:scale-[0.98] disabled:opacity-50"
+                className="flex w-full items-center gap-3 border-b border-[#F0F3F2] px-4 py-3 text-left transition hover:bg-[#F6F9F8] active:scale-[0.99] disabled:opacity-50"
               >
-                <BellOff size={14} strokeWidth={2.3} className="shrink-0 text-[#1ABEA3]" />
+                <BellOff size={14} strokeWidth={2.3} className="shrink-0 text-[#22C58B]" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-black text-[#0d1b2a]">
-                    {pushStatus === "denied" ? "Notifications bloquées" : enabling ? "Activation…" : "Activer les notifications push"}
+                  <p className="text-[12px] font-bold text-[#17212B]">
+                    {pushStatus === "denied" ? "Notifications bloquées" : enabling ? "Activation…" : "Activer les notifications"}
                   </p>
-                  <p className="text-[10px] font-medium text-[#94a3b8]">
-                    {pushStatus === "denied" ? "Autorise dans les réglages du navigateur" : "Alertes en temps réel pour tes trocs"}
+                  <p className="text-[10.5px] font-medium text-[#6F7782]">
+                    {pushStatus === "denied" ? "Autorise dans les réglages" : "Alertes en temps réel"}
                   </p>
                 </div>
               </button>
             )}
-            <div className="space-y-1.5">
+
+            {/* Rows */}
+            <div className="py-1.5">
               {count === 0 ? (
-                <div className="rounded-[14px] bg-[#F0FAF7] p-4 text-[13px] font-medium text-[#0f9f9a]">
+                <div className="px-4 py-4 text-[12.5px] font-medium text-[#6F7782]">
                   Aucune action en attente. Tes prochains trocs apparaîtront ici.
                 </div>
               ) : (
@@ -246,13 +206,17 @@ export default function NotificationButton({ className = "" }) {
                 ))
               )}
             </div>
-            <Link
-              to="/exchanges"
-              onClick={() => setOpen(false)}
-              className="troco-primary-btn mt-3 flex h-10 w-full items-center justify-center rounded-full text-[13px]"
-            >
-              Voir tous les trocs
-            </Link>
+
+            {/* Footer CTA */}
+            <div className="border-t border-[#F0F3F2] p-3">
+              <Link
+                to="/exchanges"
+                onClick={() => setOpen(false)}
+                className="flex h-10 w-full items-center justify-center rounded-[14px] bg-[#22C58B] text-[13px] font-black text-white shadow-[0_4px_12px_rgba(34,197,139,0.22)] transition active:scale-[0.97]"
+              >
+                Voir tous les trocs
+              </Link>
+            </div>
           </div>
         </>
       )}

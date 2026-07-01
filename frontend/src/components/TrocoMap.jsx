@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 
 import {
@@ -175,6 +176,28 @@ function PopupCard({ item }) {
   );
 }
 
+function ZoomControls() {
+  const map = useMap();
+  return (
+    <div className="absolute bottom-5 right-4 z-[400] flex flex-col gap-1.5">
+      <button
+        type="button"
+        onClick={() => map.zoomIn()}
+        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/80 bg-white/95 text-[20px] font-bold text-[#0d1b2a] shadow-[0_4px_16px_rgba(15,23,42,0.12)] backdrop-blur-xl transition active:scale-90"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        onClick={() => map.zoomOut()}
+        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/80 bg-white/95 text-[20px] font-bold text-[#0d1b2a] shadow-[0_4px_16px_rgba(15,23,42,0.12)] backdrop-blur-xl transition active:scale-90"
+      >
+        −
+      </button>
+    </div>
+  );
+}
+
 function MapOverlay({ count, onBackToList }) {
   return (
     <>
@@ -199,15 +222,6 @@ function MapOverlay({ count, onBackToList }) {
           </button>
         )}
       </div>
-
-      {/* Gradients bords */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-20 bg-gradient-to-b from-white/40 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-20 bg-gradient-to-t from-white/40 to-transparent" />
-
-      {/* Hint bas */}
-      <div className="pointer-events-none absolute bottom-4 left-1/2 z-[400] -translate-x-1/2 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-[11px] font-bold text-slate-500 shadow-[0_4px_16px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-        Clique sur un objet pour le voir
-      </div>
     </>
   );
 }
@@ -227,7 +241,7 @@ export default function TrocoMap({ items = [], className = "", onBackToList }) {
         <MapContainer
           center={[48.8566, 2.3522]}
           zoom={12}
-          scrollWheelZoom={false}
+          scrollWheelZoom={true}
           className="h-full w-full"
           zoomControl={false}
           attributionControl={false}
@@ -238,18 +252,33 @@ export default function TrocoMap({ items = [], className = "", onBackToList }) {
           />
 
           <FitMapToItems items={visibleItems} />
+          <ZoomControls />
 
-          {visibleItems.map((item) => (
-            <Marker
-              key={item.id}
-              position={getApproxPosition(item)}
-              icon={createTrocoIcon(item)}
-            >
-              <Popup closeButton={false} className="troco-map-popup">
-                <PopupCard item={item} />
-              </Popup>
-            </Marker>
-          ))}
+          <MarkerClusterGroup
+            chunkedLoading
+            maxClusterRadius={60}
+            iconCreateFunction={(cluster) => {
+              const count = cluster.getChildCount();
+              return L.divIcon({
+                html: `<div class="troco-cluster"><span>${count}</span></div>`,
+                className: "troco-cluster-wrapper",
+                iconSize: [46, 46],
+                iconAnchor: [23, 23],
+              });
+            }}
+          >
+            {visibleItems.map((item) => (
+              <Marker
+                key={item.id}
+                position={getApproxPosition(item)}
+                icon={createTrocoIcon(item)}
+              >
+                <Popup closeButton={false} className="troco-map-popup" maxWidth={260}>
+                  <PopupCard item={item} />
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
         </MapContainer>
 
         <MapOverlay count={visibleItems.length} onBackToList={onBackToList} />
@@ -357,6 +386,30 @@ export default function TrocoMap({ items = [], className = "", onBackToList }) {
 
         .troco-map-popup .leaflet-popup-tip {
           background: rgba(255, 255, 255, 0.96);
+        }
+
+        .troco-cluster-wrapper {
+          background: transparent;
+          border: none;
+        }
+
+        .troco-cluster {
+          width: 46px;
+          height: 46px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #1ABEA3, #36C982);
+          border: 3px solid white;
+          box-shadow: 0 6px 20px rgba(26, 190, 163, 0.35);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .troco-cluster span {
+          color: white;
+          font-size: 14px;
+          font-weight: 900;
+          letter-spacing: -0.03em;
         }
 
         @keyframes trocoMapFloat {

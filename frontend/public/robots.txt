@@ -26,4 +26,4 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
-Sitemap: https://troco.app/sitemap.xml
+Sitemap: https://www.troco.app/sitemap.xml

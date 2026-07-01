@@ -91,7 +91,7 @@ export default function TrocoPageHeader({
           {actions}
 
           {showNotifications && (
-            <div className="[&_button]:h-10 [&_button]:w-10 [&_button]:rounded-full [&_button]:border-[#ECE4D8] [&_button]:bg-white/92 [&_button]:text-[#16A085] [&_button]:shadow-[0_6px_16px_rgba(15,23,42,0.035)]">
+            <div className="[&>div>button]:h-10 [&>div>button]:w-10 [&>div>button]:rounded-full [&>div>button]:border-[#ECE4D8] [&>div>button]:bg-white/92 [&>div>button]:text-[#16A085] [&>div>button]:shadow-[0_6px_16px_rgba(15,23,42,0.035)]">
               <NotificationButton />
             </div>
           )}

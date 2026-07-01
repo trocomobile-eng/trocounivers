@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   ArrowRight,
   CalendarCheck,
+  Coffee,
   MessageCircle,
   Repeat2,
   Sparkles,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 import TrocoLogo from "../components/TrocoLogo";
+import { PARTNER_CAFES } from "../data/partnerCafes";
 import TrocoFooter from "../components/TrocoFooter";
 import { db } from "../firebase";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
@@ -247,6 +249,76 @@ function ObjectStorySection() {
   );
 }
 
+function PartnerCafeCard({ cafe }) {
+  return (
+    <article className="overflow-hidden rounded-[28px] border border-[#E4ECE8] bg-white/86 shadow-[0_14px_40px_rgba(15,23,42,0.045)] backdrop-blur-xl">
+      <div className="aspect-[16/9] overflow-hidden bg-[#EEF7F3]">
+        <img
+          src={cafe.imageUrl}
+          alt={cafe.name}
+          className="h-full w-full object-cover"
+          draggable="false"
+        />
+      </div>
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-[17px] font-black tracking-[-0.035em] text-[#081225]">{cafe.name}</p>
+            <p className="mt-0.5 text-[13px] font-semibold text-[#64748B]">{cafe.area}</p>
+          </div>
+          <span className="shrink-0 rounded-full bg-[#E8F7EF] px-2.5 py-1 text-[11px] font-black text-[#0f9f9a]">
+            Partenaire
+          </span>
+        </div>
+        <p className="mt-3 text-[13px] font-medium leading-relaxed text-[#64748B]">
+          {cafe.description}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {cafe.perks.slice(0, 3).map((perk) => (
+            <span
+              key={perk}
+              className="rounded-full border border-[#E4ECE8] bg-white px-2.5 py-0.5 text-[10px] font-semibold text-[#64748B]"
+            >
+              {perk}
+            </span>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PartnerPlacesSection() {
+  return (
+    <section className="relative mx-auto mt-9 max-w-7xl px-5">
+      <div className="rounded-[38px] border border-[#E4ECE8] bg-white/84 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.05)] backdrop-blur-xl md:p-9">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[#E8F7EF] text-[#0f9f9a]">
+            <Coffee size={20} strokeWidth={2.35} />
+          </div>
+          <p className="text-[12px] font-black uppercase tracking-[0.24em] text-[#0f9f9a]">
+            Lieux partenaires
+          </p>
+        </div>
+
+        <h2 className="mt-4 max-w-xl text-[34px] font-black leading-[0.96] tracking-[-0.06em] text-[#081225] md:text-[48px]">
+          Troquez dans des lieux de confiance.
+        </h2>
+
+        <p className="mt-4 max-w-2xl text-[17px] font-medium leading-relaxed text-[#64748B]">
+          Nos cafés et bars partenaires sont des lieux publics sélectionnés pour que vos échanges se passent sereinement.
+        </p>
+
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {PARTNER_CAFES.map((cafe) => (
+            <PartnerCafeCard key={cafe.id} cafe={cafe} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -281,6 +353,10 @@ export default function LandingPage() {
 
             <p className="mx-auto mt-4 max-w-[370px] text-[18px] font-medium leading-relaxed text-[#64748B] sm:max-w-xl md:text-[21px] lg:mx-0">
               {t("landing.description")}
+            </p>
+
+            <p className="mx-auto mt-2 max-w-[370px] text-[15px] font-medium leading-relaxed text-[#94A3B8] sm:max-w-xl lg:mx-0">
+              {t("landing.subDescription")}
             </p>
 
             <div className="mx-auto mt-7 flex w-full max-w-[370px] flex-col gap-3 lg:mx-0 lg:max-w-none lg:flex-row">
@@ -358,6 +434,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <PartnerPlacesSection />
 
       <section className="relative mx-auto mt-9 max-w-7xl px-5 pb-16">
         <div className="rounded-[38px] border border-[#E4ECE8] bg-white/86 p-7 shadow-[0_20px_70px_rgba(15,23,42,0.055)] backdrop-blur-xl md:p-10">

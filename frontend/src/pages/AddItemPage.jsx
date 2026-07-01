@@ -5,7 +5,10 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
+  query,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -261,6 +264,24 @@ export default function AddItemPage() {
           updatedAt: serverTimestamp(),
         });
       }
+
+      // Notifier les followers
+      try {
+        const { sendPushNotification } = await import("../utils/sendPushNotification");
+        const followersSnap = await getDocs(
+          query(collection(db, "users"), where("favoriteUsers", "array-contains", user.uid))
+        );
+        const ownerName = user.displayName?.split(" ")[0] || "Un troqueur";
+        const itemTitle = title || "un nouvel objet";
+        followersSnap.forEach((followerDoc) => {
+          sendPushNotification(
+            followerDoc.id,
+            `${ownerName} a publié un objet`,
+            itemTitle,
+            `/items/${draftRef.id}`
+          );
+        });
+      } catch (_) {}
 
       setPublishedItemId(draftRef.id);
       setShowSurvey(true);

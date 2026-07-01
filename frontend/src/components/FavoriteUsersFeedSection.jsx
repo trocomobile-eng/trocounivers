@@ -12,18 +12,18 @@ function FavItem({ item, cardWidth = "w-[160px]" }) {
   return (
     <Link
       to={`/items/${item.id}`}
-      className={`${cardWidth} shrink-0 block overflow-hidden rounded-[18px] bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition hover:-translate-y-[1px] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]`}
+      className={`${cardWidth} shrink-0 block overflow-hidden rounded-[18px] bg-white shadow-[0_2px_14px_rgba(15,23,42,0.07)] transition active:scale-[0.97]`}
     >
-      <div className="relative aspect-square overflow-hidden bg-slate-100">
+      <div className="relative aspect-square overflow-hidden bg-[#F2F4F3]">
         {image
           ? <img src={image} alt={title} className="h-full w-full object-cover" />
           : <div className="flex h-full w-full items-center justify-center text-2xl text-slate-300">📦</div>
         }
       </div>
-      <div className="p-2.5">
-        <p className="line-clamp-2 text-[12px] font-extrabold leading-snug text-[#0d1b2a]">{title}</p>
+      <div className="px-2.5 py-2">
+        <p className="line-clamp-2 text-[12px] font-bold leading-snug text-[#17212B]">{title}</p>
         {ownerId && (
-          <p className="mt-1 truncate text-[11px] font-medium text-[#94a3b8]">
+          <p className="mt-1 truncate text-[10.5px] font-medium text-[#6F7782]">
             {item.ownerName || item.ownerDisplayName || "Troqueur"}
           </p>
         )}
@@ -40,18 +40,17 @@ export default function FavoriteUsersFeedSection({ cardWidth, maxItems = 6, show
   const displayed = favoriteItems.slice(0, maxItems);
 
   return (
-    <section className="mt-6">
+    <section className="mt-5">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#0f9f9a] flex items-center gap-1.5">
-          <Heart size={13} strokeWidth={2.5} />
+        <p className="text-[12px] font-black tracking-[-0.01em] text-[#17212B]">
           Nouveautés de vos favoris
         </p>
         {showSeeAll && favoriteItems.length > maxItems && (
           <Link
             to="/favorites"
-            className="text-[12px] font-black text-[#1ABEA3] transition hover:opacity-70"
+            className="text-[12px] font-bold text-[#22C58B]"
           >
-            Voir tout →
+            Voir tout
           </Link>
         )}
       </div>
