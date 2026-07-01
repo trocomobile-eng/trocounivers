@@ -128,25 +128,35 @@ function getExchangeStage(exchange, currentUserId) {
     status === "time_confirmed" ||
     status === "choosing_place"
   ) return "start_time";
+  // pending : distingue si c'est moi qui ai envoyé ou reçu
+  if (exchange.senderId === currentUserId) return "pending_mine";
   return "pending";
 }
 
 function getStageVisual(stage) {
   const map = {
-    respond_time:  { label: "À toi de répondre", cta: "Répondre aux disponibilités" },
-    waiting_time:  { label: "En attente",         cta: "Voir les disponibilités" },
-    start_place:   { label: "Horaire validé",      cta: "Choisir un lieu" },
-    respond_place: { label: "À toi de répondre",  cta: "Répondre au lieu" },
-    waiting_place: { label: "En attente",          cta: "Voir le lieu" },
-    confirmed:     { label: "Rendez-vous confirmé", cta: "Voir la rencontre" },
-    chat:          { label: "En cours",            cta: "Ouvrir la discussion" },
-    completed:     { label: "Terminé",             cta: "Voir le troc" },
-    declined:      { label: "Refusé",              cta: "Voir le troc" },
-    cancelled:     { label: "Annulé",              cta: "Voir le troc" },
-    start_time:    { label: "Accepté",             cta: "Choisir mes disponibilités" },
-    pending:       { label: "En attente",          cta: "Voir le troc" },
+    respond_time:  { label: "À toi de répondre",    cta: "Choisir un créneau",         myTurn: true  },
+    waiting_time:  { label: "À lui de choisir",      cta: "Voir les disponibilités",    myTurn: false },
+    start_place:   { label: "Créneau validé",        cta: "Proposer un lieu",           myTurn: true  },
+    respond_place: { label: "À toi de répondre",     cta: "Confirmer le lieu",          myTurn: true  },
+    waiting_place: { label: "Lieu à confirmer",      cta: "Voir le lieu proposé",       myTurn: false },
+    confirmed:     { label: "Rendez-vous fixé",      cta: "Voir les détails",           myTurn: false },
+    chat:          { label: "En discussion",         cta: "Ouvrir le chat",             myTurn: true  },
+    completed:     { label: "Échange terminé",       cta: "Voir le récap",              myTurn: false },
+    declined:      { label: "Refusé",                cta: "Voir le troc",               myTurn: false },
+    cancelled:     { label: "Annulé",                cta: "Voir le troc",               myTurn: false },
+    start_time:    { label: "Accepté — à planifier", cta: "Proposer mes disponibilités", myTurn: true },
+    pending_mine:  { label: "En attente de réponse", cta: "Voir la proposition",        myTurn: false },
+    pending:       { label: "À toi de répondre",     cta: "Voir la proposition",        myTurn: true  },
   };
   return map[stage] || map.pending;
+}
+
+function getStageOrder(stage) {
+  if (["respond_time", "respond_place", "start_time", "start_place", "chat", "pending"].includes(stage)) return 0;
+  if (stage === "confirmed") return 1;
+  if (["waiting_time", "waiting_place", "pending_mine"].includes(stage)) return 2;
+  return 3;
 }
 
 function getSubtitle(exchange, stage, currentUserId) {
@@ -171,12 +181,8 @@ function getSubtitle(exchange, stage, currentUserId) {
   if (stage === "completed") return "L'échange est terminé. Bravo !";
   if (stage === "declined") return "Cette proposition a été refusée.";
   if (stage === "cancelled") return "Cet échange a été annulé.";
-  if (stage === "pending") {
-    const isSender = exchange.senderId === currentUserId;
-    return isSender
-      ? `${short} examine votre proposition.`
-      : `${short} vous propose un échange.`;
-  }
+  if (stage === "pending_mine") return `${short} examine ta proposition.`;
+  if (stage === "pending") return `${short} te propose un échange.`;
   return "Consulte le détail du troc.";
 }
 
@@ -185,8 +191,8 @@ function getSubtitle(exchange, stage, currentUserId) {
 function StatusPill({ stage }) {
   const visual = getStageVisual(stage);
   const isEnded   = ["completed", "declined", "cancelled"].includes(stage);
-  const isWaiting = ["pending", "waiting_time", "waiting_place"].includes(stage);
-  const isAction  = ["respond_time", "respond_place", "start_time", "start_place", "chat", "confirmed"].includes(stage);
+  const isWaiting = ["pending_mine", "waiting_time", "waiting_place"].includes(stage);
+  const isAction  = visual.myTurn && !isEnded;
 
   const color = isEnded
     ? "bg-[#F3F4F6] text-[#6F7782]"
@@ -246,84 +252,88 @@ function ExchangeCard({ exchange, items, currentUserId }) {
   const rightImage = getItemImage(offeredItem) || exchange.offeredItemImage || "";
   const rightTitle = getDisplayItemType(offeredItem) || exchange.offeredItemTitle || "Son objet";
 
-  const isEnded = ["completed", "declined", "cancelled"].includes(stage);
+  const isEnded  = ["completed", "declined", "cancelled"].includes(stage);
+  const visual   = getStageVisual(stage);
+  const myTurn   = visual.myTurn && !isEnded;
 
   return (
-    <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.08)]">
+    <div className={["overflow-hidden rounded-[20px] bg-white shadow-[0_2px_14px_rgba(15,23,42,0.07)] transition", myTurn ? "ring-1 ring-[#22C58B]/30" : ""].join(" ")}>
+
+      {/* Bandeau action requise */}
+      {myTurn && (
+        <div className="flex items-center gap-1.5 bg-[#F0FAF7] px-4 py-1.5">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#22C58B]" />
+          <p className="text-[10.5px] font-black text-[#0c9e7b]">Action requise</p>
+        </div>
+      )}
 
       {/* En-tête : avatar + nom + statut */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+      <div className="flex items-center gap-3 px-4 pt-3 pb-2.5">
         <PersonAvatar name={otherName} photoURL={otherPhotoURL} size="md" />
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-black leading-tight text-[#17212B]">{firstName}</p>
-          <p className="mt-0.5 text-[11.5px] font-medium leading-snug text-[#6F7782]">{subtitle}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[13.5px] font-black leading-tight text-[#17212B]">{firstName}</p>
+            <StatusPill stage={stage} />
+          </div>
+          <p className="mt-0.5 text-[11px] font-medium leading-snug text-[#6F7782]">{subtitle}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <StatusPill stage={stage} />
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); navigate(`/exchanges/${exchange.id}/chat`); }}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E7ECEB] bg-white text-[#22C58B] shadow-[0_2px_6px_rgba(15,23,42,0.06)] transition active:scale-95"
-            aria-label="Ouvrir le chat"
-          >
-            <MessageCircle size={14} strokeWidth={2.2} />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); navigate(`/exchanges/${exchange.id}/chat`); }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E7ECEB] bg-white text-[#22C58B] shadow-[0_2px_6px_rgba(15,23,42,0.06)] transition active:scale-95"
+          aria-label="Ouvrir le chat"
+        >
+          <MessageCircle size={14} strokeWidth={2.2} />
+        </button>
       </div>
 
-      {/* Séparateur */}
-      <div className="mx-4 h-px bg-[#F0F3F2]" />
-
       {/* Photos */}
-      <div className="grid grid-cols-[1fr_32px_1fr] items-center gap-2 px-4 py-3.5">
+      <div className="grid grid-cols-[1fr_28px_1fr] items-center gap-2 px-4 pb-3">
         <div>
-          <div className="aspect-[4/3] overflow-hidden rounded-[14px] bg-[#F2F4F3]">
+          <div className="aspect-[3/2] overflow-hidden rounded-[12px] bg-[#F2F4F3]">
             {leftImage
               ? <img src={leftImage} alt={leftTitle} className="h-full w-full object-cover" />
-              : <div className="flex h-full w-full items-center justify-center text-2xl text-slate-200">📦</div>
+              : <div className="flex h-full w-full items-center justify-center text-xl text-slate-200">📦</div>
             }
           </div>
-          <p className="mt-1.5 line-clamp-1 text-[11.5px] font-bold leading-snug text-[#17212B]">
-            {leftTitle}
-          </p>
-          <p className="mt-0.5 text-[10px] font-medium text-[#6F7782]">Ton objet</p>
+          <p className="mt-1 line-clamp-1 text-[11px] font-bold leading-snug text-[#17212B]">{leftTitle}</p>
+          <p className="text-[9.5px] font-medium text-[#6F7782]">Ton objet</p>
         </div>
 
-        {/* Icône échange */}
         <div className="flex justify-center">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0FAF7]">
-            <Repeat2 size={13} strokeWidth={2.3} className="text-[#22C58B]" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F0FAF7]">
+            <Repeat2 size={12} strokeWidth={2.3} className="text-[#22C58B]" />
           </span>
         </div>
 
         <div>
-          <div className="aspect-[4/3] overflow-hidden rounded-[14px] bg-[#F2F4F3]">
+          <div className="aspect-[3/2] overflow-hidden rounded-[12px] bg-[#F2F4F3]">
             {rightImage
               ? <img src={rightImage} alt={rightTitle} className="h-full w-full object-cover" />
-              : <div className="flex h-full w-full items-center justify-center text-2xl text-slate-200">📦</div>
+              : <div className="flex h-full w-full items-center justify-center text-xl text-slate-200">📦</div>
             }
           </div>
-          <p className="mt-1.5 line-clamp-1 text-[11.5px] font-bold leading-snug text-[#17212B]">
-            {rightTitle}
-          </p>
-          <p className="mt-0.5 text-[10px] font-medium text-[#6F7782]">Son objet</p>
+          <p className="mt-1 line-clamp-1 text-[11px] font-bold leading-snug text-[#17212B]">{rightTitle}</p>
+          <p className="text-[9.5px] font-medium text-[#6F7782]">Son objet</p>
         </div>
       </div>
 
       {/* CTA */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-3">
         <button
           type="button"
           onClick={() => navigate(`/exchanges/${exchange.id}`)}
           className={[
-            "flex w-full items-center justify-center gap-2 rounded-[14px] py-3 text-[13px] font-black transition active:scale-[0.98]",
+            "flex w-full items-center justify-center gap-2 rounded-[12px] py-2 text-[12.5px] font-black transition active:scale-[0.98]",
             isEnded
               ? "bg-[#F6F9F8] text-[#6F7782]"
-              : "bg-[#22C58B] text-white shadow-[0_6px_18px_rgba(34,197,139,0.25)]",
+              : myTurn
+              ? "bg-[#22C58B] text-white shadow-[0_4px_14px_rgba(34,197,139,0.22)]"
+              : "border border-[#E7ECEB] bg-white text-[#17212B]",
           ].join(" ")}
         >
-          Voir l'échange
-          <ArrowRight size={14} strokeWidth={2.5} />
+          {visual.cta}
+          <ArrowRight size={13} strokeWidth={2.5} />
         </button>
       </div>
     </div>
@@ -414,15 +424,18 @@ export default function ExchangesPage() {
 
   // Catégories
   const activeExchanges  = useMemo(() => exchanges.filter((e) => !["completed", "declined", "cancelled"].includes(getExchangeStage(e, user?.uid))), [exchanges, user?.uid]);
-  const waitingExchanges = useMemo(() => exchanges.filter((e) => ["pending", "waiting_time", "waiting_place"].includes(getExchangeStage(e, user?.uid))), [exchanges, user?.uid]);
+  const waitingExchanges = useMemo(() => exchanges.filter((e) => ["pending_mine", "waiting_time", "waiting_place"].includes(getExchangeStage(e, user?.uid))), [exchanges, user?.uid]);
   const endedExchanges   = useMemo(() => exchanges.filter((e) => ["completed", "declined", "cancelled"].includes(getExchangeStage(e, user?.uid))), [exchanges, user?.uid]);
 
   const displayed = useMemo(() => {
-    if (activeFilter === "actifs")   return activeExchanges;
-    if (activeFilter === "attente")  return waitingExchanges;
-    if (activeFilter === "termines") return endedExchanges;
-    return exchanges;
-  }, [activeFilter, activeExchanges, waitingExchanges, endedExchanges, exchanges]);
+    let list;
+    if (activeFilter === "actifs")   list = activeExchanges;
+    else if (activeFilter === "attente")  list = waitingExchanges;
+    else if (activeFilter === "termines") list = endedExchanges;
+    else list = exchanges;
+    // Trier : action requise d'abord
+    return [...list].sort((a, b) => getStageOrder(getExchangeStage(a, user?.uid)) - getStageOrder(getExchangeStage(b, user?.uid)));
+  }, [activeFilter, activeExchanges, waitingExchanges, endedExchanges, exchanges, user?.uid]);
 
   const sectionLabel = activeFilter === "actifs"
     ? "Échanges actifs"
