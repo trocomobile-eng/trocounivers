@@ -115,6 +115,13 @@ function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
           className="aspect-square w-full object-cover transition duration-300 group-hover:scale-[1.012]"
         />
 
+        {item.isMatch && (
+          <span className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-[#22C58B] px-2 py-0.5 text-[9px] font-black text-white shadow-[0_2px_8px_rgba(34,197,139,0.35)]">
+            <Zap size={9} fill="currentColor" strokeWidth={0} />
+            Match
+          </span>
+        )}
+
         <motion.button
           type="button"
           onClick={(event) => {

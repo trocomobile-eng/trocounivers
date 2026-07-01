@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import FavoriteUsersFeedSection from "../../components/FavoriteUsersFeedSection";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { SkeletonGrid } from "../../components/SkeletonCard";
-import { Heart, List, Map, Navigation, Search, SlidersHorizontal } from "lucide-react";
+import { Heart, List, Map, Navigation, Search, SlidersHorizontal, Zap } from "lucide-react";
 import TrocoMap from "../../components/TrocoMap";
 import { Link } from "react-router-dom";
 
@@ -155,6 +155,13 @@ function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false
         >
           <Heart size={12} fill={favorite ? "currentColor" : "none"} strokeWidth={2} />
         </button>
+
+        {item.isMatch && (
+          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-[#22C58B] px-2 py-0.5 text-[9px] font-black text-white shadow-[0_2px_8px_rgba(34,197,139,0.35)]">
+            <Zap size={9} fill="currentColor" strokeWidth={0} />
+            Match
+          </span>
+        )}
 
         {location && (
           <span className="absolute bottom-2 left-2 flex items-center gap-0.5 rounded-full bg-black/40 px-2 py-0.5 text-[9px] font-semibold text-white backdrop-blur-sm">
