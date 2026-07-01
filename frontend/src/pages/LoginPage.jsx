@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   GoogleAuthProvider,
   fetchSignInMethodsForEmail,
-  linkWithCredential,
+  getRedirectResult,
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
@@ -20,12 +20,41 @@ async function ensureUserDoc(user) {
   }, { merge: true });
 }
 
+function googleErrorMessage(code) {
+  if (code === "auth/popup-blocked")         return "Le popup a été bloqué par ton navigateur. Autorise les popups ou réessaie.";
+  if (code === "auth/popup-closed-by-user")  return "Connexion annulée.";
+  if (code === "auth/cancelled-by-user")     return "Connexion annulée.";
+  if (code === "auth/network-request-failed") return "Erreur réseau. Vérifie ta connexion.";
+  if (code === "auth/account-exists-with-different-credential") return null; // géré séparément
+  return `Connexion Google impossible (${code || "erreur inconnue"}).`;
+}
+
 export default function LoginPage() {
   const navigate   = useNavigate();
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
+
+  // Récupère le résultat du redirect Google (mobile)
+  useEffect(() => {
+    setLoading(true);
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (!result) return;
+        await ensureUserDoc(result.user);
+        // PublicRoute redirige vers /feed dès que onAuthStateChanged met à jour l'auth
+      })
+      .catch((e) => {
+        console.error("[Google Redirect] code:", e.code, "message:", e.message, "customData:", e.customData);
+        if (e.code === "auth/account-exists-with-different-credential") {
+          setError("Un compte existe déjà avec cet email. Connecte-toi avec ton mot de passe d'abord.");
+        } else if (e.code) {
+          setError(googleErrorMessage(e.code));
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   async function loginWithEmail() {
     if (!email || !password) { setError("Remplis tous les champs."); return; }
@@ -46,21 +75,25 @@ export default function LoginPage() {
     setError(""); setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      const result   = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       await ensureUserDoc(result.user);
       navigate("/feed", { replace: true });
     } catch (e) {
-      // Compte email existant — proposer de fusionner
+      console.error("[Google Login] code:", e.code, "message:", e.message, "customData:", e.customData);
       if (e.code === "auth/account-exists-with-different-credential") {
-        const email = e.customData?.email;
-        if (email) {
-          const methods = await fetchSignInMethodsForEmail(auth, email);
-          if (methods.includes("password")) {
-            setError(`Un compte existe déjà avec cet email. Connecte-toi avec ton mot de passe d'abord.`);
-          }
+        const existingEmail = e.customData?.email;
+        if (existingEmail) {
+          try {
+            const methods = await fetchSignInMethodsForEmail(auth, existingEmail);
+            if (methods.includes("password")) {
+              setError("Un compte existe déjà avec cet email. Connecte-toi avec ton mot de passe d'abord.");
+              return;
+            }
+          } catch {}
         }
+        setError("Un compte existe déjà avec cet email.");
       } else {
-        setError("Connexion Google impossible. Vérifie que les popups sont autorisés.");
+        setError(googleErrorMessage(e.code) || "Connexion Google impossible.");
       }
     } finally { setLoading(false); }
   }
