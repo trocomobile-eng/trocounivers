@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import TrocoCroc from "../assets/logo/troco-crocodile-premium.png";
 import TrocoWord from "../assets/logo/troco-word.png";
 
 const TOTAL_DURATION = 2200;
@@ -24,11 +25,11 @@ export default function SplashScreen({ onDone }) {
       {/* Halo vert très doux */}
       <div className="pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-emerald-100/60 blur-[100px]" />
 
-      {/* Icône app — le vrai crocodile */}
+      {/* Crocodile sans fond */}
       <img
-        src="/icon-512.png"
+        src={TrocoCroc}
         alt="Troco"
-        className="relative z-10 w-[120px] rounded-[28px] shadow-[0_20px_50px_rgba(22,120,68,0.20)]"
+        className="relative z-10 w-[130px] drop-shadow-[0_16px_40px_rgba(22,120,68,0.22)]"
         style={{ animation: "logoIn 700ms cubic-bezier(.16,1,.3,1) both" }}
       />
 
@@ -36,11 +37,22 @@ export default function SplashScreen({ onDone }) {
       <img
         src={TrocoWord}
         alt="Troco"
-        className="relative z-10 mt-5 w-[120px]"
+        className="relative z-10 mt-4 w-[120px]"
         style={{ animation: "logoIn 700ms cubic-bezier(.16,1,.3,1) 120ms both" }}
       />
 
+      {/* Spinner */}
+      <div className="relative z-10 mt-10" style={{ animation: "logoIn 400ms ease-out 500ms both" }}>
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ animation: "spin 1s linear infinite" }}>
+          <circle cx="14" cy="14" r="11" stroke="#D1FAE5" strokeWidth="2.5" />
+          <path d="M14 3 A11 11 0 0 1 25 14" stroke="#22C58B" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
       <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
         @keyframes logoIn {
           from { opacity: 0; transform: scale(0.90) translateY(10px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
