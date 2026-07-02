@@ -89,7 +89,7 @@ function IPhoneMockup({ src, alt, className = "", front = false }) {
         <img
           src={src}
           alt={alt}
-          className="h-full w-full bg-white object-cover object-center"
+          className="h-full w-full bg-white object-cover object-top"
           draggable="false"
         />
       </div>
