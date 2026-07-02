@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import TrocoCroc from "../assets/logo/troco-crocodile-premium.png";
 import TrocoWord from "../assets/logo/troco-word.png";
 
 const TOTAL_DURATION = 2200;
@@ -18,19 +17,22 @@ export default function SplashScreen({ onDone }) {
     <div
       className={[
         "fixed inset-0 z-[9999] flex flex-col items-center justify-center",
-        "bg-[linear-gradient(160deg,#f0fdf7_0%,#ffffff_100%)]",
+        "bg-white",
         leaving ? "animate-[splashLeave_600ms_ease-in-out_forwards]" : "",
       ].join(" ")}
     >
       {/* Halo vert très doux */}
       <div className="pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-emerald-100/60 blur-[100px]" />
 
-      {/* Crocodile sans fond */}
+      {/* Crocodile de l'icône — mix-blend-mode supprime le fond blanc */}
       <img
-        src={TrocoCroc}
+        src="/icon-512.png"
         alt="Troco"
-        className="relative z-10 w-[130px] drop-shadow-[0_16px_40px_rgba(22,120,68,0.22)]"
-        style={{ animation: "logoIn 700ms cubic-bezier(.16,1,.3,1) both" }}
+        className="relative z-10 w-[140px]"
+        style={{
+          mixBlendMode: "multiply",
+          animation: "logoIn 700ms cubic-bezier(.16,1,.3,1) both",
+        }}
       />
 
       {/* Nom */}
