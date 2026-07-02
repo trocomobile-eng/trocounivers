@@ -11,20 +11,13 @@ function CommunauteCard({ communaute, large }) {
       className="relative shrink-0 overflow-hidden rounded-2xl transition active:scale-[0.97]"
       style={{ width: w, height: h }}
     >
-      {communaute.img ? (
-        <img
-          src={communaute.img}
-          alt={communaute.label}
-          className="h-full w-full object-cover"
-          draggable="false"
-        />
-      ) : (
-        <div
-          className="h-full w-full"
-          style={{ background: `linear-gradient(135deg, ${communaute.accent}cc 0%, ${communaute.accent}66 100%)` }}
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+      <img
+        src={communaute.img}
+        alt={communaute.label}
+        className="h-full w-full object-cover"
+        draggable="false"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/15 to-transparent" />
 
       <span
         className="absolute left-2 top-2 text-[16px] leading-none"

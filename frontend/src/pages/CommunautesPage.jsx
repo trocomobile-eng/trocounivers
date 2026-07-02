@@ -39,11 +39,7 @@ function DesktopHero() {
     <section className="relative overflow-hidden rounded-[34px] bg-slate-900 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
       <div className="absolute inset-0 grid grid-cols-5">
         {COMMUNAUTES.slice(0, 5).map((c) => (
-          c.img ? (
-            <img key={c.id} src={c.img} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div key={c.id} className="h-full w-full" style={{ background: `linear-gradient(135deg, ${c.accent}cc, ${c.accent}44)` }} />
-          )
+          <img key={c.id} src={c.img} alt="" className="h-full w-full object-cover" />
         ))}
       </div>
       <div className="absolute inset-0 bg-gradient-to-r from-black/76 via-black/42 to-black/16" />
@@ -111,29 +107,42 @@ function MobileCommunauteRow({ communaute, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="group relative h-[112px] w-full overflow-hidden rounded-[24px] text-left shadow-[0_14px_34px_rgba(15,23,42,0.075)] active:scale-[0.985]"
+      className="group relative h-[140px] w-full overflow-hidden rounded-[22px] text-left shadow-[0_8px_24px_rgba(15,23,42,0.10)] active:scale-[0.985] transition-transform"
     >
-      <CommunauteCardImage communaute={communaute} />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/74 via-black/34 to-black/8" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/42 via-transparent to-transparent" />
+      {/* Photo de fond — toujours présente */}
+      <img
+        src={communaute.img}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-active:scale-[1.02]"
+      />
 
-      <div className="relative z-10 flex h-full items-center gap-4 px-4">
+      {/* Overlay dégradé fort pour lisibilité garantie */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+      {/* Contenu */}
+      <div className="relative z-10 flex h-full items-center gap-3.5 px-4">
+        {/* Icône ronde */}
         <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/36 backdrop-blur-xl"
-          style={{ background: `${communaute.accent}64` }}
+          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-white/25 shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+          style={{ background: `${communaute.accent}90` }}
         >
-          <span className="text-[20px] leading-none">{communaute.emoji}</span>
+          <span className="text-[22px] leading-none">{communaute.emoji}</span>
         </div>
+
+        {/* Texte */}
         <div className="min-w-0 flex-1">
-          <p className="text-[21px] font-black leading-none tracking-[-0.05em] text-white drop-shadow">
+          <p className="text-[20px] font-black leading-tight tracking-[-0.04em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
             {communaute.label}
           </p>
-          <p className="mt-1.5 line-clamp-2 max-w-[240px] text-[12px] font-semibold leading-snug text-white/78">
+          <p className="mt-1 line-clamp-1 text-[12.5px] font-semibold leading-snug text-white/85">
             {communaute.tagline}
           </p>
         </div>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-xl">
-          <ChevronRight size={17} strokeWidth={2.8} />
+
+        {/* Flèche */}
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+          <ChevronRight size={16} strokeWidth={2.8} className="text-white" />
         </div>
       </div>
     </button>
@@ -193,7 +202,7 @@ function MobileCommunautesPage() {
           </div>
         </header>
 
-        <section className="flex flex-col gap-3.5">
+        <section className="flex flex-col gap-2.5">
           {COMMUNAUTES.map((c) => (
             <MobileCommunauteRow key={c.id} communaute={c} onClick={() => navigate(`/communautes/${c.id}`)} />
           ))}

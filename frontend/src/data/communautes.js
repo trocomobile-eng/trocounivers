@@ -1,14 +1,18 @@
-import imgJeux from "../assets/univers/univ-jeux.png";
 import imgMusique from "../assets/univers/univ-musique.png";
+import imgVelo from "../assets/univers/univ-velo.png";
 import imgDeco from "../assets/univers/univ-deco_maison.png";
+import imgMode from "../assets/univers/univ-mode.png";
+import imgLivres from "../assets/univers/univ-livres.png";
+import imgJeux from "../assets/univers/univ-jeux.png";
 import imgPhoto from "../assets/univers/univ-photo.png";
 import imgSport from "../assets/univers/univ-sport.png";
+import imgEnfants from "../assets/univers/univ-enfants.png";
 
 export const COMMUNAUTES = [
   {
     id: "musique",
     label: "Musique",
-    tagline: "Écouter, collectionner, faire résonner.",
+    tagline: "Instruments, vinyles et matériel audio.",
     description: "Instruments, vinyles, enceintes, pédales et accessoires audio à échanger près de toi.",
     img: imgMusique,
     accent: "#4BA8B8",
@@ -19,9 +23,9 @@ export const COMMUNAUTES = [
   {
     id: "velo",
     label: "Vélo",
-    tagline: "Rouler, explorer, se déplacer autrement.",
+    tagline: "Rouler, réparer, se déplacer autrement.",
     description: "Vélos, accessoires, équipements cyclistes et pièces à échanger près de toi.",
-    img: null,
+    img: imgVelo,
     accent: "#4F7B3E",
     emoji: "🚲",
     keywords: ["vélo", "velo", "cyclisme", "bicyclette", "roue", "guidon", "selle", "dérailleur", "pneu", "chambre à air", "casque vélo", "sacoches", "fixie", "vtt", "route"],
@@ -30,7 +34,7 @@ export const COMMUNAUTES = [
   {
     id: "deco",
     label: "Déco",
-    tagline: "Sublimer, aménager, se sentir bien chez soi.",
+    tagline: "Aménager, décorer, se sentir bien chez soi.",
     description: "Luminaires, cadres, coussins, tapis et objets décoratifs à échanger près de toi.",
     img: imgDeco,
     accent: "#C09060",
@@ -41,9 +45,9 @@ export const COMMUNAUTES = [
   {
     id: "mode",
     label: "Mode",
-    tagline: "Renouveler sa garde-robe, style par style.",
+    tagline: "Renouveler sa garde-robe autrement.",
     description: "Vêtements, chaussures, sacs et accessoires de mode à échanger près de toi.",
-    img: null,
+    img: imgMode,
     accent: "#C07090",
     emoji: "👗",
     keywords: ["mode", "vêtement", "vetement", "habit", "robe", "manteau", "jean", "pantalon", "chaussure", "sac", "accessoire", "vintage", "foulard", "chemise", "pull", "veste"],
@@ -54,7 +58,7 @@ export const COMMUNAUTES = [
     label: "Livres",
     tagline: "Lire, partager, transmettre.",
     description: "Romans, essais, BD, livres jeunesse et revues à échanger près de toi.",
-    img: null,
+    img: imgLivres,
     accent: "#6080C0",
     emoji: "📚",
     keywords: ["livre", "livres", "roman", "bd", "bande dessinée", "manga", "essai", "biographie", "poésie", "jeunesse", "revue", "magazine", "guide", "atlas", "encyclopédie"],
@@ -63,7 +67,7 @@ export const COMMUNAUTES = [
   {
     id: "jeux",
     label: "Jeux",
-    tagline: "Partager, jouer, s'amuser ensemble.",
+    tagline: "Jouer, partager, s'amuser ensemble.",
     description: "Jeux de société, cartes, puzzles et objets ludiques à échanger près de toi.",
     img: imgJeux,
     accent: "#B8A040",
@@ -107,9 +111,9 @@ export const COMMUNAUTES = [
   {
     id: "enfants",
     label: "Enfants",
-    tagline: "Grandir ensemble, partager les jouets.",
+    tagline: "Grandir, jouer, transmettre.",
     description: "Jouets, vêtements enfants, livres jeunesse et équipements bébé à échanger près de toi.",
-    img: null,
+    img: imgEnfants,
     accent: "#E8803A",
     emoji: "🧸",
     keywords: ["enfant", "bébé", "bebe", "jouet", "jouets", "lego", "doudou", "poussette", "siège auto", "vêtement enfant", "école", "cartable", "jeux enfant", "jouet en bois", "peluche"],
