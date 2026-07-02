@@ -57,7 +57,7 @@ export default function CommunautesStrip({ large = false }) {
           Voir tout →
         </Link>
       </div>
-      <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 lg:mx-0 lg:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {COMMUNAUTES.map((c) => (
           <CommunauteCard key={c.id} communaute={c} large={large} />
         ))}

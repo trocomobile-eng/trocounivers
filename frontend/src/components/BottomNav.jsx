@@ -12,7 +12,7 @@ const LINKS_LEFT = [
 ];
 
 const LINKS_RIGHT = [
-  { to: "/messages", label: "Chat",   icon: MessageCircle },
+  { to: "/messages", label: "Messages", icon: MessageCircle },
   { to: "/profile",  label: "Profil", icon: UserRound     },
 ];
 
@@ -114,7 +114,7 @@ export default function BottomNav() {
           <Plus size={24} strokeWidth={2.6} />
         </button>
 
-        <NavItem to="/messages" label="Chat"   icon={MessageCircle} badge={messagesBadge} />
+        <NavItem to="/messages" label="Messages" icon={MessageCircle} badge={messagesBadge} />
         <NavItem to="/profile"  label="Profil" icon={UserRound}     />
       </div>
     </nav>

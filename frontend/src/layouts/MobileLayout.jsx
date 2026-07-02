@@ -9,14 +9,14 @@ export default function MobileLayout({
   return (
     <div
       className={[
-        "min-h-screen bg-[var(--troco-bg)]",
-        withBottomNav ? "pb-[84px]" : "pb-6",
+        "min-h-screen overflow-x-hidden bg-[var(--troco-bg)]",
+        withBottomNav ? "pb-[104px]" : "pb-6",
         className,
       ].join(" ")}
     >
       <main
         className={[
-          "mx-auto w-full max-w-[520px]",
+          "mx-auto w-full max-w-[520px] overflow-x-hidden",
           "px-3 pt-[max(10px,env(safe-area-inset-top))]",
           contentClassName,
         ].join(" ")}

@@ -216,10 +216,10 @@ function SocialProofBlock({ items }) {
       </div>
       <div className="min-w-0">
         <p className="text-[12px] font-bold text-[#17212B]">
-          Troqueurs près de vous
+          Troqueurs actifs près de vous
         </p>
         <p className="text-[10.5px] font-medium text-[#6F7782]">
-          {items.length} objet{items.length > 1 ? "s" : ""} disponibles
+          {items.length} objet{items.length > 1 ? "s" : ""} à échanger
         </p>
       </div>
     </div>
@@ -295,9 +295,9 @@ export default function MobileFeedPage() {
 
       <TrocoPageHeader variant="brand" user={user} className="-mt-1" />
 
-      <section className="mt-1 space-y-2.5">
+      <section className="mt-1 space-y-2">
         {/* Barre de recherche */}
-        <div className="flex h-11 items-center gap-2.5 rounded-full border border-[#E7ECEB] bg-white px-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+        <div className="flex h-10 items-center gap-2.5 rounded-full border border-[#E7ECEB] bg-white px-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
           <Search size={15} strokeWidth={2} className="shrink-0 text-[#6F7782]" />
           <input
             value={localSearch}
@@ -320,7 +320,7 @@ export default function MobileFeedPage() {
         </div>
 
         {/* Catégories */}
-        <div className="-mx-4 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-3 overflow-x-auto px-3 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
         </div>
 
@@ -401,7 +401,7 @@ export default function MobileFeedPage() {
               <p className="text-[10px] font-medium text-[#6F7782]">D'après ta wishlist</p>
             </div>
           </div>
-          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <motion.div
               className="flex gap-3"
               initial="hidden"
@@ -450,7 +450,7 @@ export default function MobileFeedPage() {
               Nouveautés
             </p>
           </div>
-          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <motion.div
               className="flex gap-3"
               initial="hidden"
