@@ -362,7 +362,7 @@ export default function LandingPage() {
             <div className="mx-auto mt-7 flex w-full max-w-[370px] flex-col gap-3 lg:mx-0 lg:max-w-none lg:flex-row">
               <button
                 type="button"
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate("/feed")}
                 className="inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[22px] bg-gradient-to-r from-[#18BFAF] to-[#2ECC8A] px-7 py-3 text-[17px] font-black text-white shadow-[0_16px_38px_rgba(24,191,175,0.30)] ring-1 ring-white/50 transition active:scale-[0.98] lg:w-auto"
               >
                 {t("landing.prototype")}
@@ -454,7 +454,7 @@ export default function LandingPage() {
 
           <button
             type="button"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/feed")}
             className="mt-8 inline-flex min-h-[58px] items-center justify-center gap-2 rounded-[24px] bg-gradient-to-r from-[#22C7B8] to-[#36C982] px-7 py-4 text-[16px] font-black text-white shadow-[0_14px_34px_rgba(45,212,191,0.20)] transition active:scale-[0.98]"
           >
             {t("landing.prototype")}
