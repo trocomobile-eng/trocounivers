@@ -136,7 +136,7 @@ function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false
           alt={title}
           loading="lazy"
           decoding="async"
-          className={`${carouselMode ? "aspect-square" : "aspect-[4/5]"} w-full object-cover transition duration-300 group-active:scale-[0.99]`}
+          className={`${carouselMode ? "aspect-square" : "aspect-[4/3]"} w-full object-cover transition duration-300 group-active:scale-[0.99]`}
         />
 
         {/* Dégradé bas pour lisibilité */}
