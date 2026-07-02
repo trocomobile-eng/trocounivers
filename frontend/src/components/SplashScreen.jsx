@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import TrocoCroc from "../assets/logo/troco-crocodile-premium.png";
 import TrocoWord from "../assets/logo/troco-word.png";
 
 const TOTAL_DURATION = 2200;
@@ -25,11 +24,11 @@ export default function SplashScreen({ onDone }) {
       {/* Halo vert très doux */}
       <div className="pointer-events-none absolute h-[500px] w-[500px] rounded-full bg-emerald-100/60 blur-[100px]" />
 
-      {/* Crocodile */}
+      {/* Icône app — le vrai crocodile */}
       <img
-        src={TrocoCroc}
+        src="/icon-512.png"
         alt="Troco"
-        className="relative z-10 w-[140px] drop-shadow-[0_16px_40px_rgba(22,120,68,0.18)]"
+        className="relative z-10 w-[120px] rounded-[28px] shadow-[0_20px_50px_rgba(22,120,68,0.20)]"
         style={{ animation: "logoIn 700ms cubic-bezier(.16,1,.3,1) both" }}
       />
 
@@ -37,7 +36,7 @@ export default function SplashScreen({ onDone }) {
       <img
         src={TrocoWord}
         alt="Troco"
-        className="relative z-10 mt-5 w-[130px]"
+        className="relative z-10 mt-5 w-[120px]"
         style={{ animation: "logoIn 700ms cubic-bezier(.16,1,.3,1) 120ms both" }}
       />
 
