@@ -223,9 +223,7 @@ function AIVerificationBadge({ badge }) {
 
 // Composant compact pour l'affichage dans les listes d'objets
 export function AIVerificationStatus({ verificationData, compact = false }) {
-  if (!verificationData || !verificationData.verification) {
-    return null;
-  }
+  return null;
 
   const { aiScore } = verificationData.verification;
 
