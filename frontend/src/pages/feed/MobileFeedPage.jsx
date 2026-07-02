@@ -385,13 +385,6 @@ export default function MobileFeedPage() {
         </>
       )}
 
-      {/* Bloc social */}
-      {!isFiltered && viewMode !== "map" && visibleItems.length > 0 && (
-        <div className="mt-3">
-          <SocialProofBlock items={visibleItems} />
-        </div>
-      )}
-
       {/* Pour toi — recommandations wishlist */}
       {!isFiltered && viewMode !== "map" && recommendations.length > 0 && (
         <section className="mt-5">
