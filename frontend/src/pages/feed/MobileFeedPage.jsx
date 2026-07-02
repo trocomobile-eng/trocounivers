@@ -64,13 +64,13 @@ function formatRelativeTime(value) {
     (value ? new Date(value) : null);
   if (!date || Number.isNaN(date.getTime())) return "";
   const diff = Date.now() - date.getTime();
-  const minutes = Math.max(1, Math.floor(diff / 60000));
-  if (minutes < 60) return `il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
-  const days = Math.floor(hours / 24);
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return "aujourd'hui";
   if (days === 1) return "hier";
-  if (days < 7) return `il y a ${days} j`;
+  if (days < 7) return `il y a ${days} jours`;
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return "il y a 1 semaine";
+  if (weeks < 5) return `il y a ${weeks} semaines`;
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
@@ -182,7 +182,7 @@ function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false
             {ownerName}
           </p>
           {relativeTime && (
-            <p className="ml-auto shrink-0 text-[9.5px] font-medium text-[#b0bec5]">
+            <p className="ml-auto shrink-0 text-[10px] font-semibold text-[#94a3b8]">
               {relativeTime}
             </p>
           )}
