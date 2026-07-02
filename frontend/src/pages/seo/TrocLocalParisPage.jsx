@@ -139,7 +139,7 @@ export default function TrocLocalParisPage() {
         <div className="mt-12 text-center">
           <button
             type="button"
-            onClick={() => navigate("/onboarding")}
+            onClick={() => navigate("/signup")}
             className="inline-flex items-center gap-2 rounded-[22px] bg-gradient-to-r from-[#18BFAF] to-[#2ECC8A] px-8 py-4 text-[17px] font-black text-white shadow-[0_16px_38px_rgba(24,191,175,0.28)] transition active:scale-[0.98]"
           >
             Rejoindre la communauté

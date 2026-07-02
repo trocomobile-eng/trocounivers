@@ -11,7 +11,6 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 
 // Pages lazy (chargées à la demande)
-const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const FeedPage = lazy(() => import("./pages/FeedPage"));
 
@@ -137,7 +136,7 @@ export default function App() {
       <Route path="/echanger-sans-argent" element={<EchangerSansArgentPage />} />
       <Route path="/troco-vs-vinted-leboncoin-geev" element={<TrocoVsPage />} />
 
-      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/onboarding" element={<Navigate to="/feed" replace />} />
 
       <Route
         path="/login"

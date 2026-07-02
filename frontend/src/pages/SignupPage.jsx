@@ -12,7 +12,7 @@ function normalizePhone(value) {
 export default function SignupPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = location.state?.redirectTo || "/onboarding";
+  const redirectTo = location.state?.redirectTo || "/feed";
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");

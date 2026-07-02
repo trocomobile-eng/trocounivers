@@ -7,7 +7,6 @@ import { useAuth } from "../../context/AuthContext";
 
 const ALLOWED_WITHOUT_CROCO = new Set([
   "/create-croco",
-  "/onboarding",
   "/login",
   "/signup",
   "/verify-email",
