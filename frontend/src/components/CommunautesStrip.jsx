@@ -1,15 +1,11 @@
 import { Link } from "react-router-dom";
 import { COMMUNAUTES } from "../data/communautes";
 
-function CommunauteCard({ communaute, large }) {
-  const w = large ? 160 : 130;
-  const h = large ? 110 : 90;
-
+function CommunauteCard({ communaute }) {
   return (
     <Link
       to={`/communautes/${communaute.id}`}
-      className="relative shrink-0 overflow-hidden rounded-2xl transition active:scale-[0.97]"
-      style={{ width: w, height: h }}
+      className="relative h-[100px] w-[160px] shrink-0 overflow-hidden rounded-[22px] transition active:scale-[0.97]"
     >
       <img
         src={communaute.img}
@@ -17,30 +13,21 @@ function CommunauteCard({ communaute, large }) {
         className="h-full w-full object-cover"
         draggable="false"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/15 to-transparent" />
+      {/* Overlay dégradé bas → haut pour lisibilité texte */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-      <span
-        className="absolute left-2 top-2 text-[16px] leading-none"
-        style={{ fontSize: large ? 17 : 15 }}
-      >
-        {communaute.emoji}
-      </span>
-
-      <span
-        className="absolute bottom-2 left-0 right-0 text-center font-black leading-none text-white drop-shadow-sm"
-        style={{ fontSize: large ? 13 : 12 }}
-      >
+      <span className="absolute bottom-2.5 left-3 text-[13px] font-black leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
         {communaute.label}
       </span>
     </Link>
   );
 }
 
-export default function CommunautesStrip({ large = false }) {
+export default function CommunautesStrip() {
   return (
     <section>
       <div className="mb-2.5 flex items-center justify-between">
-        <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#0d1b2a]">
+        <p className="text-[12px] font-black text-[#0d1b2a]">
           Communautés
         </p>
         <Link
@@ -50,9 +37,9 @@ export default function CommunautesStrip({ large = false }) {
           Voir tout →
         </Link>
       </div>
-      <div className="-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 lg:mx-0 lg:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {COMMUNAUTES.map((c) => (
-          <CommunauteCard key={c.id} communaute={c} large={large} />
+          <CommunauteCard key={c.id} communaute={c} />
         ))}
       </div>
     </section>

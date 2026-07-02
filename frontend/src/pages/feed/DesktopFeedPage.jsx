@@ -325,7 +325,7 @@ export default function DesktopFeedPage() {
 
         {!search.trim() && activeCategory === "Tout" && (
           <div className="mt-6">
-            <CommunautesStrip large />
+            <CommunautesStrip />
           </div>
         )}
 
