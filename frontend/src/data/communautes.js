@@ -8,6 +8,15 @@ import imgPhoto from "../assets/univers/univ-photo.png";
 import imgSport from "../assets/univers/univ-sport.png";
 import imgEnfants from "../assets/univers/univ-enfants.png";
 
+import iconMusique from "../assets/categories/musique.png";
+import iconDeco from "../assets/categories/deco.png";
+import iconMode from "../assets/categories/vetements.png";
+import iconLivres from "../assets/categories/livres.png";
+import iconJeux from "../assets/categories/jeux.png";
+import iconMaison from "../assets/categories/maison.png";
+import iconSport from "../assets/categories/sport.png";
+import iconLoisirs from "../assets/categories/loisirs.png";
+
 export const COMMUNAUTES = [
   {
     id: "musique",
@@ -18,6 +27,7 @@ export const COMMUNAUTES = [
     img: imgMusique,
     accent: "#4BA8B8",
     emoji: "🎵",
+    icon: iconMusique,
     keywords: ["musique", "instrument", "vinyle", "guitare", "piano", "audio", "basse", "batterie", "casque", "enceinte", "synthé", "pedale", "pédale", "ampli", "trompette", "violon", "clarinette", "flute", "platine"],
     subcats: ["Instruments", "Vinyles", "Audio", "Platines", "Claviers", "Accessoires"],
   },
@@ -29,6 +39,7 @@ export const COMMUNAUTES = [
     img: imgVelo,
     accent: "#4F7B3E",
     emoji: "🚲",
+    icon: iconLoisirs,
     keywords: ["vélo", "velo", "cyclisme", "bicyclette", "roue", "guidon", "selle", "dérailleur", "pneu", "chambre à air", "casque vélo", "sacoches", "fixie", "vtt", "route"],
     subcats: ["Vélos complets", "Pièces", "Accessoires", "Équipement", "Sécurité"],
   },
@@ -40,6 +51,7 @@ export const COMMUNAUTES = [
     img: imgDeco,
     accent: "#C09060",
     emoji: "🖼️",
+    icon: iconDeco,
     keywords: ["deco", "déco", "décoration", "luminaire", "lampe", "coussin", "tapis", "cadre", "vase", "miroir", "poster", "art", "tableau", "bougie"],
     subcats: ["Luminaires", "Textile", "Art & Cadres", "Bougies", "Plantes", "Vintage"],
   },
@@ -51,6 +63,7 @@ export const COMMUNAUTES = [
     img: imgMode,
     accent: "#C07090",
     emoji: "👗",
+    icon: iconMode,
     keywords: ["mode", "vêtement", "vetement", "habit", "robe", "manteau", "jean", "pantalon", "chaussure", "sac", "accessoire", "vintage", "foulard", "chemise", "pull", "veste"],
     subcats: ["Hauts", "Bas", "Chaussures", "Sacs", "Accessoires", "Vintage"],
   },
@@ -62,6 +75,7 @@ export const COMMUNAUTES = [
     img: imgLivres,
     accent: "#6080C0",
     emoji: "📚",
+    icon: iconLivres,
     keywords: ["livre", "livres", "roman", "bd", "bande dessinée", "manga", "essai", "biographie", "poésie", "jeunesse", "revue", "magazine", "guide", "atlas", "encyclopédie"],
     subcats: ["Romans", "BD & Manga", "Essais", "Jeunesse", "Revues", "Pratique"],
   },
@@ -73,6 +87,7 @@ export const COMMUNAUTES = [
     img: imgJeux,
     accent: "#B8A040",
     emoji: "🎲",
+    icon: iconJeux,
     keywords: ["jeux", "jeu", "board game", "puzzle", "carte", "cartes", "échecs", "dés", "catan", "carcassonne", "monopoly", "jeux de société", "jeux vidéo", "manette", "console"],
     subcats: ["Société", "Cartes", "Puzzles", "Jeux vidéo", "Échecs", "Enfants"],
   },
@@ -95,6 +110,7 @@ export const COMMUNAUTES = [
     img: imgDeco,
     accent: "#B07840",
     emoji: "🏠",
+    icon: iconMaison,
     keywords: ["maison", "meuble", "mobilier", "table", "chaise", "canapé", "armoire", "étagère", "vaisselle", "cuisine", "électroménager", "cafetière", "frigo", "micro-onde", "aspirateur"],
     subcats: ["Mobilier", "Cuisine", "Électroménager", "Vaisselle", "Rangement", "Literie"],
   },
@@ -106,6 +122,7 @@ export const COMMUNAUTES = [
     img: imgSport,
     accent: "#4F9F67",
     emoji: "⚽",
+    icon: iconSport,
     keywords: ["sport", "fitness", "outdoor", "randonnée", "tennis", "foot", "yoga", "ski", "musculation", "tapis roulant", "haltère", "raquette", "ballon", "natation", "surf", "escalade"],
     subcats: ["Fitness", "Outdoor", "Ballon", "Raquettes", "Ski & Snow", "Yoga"],
   },

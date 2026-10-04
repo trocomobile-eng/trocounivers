@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, BellOff, ChevronRight, FileText, Lock, LogOut, Mail, MapPin, Shield, UserRound } from "lucide-react";
+import { Bell, BellOff, ChevronRight, FileText, Lock, LogOut, Mail, MapPin, Palette, Shield, UserRound } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -45,6 +46,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { show: showToast } = useToast();
   const { pushStatus, enablePushNotifications } = usePushNotifications(user?.uid);
+  const { theme, setTheme } = useTheme();
   const { status: geoStatus, requesting: geoRequesting, request: requestGeo } = useGeolocation(user?.uid);
   const [enabling, setEnabling] = useState(false);
 
@@ -156,6 +158,31 @@ export default function SettingsPage() {
         />
       </Section>
 
+
+      {/* Apparence */}
+      <Section title="Apparence">
+        <Row
+          icon={Palette}
+          label="Thème vert nature"
+          sublabel="Fond vert doux à la place du blanc"
+          onClick={() => setTheme(theme === "green" ? "default" : "green")}
+          rightEl={
+            <button
+              type="button"
+              onClick={() => setTheme(theme === "green" ? "default" : "green")}
+              className={[
+                "relative h-6 w-11 rounded-full transition-colors duration-200",
+                theme === "green" ? "bg-[#1ABEA3]" : "bg-slate-200",
+              ].join(" ")}
+            >
+              <span className={[
+                "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200",
+                theme === "green" ? "translate-x-5" : "translate-x-0.5",
+              ].join(" ")} />
+            </button>
+          }
+        />
+      </Section>
 
       {/* Légal */}
       <Section title="Informations légales">

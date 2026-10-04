@@ -1,90 +1,87 @@
 import { Link } from "react-router-dom";
 import { COMMUNAUTES } from "../data/communautes";
 
-function FeaturedCard({ communaute }) {
+function CommunauteCard({ communaute }) {
   return (
     <Link
       to={`/communautes/${communaute.id}`}
-      className="relative block h-[170px] w-full overflow-hidden rounded-[22px] transition active:scale-[0.985]"
+      className="group relative shrink-0 overflow-hidden rounded-[20px] transition-transform duration-200 active:scale-[0.97]
+        w-[118px] h-[148px]
+        lg:w-[148px] lg:h-[180px]"
     >
       {/* Photo */}
       <img
         src={communaute.img}
         alt={communaute.label}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         draggable="false"
       />
 
-      {/* Overlay gauche → droite */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/10" />
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
-      {/* Contenu à gauche */}
-      <div className="absolute inset-0 flex flex-col justify-between p-4">
-        {/* Emoji en carré sombre */}
-        <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-black/40 backdrop-blur-sm">
-          <span className="text-[18px] leading-none">{communaute.emoji}</span>
-        </div>
+      {/* Contenu bas */}
+      <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2.5">
+        {/* Icône */}
+        {communaute.icon ? (
+          <img
+            src={communaute.icon}
+            alt=""
+            className="mb-1.5 h-7 w-7 object-contain drop-shadow-sm lg:h-8 lg:w-8"
+            draggable="false"
+          />
+        ) : (
+          <span className="mb-1 block text-[18px] leading-none lg:text-[22px]">
+            {communaute.emoji}
+          </span>
+        )}
 
-        {/* Texte bas */}
-        <div>
-          <p className="text-[20px] font-black leading-tight tracking-[-0.03em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
-            {communaute.label}
-          </p>
-          <p className="mt-0.5 max-w-[200px] text-[12px] font-medium leading-snug text-white/85">
-            {communaute.description}
-          </p>
-          {communaute.members && (
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/18 px-2.5 py-1 backdrop-blur-sm">
-              <span className="text-[11px]">👥</span>
-              <span className="text-[11px] font-bold text-white/90">{communaute.members} membres</span>
-            </div>
-          )}
-        </div>
+        {/* Nom */}
+        <p className="text-[12px] font-black leading-tight text-white drop-shadow-sm lg:text-[13px]">
+          {communaute.label}
+        </p>
+
+        {/* Compteur */}
+        <p className="mt-0.5 text-[10px] font-semibold text-white/75 lg:text-[11px]">
+          {communaute.members} membres
+        </p>
       </div>
-    </Link>
-  );
-}
 
-function SmallCard({ communaute }) {
-  return (
-    <Link
-      to={`/communautes/${communaute.id}`}
-      className="relative h-[90px] w-[100px] shrink-0 overflow-hidden rounded-[18px] transition active:scale-[0.97]"
-    >
-      <img
-        src={communaute.img}
-        alt={communaute.label}
-        className="h-full w-full object-cover"
-        draggable="false"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-      <span className="absolute bottom-2 left-0 right-0 text-center text-[12px] font-black leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]">
-        {communaute.label}
-      </span>
+      {/* Petit badge hover (desktop) */}
+      <div className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-opacity duration-200 opacity-0 group-hover:opacity-100 lg:flex">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 5h6M5 2l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
     </Link>
   );
 }
 
 export default function CommunautesStrip() {
-  const [featured, ...rest] = COMMUNAUTES;
-
   return (
-    <section>
-      <div className="mb-2.5 flex items-center justify-between">
-        <p className="text-[12px] font-black text-[#0d1b2a]">Explorer les communautés</p>
+    <section className="rounded-[24px] bg-gradient-to-br from-[#f0faf7] to-[#f7fdfb] p-4 lg:p-5">
+      {/* Header */}
+      <div className="mb-3 flex items-start justify-between gap-3 lg:mb-4">
+        <div>
+          <p className="text-[15px] font-black leading-snug text-[#0d1b2a] lg:text-[17px]">
+            Explorer les communautés
+          </p>
+          <p className="mt-0.5 text-[11px] font-medium text-[#64748b] lg:text-[12px]">
+            Découvrez, échangez, trouvez des objets qui vous ressemblent.
+          </p>
+        </div>
         <Link
           to="/communautes"
-          className="text-[12px] font-bold text-[#1ABEA3] transition hover:opacity-70"
+          className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-[#1ABEA3] shadow-sm transition hover:bg-[#f0faf7] active:scale-95"
         >
           Voir tout →
         </Link>
       </div>
 
-      <FeaturedCard communaute={featured} />
-
-      <div className="-mx-3 mt-2.5 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {rest.map((c) => (
-          <SmallCard key={c.id} communaute={c} />
+      {/* Cartes */}
+      <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-3">
+        {COMMUNAUTES.map((c) => (
+          <CommunauteCard key={c.id} communaute={c} />
         ))}
       </div>
     </section>

@@ -12,9 +12,12 @@ export interface E2EState {
   camillePassword: string;
   thomasPassword: string;
   lampId: string;
+  lamp2Id: string;
   book1Id: string;
   book2Id: string;
+  book3Id: string;
   exchangeId?: string;
+  extraExchangeId?: string;
 }
 
 export function getTestState(): E2EState {
@@ -27,6 +30,13 @@ export function getTestState(): E2EState {
 export function saveExchangeId(id: string) {
   const state = getTestState();
   state.exchangeId = id;
+  const { writeFileSync } = require("fs");
+  writeFileSync(STATE_FILE, JSON.stringify(state));
+}
+
+export function saveExtraExchangeId(id: string) {
+  const state = getTestState();
+  state.extraExchangeId = id;
   const { writeFileSync } = require("fs");
   writeFileSync(STATE_FILE, JSON.stringify(state));
 }

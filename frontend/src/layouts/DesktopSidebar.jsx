@@ -1,4 +1,5 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 import {
   BookMarked,
   BookOpen,
@@ -26,9 +27,10 @@ const LINKS = [
 
 export default function DesktopSidebar() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col bg-white px-5 pb-6 pt-6 lg:flex">
+    <aside className={["sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col px-5 pb-6 pt-6 lg:flex", theme === "green" ? "bg-[#e8f7ef]" : "bg-white"].join(" ")}>
 
       {/* Logo */}
       <Link to="/feed" className="mb-7 flex items-center pl-1" aria-label="Accueil Troco">

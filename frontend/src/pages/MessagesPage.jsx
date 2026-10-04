@@ -497,6 +497,12 @@ export default function MessagesPage() {
               <p className="mt-2 text-sm leading-relaxed text-slate-500">
                 Les discussions apparaîtront ici quand un échange aura besoin d’être finalisé par message.
               </p>
+              <Link
+                to="/exchanges"
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1ABEA3] px-5 py-2.5 text-[13px] font-black text-white"
+              >
+                Voir mes trocs
+              </Link>
             </div>
           ) : (
             <div className="space-y-3">

@@ -147,7 +147,7 @@ export function ToastProvider({ children }) {
       });
 
       isFirstLoad.value = false;
-    });
+    }, (err) => console.error("Erreur listener exchanges :", err));
 
     return () => unsub();
   }, [user?.uid, show]);
@@ -157,7 +157,7 @@ export function ToastProvider({ children }) {
       {children}
 
       {/* Zone toasts — bas droite desktop, bas mobile */}
-      <div className="fixed bottom-[90px] left-1/2 z-[9999] flex -translate-x-1/2 flex-col gap-2 px-4 lg:bottom-6 lg:left-auto lg:right-6 lg:translate-x-0">
+      <div className="fixed left-1/2 z-[9999] flex -translate-x-1/2 flex-col gap-2 px-4 lg:left-auto lg:right-6 lg:translate-x-0" style={{ bottom: "max(90px, calc(60px + env(safe-area-inset-bottom, 0px)))" }}>
         <AnimatePresence mode="popLayout">
           {toasts.map((t) => (
             <Toast key={t.id} {...t} onDismiss={dismiss} />

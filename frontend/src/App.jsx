@@ -1,4 +1,5 @@
 import { useEffect, useState, Suspense, lazy } from "react";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { Navigate, Route, Routes } from "react-router-dom";
 import "./i18n";
 
@@ -45,7 +46,7 @@ const PostMeetingPage = lazy(() => import("./pages/PostMeetingPage"));
 const PostMeetingProblemPage = lazy(() => import("./pages/PostMeetingProblemPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-const ExchangeShowcasePage = lazy(() => import("./pages/ExchangeShowcasePage"));
+const ExchangeShowcasePage = lazy(() => import("./pages/ExchangeDetailPage"));
 const TestReviewsPage = lazy(() => import("./pages/TestReviewsPage"));
 
 // Pages SEO
@@ -61,8 +62,6 @@ import { usePushNotifications } from "./hooks/usePushNotifications";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
-
-  usePushNotifications(user?.uid);
 
   if (loading) return null;
 
@@ -80,32 +79,35 @@ function PublicRoute({ children }) {
 function GuestRoute({ children }) {
   const { user, loading } = useAuth();
 
-  usePushNotifications(user?.uid);
-
   if (loading) return null;
 
   return <PageLayout>{children}</PageLayout>;
 }
 
-const ADMIN_UID = "wXeLxwSQaqPjvyzsWTjvftYvt972";
+const ADMIN_UID = "BkohLox5U1PGIn9H8ZV8giTsysm1";
+const ADMIN_EMAILS = ["alexandre.ranson@gmail.com"];
 
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) return null;
 
-  return user?.uid === ADMIN_UID ? children : <Navigate to="/feed" replace />;
+  const isAdmin = user && (user.uid === ADMIN_UID || ADMIN_EMAILS.includes(user.email));
+  return isAdmin ? children : <Navigate to="/feed" replace />;
 }
 
 
 
 export default function App() {
+  const { user } = useAuth();
+  usePushNotifications(user?.uid);
+
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setShowSplash(false);
-    }, 1800);
+    }, 4200);
 
     return () => window.clearTimeout(timer);
   }, []);
@@ -115,6 +117,7 @@ export default function App() {
   }
 
   return (
+    <ErrorBoundary>
     <Suspense fallback={<div className="flex h-screen items-center justify-center">
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#18A98E] border-t-transparent"></div>
     </div>}>
@@ -498,5 +501,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
+    </ErrorBoundary>
   );
 }

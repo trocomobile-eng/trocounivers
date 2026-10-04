@@ -193,6 +193,47 @@ export async function seedRealFirebase() {
     publishedAt: now,
   }, thomas.token);
 
+  const book3Id = `e2e-book3-${thomas.uid.slice(0, 8)}`;
+  await writeFirestoreDoc("items", book3Id, {
+    title: "Dune — Frank Herbert",
+    itemType: "Dune — Frank Herbert",
+    category: "livres",
+    condition: "good",
+    description: "Édition collector, légèrement cornée.",
+    ownerId: thomas.uid,
+    ownerName: THOMAS.displayName,
+    ownerEmail: THOMAS.email,
+    locationArea: "Paris 11e",
+    arrondissement: "11e",
+    lat: paris11.lat,
+    lng: paris11.lng,
+    status: "active",
+    isTestData: true,
+    createdAt: now,
+    publishedAt: now,
+  }, thomas.token);
+
+  // Item de secours pour les tests de cas limites (indépendant du flow principal)
+  const lamp2Id = `e2e-lamp2-${camille.uid.slice(0, 8)}`;
+  await writeFirestoreDoc("items", lamp2Id, {
+    title: "Vélo de ville — 7 vitesses",
+    itemType: "Vélo de ville — 7 vitesses",
+    category: "sport",
+    condition: "good",
+    description: "Vélo en bon état, idéal pour la ville.",
+    ownerId: camille.uid,
+    ownerName: CAMILLE.displayName,
+    ownerEmail: CAMILLE.email,
+    locationArea: "Paris 11e",
+    arrondissement: "11e",
+    lat: paris11.lat,
+    lng: paris11.lng,
+    status: "active",
+    isTestData: true,
+    createdAt: now,
+    publishedAt: now,
+  }, camille.token);
+
   return {
     camilleId: camille.uid,
     camilleToken: camille.token,
@@ -203,8 +244,10 @@ export async function seedRealFirebase() {
     camillePassword: CAMILLE.password,
     thomasPassword: THOMAS.password,
     lampId,
+    lamp2Id,
     book1Id,
     book2Id,
+    book3Id,
   };
 }
 
@@ -221,8 +264,18 @@ export async function cleanupRealFirebase(state: {
     try { await deleteFirestoreDoc("exchanges", id, camilleToken); } catch {}
   }
 
+  // Supprime les échanges secondaires
+  for (const id of [state.extraExchangeId as string].filter(Boolean)) {
+    try { await deleteFirestoreDoc("exchanges", id, thomasToken); } catch {}
+  }
+
   // Supprime les items
-  for (const [id, token] of [[lampId, camilleToken], [book1Id, thomasToken], [book2Id, thomasToken]]) {
+  const book3Id = state.book3Id as string;
+  const lamp2Id = state.lamp2Id as string;
+  for (const [id, token] of [
+    [lampId, camilleToken], [lamp2Id, camilleToken],
+    [book1Id, thomasToken], [book2Id, thomasToken], [book3Id, thomasToken],
+  ]) {
     try { await deleteFirestoreDoc("items", id, token as string); } catch {}
   }
 

@@ -13,6 +13,7 @@ import CategoryPills from "../../components/CategoryPills";
 import TrocoPageHeader from "../../components/TrocoPageHeader";
 import useFeedItems, { getItemImage, getItemTitle, getItemLocation, getItemCondition } from "../../hooks/useFeedItems";
 import { useRecommendations } from "../../hooks/useRecommendations";
+import { clean, formatRelativeTime } from "../../utils/format";
 
 const RADIUS_OPTIONS = [
   { label: "500 m", value: 500 },
@@ -22,10 +23,6 @@ const RADIUS_OPTIONS = [
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function clean(value = "") {
-  return String(value || "").trim().replace(/\s+/g, " ");
-}
 
 function getOwnerId(item) {
   return (
@@ -55,23 +52,6 @@ function getOwnerPhoto(item) {
 
 function getInitial(value = "") {
   return String(value || "T").trim().charAt(0).toUpperCase() || "T";
-}
-
-function formatRelativeTime(value) {
-  const date =
-    value?.toDate?.() ||
-    (value?.seconds ? new Date(value.seconds * 1000) : null) ||
-    (value ? new Date(value) : null);
-  if (!date || Number.isNaN(date.getTime())) return "";
-  const diff = Date.now() - date.getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days === 0) return "aujourd'hui";
-  if (days === 1) return "hier";
-  if (days < 7) return `il y a ${days} jours`;
-  const weeks = Math.floor(days / 7);
-  if (weeks === 1) return "il y a 1 semaine";
-  if (weeks < 5) return `il y a ${weeks} semaines`;
-  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
@@ -121,7 +101,8 @@ function DistancePill({ active, children, onClick }) {
 
 function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false }) {
   const title = getItemTitle(item);
-  const location = item.distanceLabel || getItemLocation(item);
+  const rawLocation = getItemLocation(item);
+  const locationBadge = item.distanceLabel || rawLocation || null;
   const ownerName = getOwnerName(item);
   const relativeTime = formatRelativeTime(item.createdAt || item.postedAt || item.updatedAt);
 
@@ -165,9 +146,9 @@ function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false
           </span>
         )}
 
-        {location && (
-          <span className="absolute bottom-2 left-2 flex items-center gap-0.5 rounded-full bg-black/40 px-2 py-0.5 text-[9px] font-semibold text-white backdrop-blur-sm">
-            {item.distanceLabel || location}
+        {locationBadge && (
+          <span className="absolute bottom-2 left-2 flex items-center gap-0.5 rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-bold text-white backdrop-blur-sm">
+            {locationBadge}
           </span>
         )}
       </div>
@@ -246,6 +227,9 @@ export default function MobileFeedPage() {
 
   const MIN_SECTION = 5;
   const recommendations = useRecommendations(visibleItems);
+  const nearbyItems = locationEnabled
+    ? visibleItems.filter((i) => typeof i.distanceMeters === "number" && i.distanceMeters <= 5000)
+    : [];
 
   const [showFilters, setShowFilters] = useState(false);
 
@@ -433,6 +417,43 @@ export default function MobileFeedPage() {
         <div className="mt-5">
           <CommunautesStrip />
         </div>
+      )}
+
+      {/* Près de chez vous */}
+      {!isFiltered && viewMode !== "map" && nearbyItems.length >= 3 && (
+        <section className="mt-5">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[12px] font-black tracking-[-0.01em] text-[#17212B]">
+              Près de chez vous
+            </p>
+          </div>
+          <div className="-mx-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <motion.div
+              className="flex gap-3"
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+            >
+              {nearbyItems.slice(0, 10).map((item) => (
+                <motion.div
+                  key={item.id}
+                  className="w-[128px] shrink-0"
+                  variants={{
+                    hidden: { opacity: 0, x: 12 },
+                    show: { opacity: 1, x: 0, transition: { duration: 0.26, ease: [0.2, 0.8, 0.2, 1] } },
+                  }}
+                >
+                  <MobileItemCard
+                    item={item}
+                    favorite={favoriteItemIds.includes(item.id)}
+                    onToggleFavorite={toggleFavorite}
+                    carouselMode
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
       )}
 
       {/* Carrousel Nouveautés */}

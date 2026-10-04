@@ -395,14 +395,18 @@ export default function ExchangesPage() {
       });
     }
 
-    const qSent     = query(collection(db, "exchanges"), where("senderId",  "==", uid));
-    const qReceived = query(collection(db, "exchanges"), where("receiverId", "==", uid));
+    const qSent        = query(collection(db, "exchanges"), where("senderId",    "==",           uid));
+    const qReceived    = query(collection(db, "exchanges"), where("receiverId",  "==",           uid));
+    const qParticipant = query(collection(db, "exchanges"), where("participants","array-contains",uid));
 
-    let snapSent = null, snapReceived = null, active = true;
+    let snapSent = null, snapReceived = null, snapParticipant = null, active = true;
 
     async function rebuild() {
-      if (!active || snapSent === null || snapReceived === null) return;
-      const list = sortAndDedupe(snapSent.docs, snapReceived.docs);
+      if (!active || snapSent === null || snapReceived === null || snapParticipant === null) return;
+      const list = sortAndDedupe(
+        [...snapSent.docs, ...snapParticipant.docs],
+        snapReceived.docs,
+      );
       const loadedItems = {};
       await Promise.all(
         list.map(async (exchange) => {
@@ -416,10 +420,11 @@ export default function ExchangesPage() {
       setLoading(false);
     }
 
-    const unsubSent     = onSnapshot(qSent,     (snap) => { snapSent = snap;     rebuild(); }, (err) => { console.error(err); setLoading(false); });
-    const unsubReceived = onSnapshot(qReceived,  (snap) => { snapReceived = snap; rebuild(); }, (err) => { console.error(err); setLoading(false); });
+    const unsubSent        = onSnapshot(qSent,        (snap) => { snapSent = snap;        rebuild(); }, (err) => { console.error(err); setLoading(false); });
+    const unsubReceived    = onSnapshot(qReceived,    (snap) => { snapReceived = snap;    rebuild(); }, (err) => { console.error(err); setLoading(false); });
+    const unsubParticipant = onSnapshot(qParticipant, (snap) => { snapParticipant = snap; rebuild(); }, (err) => { snapParticipant = { docs: [] }; rebuild(); });
 
-    return () => { active = false; unsubSent(); unsubReceived(); };
+    return () => { active = false; unsubSent(); unsubReceived(); unsubParticipant(); };
   }, [authLoading, user?.uid, navigate]);
 
   // Catégories

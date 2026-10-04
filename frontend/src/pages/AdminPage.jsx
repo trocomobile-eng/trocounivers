@@ -1,441 +1,779 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
   collection,
   doc,
+  getCountFromServer,
   getDoc,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
+  where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 
-const ADMIN_UID = "wXeLxwSQaqPjvyzsWTjvftYvt972";
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
-const SURVEY_LABELS = {
-  after_add_item: {
-    ease: { 1: "😤 Difficile", 2: "😕 Compliqué", 3: "😐 Correct", 4: "😊 Facile", 5: "🤩 Très facile" },
-    blocker: {
-      photos: "📸 Photos",
-      title: "✏️ Titre",
-      category: "🏷️ Catégorie",
-      condition: "⭐ État",
-      nothing: "✅ Rien",
-    },
-  },
-};
+const ADMIN_EMAILS = ["alexandre.ranson@gmail.com"];
+const ADMIN_UID = "BkohLox5U1PGIn9H8ZV8giTsysm1";
 
-const ANSWER_LABELS = {
-  overall: {
-    excellent: "🤩 Excellente",
-    good: "😊 Très bien",
-    ok: "😐 Correct",
-    bad: "😕 Difficile",
-  },
-  other_person: {
-    punctual: "⏰ Ponctuelle",
-    friendly: "🤝 Sympa",
-    trustworthy: "🛡️ De confiance",
-    late: "⌛ En retard",
-  },
-  item_match: {
-    perfect: "✅ Exactement",
-    mostly: "👍 À peu près",
-    different: "⚠️ Différent",
-  },
-  would_do_again: {
-    yes: "🔁 Absolument",
-    maybe: "🤔 Peut-être",
-    no: "❌ Non",
-  },
-};
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(value) {
-  const date = value?.toDate?.() || (value ? new Date(value) : null);
-  if (!date || Number.isNaN(date.getTime())) return "—";
-
-  return date.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function fmt(n) {
+  if (!n && n !== 0) return "—";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
 }
 
-function label(category, value) {
-  return ANSWER_LABELS[category]?.[value] || value || "—";
+function fmtDate(value) {
+  const d = value?.toDate?.() || (value ? new Date(value) : null);
+  if (!d || isNaN(d)) return "—";
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function StatCard({ title, value, sub, color = "emerald" }) {
-  const colors = {
-    emerald: "bg-emerald-50 text-emerald-700",
-    sky: "bg-sky-50 text-sky-700",
-    amber: "bg-amber-50 text-amber-700",
-    red: "bg-red-50 text-red-700",
-    slate: "bg-slate-50 text-slate-600",
-  };
+function fmtDateTime(value) {
+  const d = value?.toDate?.() || (value ? new Date(value) : null);
+  if (!d || isNaN(d)) return "—";
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
 
+const safe = (p) => p.catch(() => null);
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+
+const BG = "#0d1117";
+const SURFACE = "rgba(255,255,255,0.04)";
+const BORDER = "rgba(255,255,255,0.08)";
+const ACCENT = "#10b981";
+const TEXT = "#fff";
+const MUTED = "rgba(255,255,255,0.4)";
+const MUTED2 = "rgba(255,255,255,0.65)";
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function BigStat({ value, label, sub, color = ACCENT }) {
   return (
-    <div className={`rounded-[20px] p-4 ${colors[color]}`}>
-      <p className="text-[11px] font-black uppercase tracking-[0.16em] opacity-70">
-        {title}
-      </p>
-      <p className="mt-1 text-[32px] font-black leading-none">{value}</p>
-      {sub && <p className="mt-1 text-[12px] font-medium opacity-70">{sub}</p>}
+    <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: "24px 20px", display: "flex", flexDirection: "column", gap: 6 }}>
+      <span style={{ fontSize: 38, fontWeight: 700, color, lineHeight: 1 }}>{value}</span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: MUTED2 }}>{label}</span>
+      {sub && <span style={{ fontSize: 12, color: MUTED }}>{sub}</span>}
     </div>
   );
 }
+
+function SectionTitle({ children }) {
+  return (
+    <h2 style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: MUTED, margin: "32px 0 12px" }}>
+      {children}
+    </h2>
+  );
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    pending:         { label: "En attente",    color: "#ffd166" },
+    accepted:        { label: "Accepté",       color: "#10b981" },
+    declined:        { label: "Refusé",        color: "#fca5a5" },
+    cancelled:       { label: "Annulé",        color: "#94a3b8" },
+    completed:       { label: "Terminé",       color: "#10b981" },
+    scheduling_time: { label: "Planning",      color: "#7dd3fc" },
+    chat_open:       { label: "Chat ouvert",   color: "#c4b5fd" },
+    available:       { label: "Disponible",    color: "#10b981" },
+    exchanged:       { label: "Échangé",       color: "#7dd3fc" },
+  };
+  const { label, color } = map[status] || { label: status || "—", color: "#94a3b8" };
+  return (
+    <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: `${color}18`, color, border: `1px solid ${color}44` }}>
+      {label}
+    </span>
+  );
+}
+
+function TabBtn({ id, active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(id)}
+      style={{
+        padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
+        background: active ? "rgba(16,185,129,0.12)" : "transparent",
+        color: active ? ACCENT : MUTED2,
+        border: active ? `1px solid rgba(16,185,129,0.3)` : "1px solid transparent",
+        transition: "all 0.15s",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Table({ cols, rows, onRowClick }) {
+  if (!rows.length) {
+    return (
+      <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "32px", textAlign: "center", color: MUTED, fontSize: 14 }}>
+        Aucune donnée
+      </div>
+    );
+  }
+  return (
+    <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr style={{ borderBottom: `1px solid ${BORDER}` }}>
+              {cols.map((c) => (
+                <th key={c.key} style={{ padding: "10px 16px", textAlign: "left", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: MUTED, whiteSpace: "nowrap" }}>
+                  {c.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr
+                key={row.id || i}
+                onClick={() => onRowClick?.(row)}
+                style={{ borderBottom: i < rows.length - 1 ? `1px solid rgba(255,255,255,0.04)` : "none", cursor: onRowClick ? "pointer" : "default", transition: "background 0.1s" }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                {cols.map((c) => (
+                  <td key={c.key} style={{ padding: "12px 16px", color: c.muted ? MUTED2 : TEXT, whiteSpace: c.nowrap ? "nowrap" : "normal" }}>
+                    {row[c.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tab: Overview ────────────────────────────────────────────────────────────
+
+function TabOverview({ counts, recentExchanges, recentItems, problems }) {
+  return (
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+        <BigStat value={fmt(counts.users)} label="Membres" sub="total inscrits" color={ACCENT} />
+        <BigStat value={fmt(counts.items)} label="Objets" sub="mis en troc" color="#7dd3fc" />
+        <BigStat value={fmt(counts.exchanges)} label="Échanges" sub="au total" color="#ffd166" />
+        <BigStat value={fmt(counts.feedbacks)} label="Feedbacks" sub="post-meeting" color="#c4b5fd" />
+        <BigStat value={fmt(counts.problems)} label="Signalements" sub="rencontres problématiques" color={counts.problems > 0 ? "#fca5a5" : "#94a3b8"} />
+      </div>
+
+      {problems.length > 0 && (
+        <>
+          <SectionTitle>🚨 Signalements récents</SectionTitle>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {problems.slice(0, 5).map((ex) => (
+              <a key={ex.id} href={`/exchanges/${ex.id}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "rgba(252,165,165,0.06)", border: "1px solid rgba(252,165,165,0.15)", borderRadius: 12, textDecoration: "none" }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#fca5a5", flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{ex.meetingProblem || "Problème signalé"}</div>
+                  <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{ex.senderName || "—"} · {fmtDateTime(ex.updatedAt || ex.createdAt)}</div>
+                </div>
+                <span style={{ fontSize: 12, color: "#fca5a5" }}>Voir →</span>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+
+      <SectionTitle>🤝 Échanges récents</SectionTitle>
+      <Table
+        cols={[
+          { key: "date", label: "Date", muted: true, nowrap: true },
+          { key: "senderName", label: "De" },
+          { key: "receiverName", label: "À" },
+          { key: "status", label: "Statut" },
+          { key: "link", label: "" },
+        ]}
+        rows={recentExchanges.map((ex) => ({
+          ...ex,
+          date: fmtDateTime(ex.createdAt),
+          status: <StatusBadge status={ex.status} />,
+          link: <a href={`/exchanges/${ex.id}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>,
+        }))}
+      />
+
+      <SectionTitle>📦 Objets récents</SectionTitle>
+      <Table
+        cols={[
+          { key: "date", label: "Date", muted: true, nowrap: true },
+          { key: "title", label: "Titre" },
+          { key: "category", label: "Catégorie", muted: true },
+          { key: "ownerName", label: "Propriétaire" },
+          { key: "status", label: "Statut" },
+          { key: "link", label: "" },
+        ]}
+        rows={recentItems.map((it) => ({
+          ...it,
+          date: fmtDate(it.createdAt),
+          status: <StatusBadge status={it.status || "available"} />,
+          link: <a href={`/items/${it.id}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>,
+        }))}
+      />
+    </>
+  );
+}
+
+// ─── Tab: Users ───────────────────────────────────────────────────────────────
+
+function TabUsers({ users }) {
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return users.filter((u) => !q || (u.displayName || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q));
+  }, [users, search]);
+
+  return (
+    <>
+      <input
+        type="search"
+        placeholder="Rechercher un membre…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ width: "100%", padding: "10px 14px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, color: TEXT, fontSize: 14, outline: "none", marginBottom: 16, boxSizing: "border-box" }}
+      />
+      <Table
+        cols={[
+          { key: "avatar", label: "" },
+          { key: "displayName", label: "Nom" },
+          { key: "email", label: "Email", muted: true },
+          { key: "date", label: "Inscrit le", muted: true, nowrap: true },
+          { key: "link", label: "" },
+        ]}
+        rows={filtered.map((u) => ({
+          ...u,
+          avatar: u.avatarUrl || u.photoURL
+            ? <img src={u.avatarUrl || u.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+            : <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👤</div>,
+          displayName: u.displayName || u.name || <span style={{ color: MUTED }}>Sans nom</span>,
+          date: fmtDate(u.createdAt),
+          link: <a href={`/users/${u.id}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Profil →</a>,
+        }))}
+      />
+    </>
+  );
+}
+
+// ─── Tab: Items ───────────────────────────────────────────────────────────────
+
+function TabItems({ items }) {
+  const [filter, setFilter] = useState("all");
+  const filtered = useMemo(() => {
+    if (filter === "all") return items;
+    if (filter === "available") return items.filter((i) => (i.status || "available") === "available");
+    if (filter === "exchanged") return items.filter((i) => i.status === "exchanged");
+    return items;
+  }, [items, filter]);
+
+  return (
+    <>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {[
+          { id: "all", label: `Tous (${items.length})` },
+          { id: "available", label: `Disponibles` },
+          { id: "exchanged", label: `Échangés` },
+        ].map((f) => (
+          <button
+            key={f.id} type="button" onClick={() => setFilter(f.id)}
+            style={{ padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", background: filter === f.id ? "rgba(16,185,129,0.15)" : SURFACE, color: filter === f.id ? ACCENT : MUTED2, border: filter === f.id ? `1px solid rgba(16,185,129,0.3)` : `1px solid ${BORDER}` }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+      <Table
+        cols={[
+          { key: "img", label: "" },
+          { key: "title", label: "Titre" },
+          { key: "category", label: "Catégorie", muted: true },
+          { key: "ownerName", label: "Propriétaire" },
+          { key: "area", label: "Zone", muted: true },
+          { key: "date", label: "Date", muted: true, nowrap: true },
+          { key: "status", label: "Statut" },
+          { key: "link", label: "" },
+        ]}
+        rows={filtered.map((it) => ({
+          ...it,
+          img: it.imageUrl
+            ? <img src={it.imageUrl} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }} />
+            : <div style={{ width: 40, height: 40, borderRadius: 8, background: SURFACE, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>📦</div>,
+          date: fmtDate(it.createdAt),
+          status: <StatusBadge status={it.status || "available"} />,
+          link: <a href={`/items/${it.id}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>,
+        }))}
+      />
+    </>
+  );
+}
+
+// ─── Tab: Exchanges ───────────────────────────────────────────────────────────
+
+function TabExchanges({ exchanges }) {
+  const [filter, setFilter] = useState("all");
+  const filtered = useMemo(() => {
+    if (filter === "all") return exchanges;
+    if (filter === "active") return exchanges.filter((e) => ["pending", "accepted", "scheduling_time", "chat_open"].includes(e.status));
+    if (filter === "completed") return exchanges.filter((e) => e.status === "completed");
+    if (filter === "problems") return exchanges.filter((e) => e.meetingProblem);
+    return exchanges;
+  }, [exchanges, filter]);
+
+  const counts = useMemo(() => ({
+    active: exchanges.filter((e) => ["pending", "accepted", "scheduling_time", "chat_open"].includes(e.status)).length,
+    completed: exchanges.filter((e) => e.status === "completed").length,
+    problems: exchanges.filter((e) => e.meetingProblem).length,
+  }), [exchanges]);
+
+  return (
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 20 }}>
+        <BigStat value={exchanges.length} label="Total échanges" color="#ffd166" />
+        <BigStat value={counts.active} label="En cours" color={ACCENT} />
+        <BigStat value={counts.completed} label="Terminés" color="#7dd3fc" />
+        <BigStat value={counts.problems} label="Problèmes" color={counts.problems > 0 ? "#fca5a5" : "#94a3b8"} />
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {[
+          { id: "all", label: `Tous (${exchanges.length})` },
+          { id: "active", label: `En cours (${counts.active})` },
+          { id: "completed", label: `Terminés (${counts.completed})` },
+          { id: "problems", label: `Problèmes (${counts.problems})` },
+        ].map((f) => (
+          <button
+            key={f.id} type="button" onClick={() => setFilter(f.id)}
+            style={{ padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", background: filter === f.id ? "rgba(16,185,129,0.15)" : SURFACE, color: filter === f.id ? ACCENT : MUTED2, border: filter === f.id ? `1px solid rgba(16,185,129,0.3)` : `1px solid ${BORDER}` }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <Table
+        cols={[
+          { key: "date", label: "Date", muted: true, nowrap: true },
+          { key: "senderName", label: "Initiateur" },
+          { key: "receiverName", label: "Destinataire" },
+          { key: "status", label: "Statut" },
+          { key: "problem", label: "Problème" },
+          { key: "link", label: "" },
+        ]}
+        rows={filtered.map((ex) => ({
+          ...ex,
+          date: fmtDateTime(ex.createdAt),
+          status: <StatusBadge status={ex.status} />,
+          problem: ex.meetingProblem
+            ? <span style={{ fontSize: 11, color: "#fca5a5" }}>⚠️ {ex.meetingProblem}</span>
+            : <span style={{ color: MUTED }}>—</span>,
+          link: <a href={`/exchanges/${ex.id}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>,
+        }))}
+      />
+    </>
+  );
+}
+
+// ─── Tab: Feedbacks ───────────────────────────────────────────────────────────
+
+const ANSWER_LABELS = {
+  overall: { excellent: "🤩 Excellente", good: "😊 Très bien", ok: "😐 Correct", bad: "😕 Difficile" },
+  item_match: { perfect: "✅ Exactement", mostly: "👍 À peu près", different: "⚠️ Différent" },
+  would_do_again: { yes: "🔁 Absolument", maybe: "🤔 Peut-être", no: "❌ Non" },
+};
+const EASE_LABELS = { 1: "😤 Difficile", 2: "😕 Compliqué", 3: "😐 Correct", 4: "😊 Facile", 5: "🤩 Très facile" };
+
+function lbl(cat, val) { return ANSWER_LABELS[cat]?.[val] || val || "—"; }
+
+function TabFeedbacks({ feedbacks }) {
+  const [subTab, setSubTab] = useState("post_meeting");
+  const [filter, setFilter] = useState("all");
+
+  const postMeeting = useMemo(() => feedbacks.filter((f) => !f.surveyId || f.surveyId === "post_meeting"), [feedbacks]);
+  const addItem = useMemo(() => feedbacks.filter((f) => f.surveyId === "after_add_item"), [feedbacks]);
+  const base = subTab === "add_item" ? addItem : postMeeting;
+
+  const filtered = useMemo(() => base.filter((fb) => {
+    if (filter === "positive") return fb.answers?.overall === "excellent" || fb.answers?.overall === "good";
+    if (filter === "negative") return fb.answers?.overall === "bad" || fb.answers?.overall === "ok";
+    if (filter === "different") return fb.answers?.item_match === "different";
+    if (filter === "again_no") return fb.answers?.would_do_again === "no";
+    return true;
+  }), [base, filter]);
+
+  const stats = useMemo(() => {
+    const total = postMeeting.length;
+    const positive = postMeeting.filter((f) => ["excellent", "good"].includes(f.answers?.overall)).length;
+    const again = postMeeting.filter((f) => f.answers?.would_do_again === "yes").length;
+    const different = postMeeting.filter((f) => f.answers?.item_match === "different").length;
+    const bad = postMeeting.filter((f) => f.answers?.overall === "bad").length;
+    return { total, positive, again, different, bad, posRate: total ? Math.round((positive / total) * 100) : 0, againRate: total ? Math.round((again / total) * 100) : 0 };
+  }, [postMeeting]);
+
+  return (
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 20 }}>
+        <BigStat value={stats.total} label="Total feedbacks" color="#94a3b8" />
+        <BigStat value={`${stats.posRate}%`} label="Satisfaction" sub={`${stats.positive} positifs`} color={ACCENT} />
+        <BigStat value={`${stats.againRate}%`} label="Referaient" color="#7dd3fc" />
+        <BigStat value={stats.different} label="Objet différent" color="#ffd166" />
+        <BigStat value={stats.bad} label="Difficile" color={stats.bad > 0 ? "#fca5a5" : "#94a3b8"} />
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        {[
+          { id: "post_meeting", label: `🤝 Post-meeting (${postMeeting.length})` },
+          { id: "add_item", label: `📦 Ajout objet (${addItem.length})` },
+        ].map((t) => (
+          <button key={t.id} type="button" onClick={() => { setSubTab(t.id); setFilter("all"); }}
+            style={{ padding: "7px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: subTab === t.id ? TEXT : SURFACE, color: subTab === t.id ? BG : MUTED2, border: "none" }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {[
+          { id: "all", label: `Tous (${base.length})` },
+          { id: "positive", label: "😊 Positifs" },
+          { id: "negative", label: "😕 Négatifs" },
+          { id: "different", label: "⚠️ Objet différent" },
+          { id: "again_no", label: "❌ Ne referait pas" },
+        ].map((f) => (
+          <button key={f.id} type="button" onClick={() => setFilter(f.id)}
+            style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: "pointer", background: filter === f.id ? "rgba(255,255,255,0.1)" : SURFACE, color: filter === f.id ? TEXT : MUTED2, border: filter === f.id ? `1px solid rgba(255,255,255,0.2)` : `1px solid ${BORDER}` }}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === "add_item" ? (
+        <Table
+          cols={[
+            { key: "date", label: "Date", muted: true, nowrap: true },
+            { key: "userName", label: "Utilisateur" },
+            { key: "ease", label: "Facilité" },
+            { key: "item", label: "Objet" },
+          ]}
+          rows={filtered.map((fb) => ({
+            ...fb,
+            date: fmtDateTime(fb.createdAt),
+            ease: EASE_LABELS[fb.answers?.ease] || fb.answers?.ease || "—",
+            item: fb.metadata?.itemId
+              ? <a href={`/items/${fb.metadata.itemId}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>
+              : <span style={{ color: MUTED }}>—</span>,
+          }))}
+        />
+      ) : (
+        <Table
+          cols={[
+            { key: "date", label: "Date", muted: true, nowrap: true },
+            { key: "userName", label: "Auteur" },
+            { key: "otherName", label: "Sur", muted: true },
+            { key: "overall", label: "Rencontre" },
+            { key: "itemMatch", label: "Objet" },
+            { key: "again", label: "Referait" },
+            { key: "link", label: "" },
+          ]}
+          rows={filtered.map((fb) => ({
+            ...fb,
+            date: fmtDateTime(fb.createdAt),
+            overall: lbl("overall", fb.answers?.overall),
+            itemMatch: lbl("item_match", fb.answers?.item_match),
+            again: lbl("would_do_again", fb.answers?.would_do_again),
+            link: fb.exchangeId
+              ? <a href={`/exchanges/${fb.exchangeId}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>
+              : <span style={{ color: MUTED }}>—</span>,
+          }))}
+        />
+      )}
+
+      <p style={{ marginTop: 12, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>
+        {filtered.length} feedback{filtered.length > 1 ? "s" : ""} affiché{filtered.length > 1 ? "s" : ""}
+      </p>
+    </>
+  );
+}
+
+// ─── Tab: Signalements ────────────────────────────────────────────────────────
+
+function TabReports({ problems, feedbackFlags }) {
+  return (
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 20 }}>
+        <BigStat value={problems.length} label="Rencontres problématiques" color="#fca5a5" />
+        <BigStat value={feedbackFlags.length} label="Feedbacks avec flags" color="#ffd166" />
+      </div>
+
+      {problems.length > 0 && (
+        <>
+          <SectionTitle>⚠️ Rencontres avec problèmes</SectionTitle>
+          <Table
+            cols={[
+              { key: "date", label: "Date", muted: true, nowrap: true },
+              { key: "senderName", label: "Signalant" },
+              { key: "problem", label: "Problème" },
+              { key: "action", label: "Action" },
+              { key: "status", label: "Statut" },
+              { key: "link", label: "" },
+            ]}
+            rows={problems.map((ex) => ({
+              ...ex,
+              date: fmtDateTime(ex.updatedAt || ex.createdAt),
+              problem: <span style={{ color: "#fca5a5" }}>{ex.meetingProblem}</span>,
+              action: ex.meetingProblemAction || "—",
+              status: <StatusBadge status={ex.status} />,
+              link: <a href={`/exchanges/${ex.id}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>,
+            }))}
+          />
+        </>
+      )}
+
+      {feedbackFlags.length > 0 && (
+        <>
+          <SectionTitle>🚩 Feedbacks flagués</SectionTitle>
+          <Table
+            cols={[
+              { key: "date", label: "Date", muted: true, nowrap: true },
+              { key: "userName", label: "Auteur" },
+              { key: "flags", label: "Flags" },
+              { key: "link", label: "" },
+            ]}
+            rows={feedbackFlags.map((fb) => ({
+              ...fb,
+              date: fmtDateTime(fb.createdAt),
+              flags: (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {Object.entries(fb.flags || {}).filter(([, v]) => v).map(([k]) => (
+                    <span key={k} style={{ fontSize: 10, padding: "2px 8px", background: "rgba(252,165,165,0.12)", color: "#fca5a5", border: "1px solid rgba(252,165,165,0.2)", borderRadius: 20 }}>
+                      {k.replace(/_/g, " ")}
+                    </span>
+                  ))}
+                </div>
+              ),
+              link: fb.exchangeId
+                ? <a href={`/exchanges/${fb.exchangeId}`} style={{ color: ACCENT, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>Voir →</a>
+                : <span style={{ color: MUTED }}>—</span>,
+            }))}
+          />
+        </>
+      )}
+
+      {problems.length === 0 && feedbackFlags.length === 0 && (
+        <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, textAlign: "center", color: MUTED }}>
+          Aucun signalement. Tout va bien ! 🎉
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+const TABS = [
+  { id: "overview",   label: "📊 Vue d'ensemble" },
+  { id: "users",      label: "👥 Membres" },
+  { id: "items",      label: "📦 Objets" },
+  { id: "exchanges",  label: "🤝 Échanges" },
+  { id: "feedbacks",  label: "💬 Feedbacks" },
+  { id: "reports",    label: "🚨 Signalements" },
+];
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [feedbacks, setFeedbacks] = useState([]);
+  const isAdmin = !authLoading && user && (ADMIN_EMAILS.includes(user.email) || user.uid === ADMIN_UID);
+
+  const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
-  const [tab, setTab] = useState("post_meeting");
 
+  const [counts, setCounts] = useState({ users: 0, items: 0, exchanges: 0, feedbacks: 0, problems: 0 });
+  const [users, setUsers] = useState([]);
+  const [items, setItems] = useState([]);
+  const [exchanges, setExchanges] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [recentExchanges, setRecentExchanges] = useState([]);
+  const [recentItems, setRecentItems] = useState([]);
+
+  // Load all data once authenticated
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !isAdmin) return;
 
-    if (!user?.uid) {
-      navigate("/login", { replace: true });
-      return;
+    let unsubFeedback = () => {};
+
+    async function loadData() {
+      setLoading(true);
+
+      // Parallel fetches
+      const [
+        usersCountSnap,
+        itemsCountSnap,
+        exchangesCountSnap,
+        feedbackCountSnap,
+        usersSnap,
+        itemsSnap,
+        exchangesSnap,
+        recentExchangesSnap,
+        recentItemsSnap,
+      ] = await Promise.all([
+        safe(getCountFromServer(collection(db, "users"))),
+        safe(getCountFromServer(collection(db, "items"))),
+        safe(getCountFromServer(collection(db, "exchanges"))),
+        safe(getCountFromServer(collection(db, "feedback"))),
+        safe(getDocs(query(collection(db, "users"), orderBy("createdAt", "desc"), limit(100)))),
+        safe(getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(100)))),
+        safe(getDocs(query(collection(db, "exchanges"), orderBy("createdAt", "desc"), limit(200)))),
+        safe(getDocs(query(collection(db, "exchanges"), orderBy("createdAt", "desc"), limit(10)))),
+        safe(getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(10)))),
+      ]);
+
+      const allExchanges = (exchangesSnap?.docs ?? []).map((d) => ({ id: d.id, ...d.data() }));
+      const allUsers = (usersSnap?.docs ?? []).map((d) => ({ id: d.id, ...d.data() }));
+      const allItems = (itemsSnap?.docs ?? []).map((d) => ({ id: d.id, ...d.data() }));
+
+      // Build user lookup for name enrichment
+      const userMap = {};
+      allUsers.forEach((u) => { userMap[u.id] = u.displayName || u.name || u.email || u.id.slice(0, 8); });
+
+      // Enrich exchanges with names
+      const enrichedExchanges = allExchanges.map((ex) => ({
+        ...ex,
+        senderName: userMap[ex.senderId || ex.proposerId] || (ex.senderId || "")?.slice(0, 8) || "—",
+        receiverName: userMap[ex.receiverId] || (ex.receiverId || "")?.slice(0, 8) || "—",
+      }));
+
+      // Enrich items with owner name
+      const enrichedItems = allItems.map((it) => ({
+        ...it,
+        ownerName: userMap[it.ownerId] || it.ownerName || it.ownerEmail || "—",
+      }));
+
+      const problems = enrichedExchanges.filter((ex) => ex.meetingProblem);
+
+      setCounts({
+        users: usersCountSnap?.data().count ?? 0,
+        items: itemsCountSnap?.data().count ?? 0,
+        exchanges: exchangesCountSnap?.data().count ?? 0,
+        feedbacks: feedbackCountSnap?.data().count ?? 0,
+        problems: problems.length,
+      });
+      setUsers(allUsers);
+      setItems(enrichedItems);
+      setExchanges(enrichedExchanges);
+      setRecentExchanges(
+        ((recentExchangesSnap?.docs ?? []).map((d) => ({ id: d.id, ...d.data() }))).map((ex) => ({
+          ...ex,
+          senderName: userMap[ex.senderId || ex.proposerId] || (ex.senderId || "")?.slice(0, 8) || "—",
+          receiverName: userMap[ex.receiverId] || (ex.receiverId || "")?.slice(0, 8) || "—",
+        }))
+      );
+      setRecentItems(
+        ((recentItemsSnap?.docs ?? []).map((d) => ({ id: d.id, ...d.data() }))).map((it) => ({
+          ...it,
+          ownerName: userMap[it.ownerId] || it.ownerName || "—",
+        }))
+      );
+
+      setLoading(false);
     }
 
-    if (user.uid !== ADMIN_UID) {
-      navigate("/feed", { replace: true });
-      return;
-    }
+    loadData();
 
-    setLoading(true);
-
-    const q = query(collection(db, "feedback"), orderBy("createdAt", "desc"));
-
-    const unsubscribe = onSnapshot(
-      q,
-      async (snap) => {
-        try {
-          const raw = snap.docs.map((d) => ({
-            id: d.id,
-            ...d.data(),
-          }));
-
-          const enriched = await Promise.all(
-            raw.map(async (fb) => {
-              let userName = fb.userId?.slice(0, 8) || "—";
-              let otherName = fb.otherUserId?.slice(0, 8) || "—";
-
-              try {
-                if (fb.userId) {
-                  const userSnap = await getDoc(doc(db, "users", fb.userId));
-                  if (userSnap.exists()) {
-                    const data = userSnap.data();
-                    userName =
-                      data?.displayName ||
-                      data?.name ||
-                      data?.email ||
-                      userName;
-                  }
-                }
-
-                if (fb.otherUserId) {
-                  const otherSnap = await getDoc(doc(db, "users", fb.otherUserId));
-                  if (otherSnap.exists()) {
-                    const data = otherSnap.data();
-                    otherName =
-                      data?.displayName ||
-                      data?.name ||
-                      data?.email ||
-                      otherName;
-                  }
-                }
-              } catch (error) {
-                console.error("Erreur lecture utilisateur feedback :", error);
-              }
-
-              return {
-                ...fb,
-                userName,
-                otherName,
-              };
-            })
-          );
-
-          setFeedbacks(enriched);
-        } catch (error) {
-          console.error("Erreur traitement feedbacks :", error);
-        } finally {
-          setLoading(false);
-        }
-      },
-      (error) => {
-        console.error("Erreur écoute feedbacks :", error);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [authLoading, user?.uid, navigate]);
-
-  const postMeetingFeedbacks = useMemo(() =>
-    feedbacks.filter((fb) => !fb.surveyId || fb.surveyId === "post_meeting"),
-    [feedbacks]
-  );
-
-  const addItemFeedbacks = useMemo(() =>
-    feedbacks.filter((fb) => fb.surveyId === "after_add_item"),
-    [feedbacks]
-  );
-
-  const filtered = useMemo(() => {
-    const base = tab === "add_item" ? addItemFeedbacks : postMeetingFeedbacks;
-    return base.filter((fb) => {
-      if (filter === "positive") {
-        return fb.answers?.overall === "excellent" || fb.answers?.overall === "good";
-      }
-
-      if (filter === "negative") {
-        return fb.answers?.overall === "bad" || fb.answers?.overall === "ok";
-      }
-
-      if (filter === "again_no") {
-        return fb.answers?.would_do_again === "no";
-      }
-
-      if (filter === "different") {
-        return fb.answers?.item_match === "different";
-      }
-
-      return true;
+    // Real-time feedbacks with user enrichment
+    const feedbackQ = query(collection(db, "feedback"), orderBy("createdAt", "desc"));
+    unsubFeedback = onSnapshot(feedbackQ, async (snap) => {
+      const raw = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const enriched = await Promise.all(
+        raw.map(async (fb) => {
+          let userName = (fb.userId || "").slice(0, 8) || "—";
+          let otherName = (fb.otherUserId || "").slice(0, 8) || "—";
+          try {
+            if (fb.userId) {
+              const s = await getDoc(doc(db, "users", fb.userId));
+              if (s.exists()) userName = s.data()?.displayName || s.data()?.name || s.data()?.email || userName;
+            }
+            if (fb.otherUserId) {
+              const s = await getDoc(doc(db, "users", fb.otherUserId));
+              if (s.exists()) otherName = s.data()?.displayName || s.data()?.name || s.data()?.email || otherName;
+            }
+          } catch { /* ignore */ }
+          return { ...fb, userName, otherName };
+        })
+      );
+      setFeedbacks(enriched);
     });
-  }, [feedbacks, filter, tab, postMeetingFeedbacks, addItemFeedbacks]);
 
-  const stats = useMemo(() => {
-    const total = feedbacks.length;
+    return () => unsubFeedback();
+  }, [authLoading, isAdmin]);
 
-    const positive = feedbacks.filter(
-      (fb) => fb.answers?.overall === "excellent" || fb.answers?.overall === "good"
-    ).length;
+  const problems = useMemo(() => exchanges.filter((ex) => ex.meetingProblem), [exchanges]);
+  const feedbackFlags = useMemo(() => feedbacks.filter((fb) => fb.flags && Object.values(fb.flags).some(Boolean)), [feedbacks]);
 
-    const wouldDoAgain = feedbacks.filter(
-      (fb) => fb.answers?.would_do_again === "yes"
-    ).length;
-
-    const different = feedbacks.filter(
-      (fb) => fb.answers?.item_match === "different"
-    ).length;
-
-    const bad = feedbacks.filter(
-      (fb) => fb.answers?.overall === "bad"
-    ).length;
-
-    return {
-      total,
-      positive,
-      wouldDoAgain,
-      different,
-      bad,
-      positiveRate: total ? Math.round((positive / total) * 100) : 0,
-      againRate: total ? Math.round((wouldDoAgain / total) * 100) : 0,
-    };
-  }, [feedbacks]);
-
-  if (authLoading || loading) {
+  // Auth checks
+  if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-sm font-bold text-slate-400">Chargement admin...</p>
+      <div style={{ minHeight: "100vh", background: BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: MUTED, fontSize: 14 }}>Chargement…</p>
       </div>
     );
   }
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/feed" replace />;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center justify-between gap-4">
+    <div style={{ minHeight: "100vh", background: BG, color: TEXT, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px 80px" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 32, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.20em] text-slate-400">
-              Troco Admin
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: ACCENT, marginBottom: 8 }}>
+              Troco — Admin
             </p>
-            <h1 className="mt-1 text-[28px] font-black tracking-[-0.04em]">
-              Feedbacks post-meeting
-            </h1>
-            <p className="mt-1 text-[13px] font-medium text-slate-400">
-              Mise à jour automatique depuis Firestore.
+            <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0, lineHeight: 1.1 }}>Bonjour Alex 👋</h1>
+            <p style={{ color: MUTED, marginTop: 8, fontSize: 14 }}>
+              Tableau de bord en temps réel · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
-
           <button
             type="button"
             onClick={() => navigate("/feed")}
-            className="rounded-full bg-white px-4 py-2 text-[13px] font-black text-slate-600 shadow-sm"
+            style={{ padding: "8px 16px", background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 10, color: MUTED2, fontSize: 13, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
           >
-            ← Retour
+            ← App
           </button>
         </div>
 
-        {/* Onglets */}
-        <div className="mb-6 flex gap-2">
-          {[
-            { id: "post_meeting", label: `🤝 Post-meeting (${postMeetingFeedbacks.length})` },
-            { id: "add_item",     label: `📦 Ajout objet (${addItemFeedbacks.length})` },
-          ].map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={[
-                "rounded-full px-4 py-2 text-[13px] font-black transition",
-                tab === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-600 shadow-sm",
-              ].join(" ")}
-            >
-              {t.label}
-            </button>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 28, flexWrap: "wrap", borderBottom: `1px solid ${BORDER}`, paddingBottom: 12 }}>
+          {TABS.map((t) => (
+            <TabBtn key={t.id} id={t.id} active={tab === t.id} onClick={setTab}>{t.label}</TabBtn>
           ))}
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <StatCard title="Total" value={stats.total} color="slate" />
-          <StatCard title="Satisfaction" value={`${stats.positiveRate} %`} sub={`${stats.positive} positifs`} color="emerald" />
-          <StatCard title="Referaient" value={`${stats.againRate} %`} sub={`${stats.wouldDoAgain} / ${stats.total}`} color="sky" />
-          <StatCard title="Objet différent" value={stats.different} color="amber" />
-          <StatCard title="Difficile" value={stats.bad} color="red" />
-        </div>
-
-        <div className="mb-4 flex flex-wrap gap-2">
-          {[
-            { id: "all", label: `Tous (${stats.total})` },
-            { id: "positive", label: "😊 Positifs" },
-            { id: "negative", label: "😕 Négatifs / OK" },
-            { id: "different", label: "⚠️ Objet différent" },
-            { id: "again_no", label: "❌ Ne referait pas" },
-          ].map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={[
-                "rounded-full px-4 py-1.5 text-[13px] font-black transition",
-                filter === f.id
-                  ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-600 shadow-sm",
-              ].join(" ")}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="rounded-[20px] bg-white p-8 text-center text-sm font-bold text-slate-400">
-            Aucun feedback pour ce filtre.
-          </div>
-        ) : tab === "add_item" ? (
-          <div className="overflow-hidden rounded-[20px] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px] text-left text-[13px]">
-                <thead className="border-b border-slate-100 bg-slate-50 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
-                  <tr>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Utilisateur</th>
-                    <th className="px-4 py-3">Facilité</th>
-                    <th className="px-4 py-3">Bloqueur</th>
-                    <th className="px-4 py-3">Objet</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filtered.map((fb) => (
-                    <tr key={fb.id} className="hover:bg-slate-50/60">
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-400">{formatDate(fb.createdAt)}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-700">{fb.userName}</td>
-                      <td className="px-4 py-3">{SURVEY_LABELS.after_add_item.ease[fb.answers?.ease] || fb.answers?.ease || "—"}</td>
-                      <td className="px-4 py-3">{SURVEY_LABELS.after_add_item.blocker[fb.answers?.blocker] || fb.answers?.blocker || "—"}</td>
-                      <td className="px-4 py-3">
-                        {fb.metadata?.itemId ? (
-                          <a href={`/items/${fb.metadata.itemId}`} className="font-black text-emerald-600 hover:underline">Voir →</a>
-                        ) : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {/* Content */}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 60, color: MUTED, fontSize: 14 }}>Chargement des données…</div>
         ) : (
-          <div className="overflow-hidden rounded-[20px] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left text-[13px]">
-                <thead className="border-b border-slate-100 bg-slate-50 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
-                  <tr>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Auteur</th>
-                    <th className="px-4 py-3">Sur</th>
-                    <th className="px-4 py-3">Rencontre</th>
-                    <th className="px-4 py-3">Autre personne</th>
-                    <th className="px-4 py-3">Objet</th>
-                    <th className="px-4 py-3">Referait</th>
-                    <th className="px-4 py-3">Échange</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-slate-50">
-                  {filtered.map((fb) => (
-                    <tr key={fb.id} className="hover:bg-slate-50/60">
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-400">
-                        {formatDate(fb.createdAt)}
-                      </td>
-
-                      <td className="px-4 py-3 font-semibold text-slate-700">
-                        {fb.userName}
-                      </td>
-
-                      <td className="px-4 py-3 text-slate-500">
-                        {fb.otherName}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {label("overall", fb.answers?.overall)}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {label("other_person", fb.answers?.other_person)}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {label("item_match", fb.answers?.item_match)}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {label("would_do_again", fb.answers?.would_do_again)}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {fb.exchangeId ? (
-                          <a
-                            href={`/exchanges/${fb.exchangeId}`}
-                            className="font-black text-emerald-600 hover:underline"
-                          >
-                            Voir →
-                          </a>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <>
+            {tab === "overview"  && <TabOverview counts={counts} recentExchanges={recentExchanges} recentItems={recentItems} problems={problems} />}
+            {tab === "users"     && <TabUsers users={users} />}
+            {tab === "items"     && <TabItems items={items} />}
+            {tab === "exchanges" && <TabExchanges exchanges={exchanges} />}
+            {tab === "feedbacks" && <TabFeedbacks feedbacks={feedbacks} />}
+            {tab === "reports"   && <TabReports problems={problems} feedbackFlags={feedbackFlags} />}
+          </>
         )}
-
-        <p className="mt-4 text-center text-[11px] text-slate-300">
-          {filtered.length} feedback{filtered.length > 1 ? "s" : ""} affiché
-          {filtered.length > 1 ? "s" : ""}
-        </p>
       </div>
     </div>
   );

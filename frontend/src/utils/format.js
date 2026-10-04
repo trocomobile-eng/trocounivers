@@ -197,6 +197,31 @@ export function formatDate(itemOrTimestamp) {
   return formatRelativeDate(timestamp);
 }
 
+export function clean(value = "") {
+  return String(value || "").trim().replace(/\s+/g, " ");
+}
+
+export function formatRelativeTime(value) {
+  const date =
+    value?.toDate?.() ||
+    (value?.seconds ? new Date(value.seconds * 1000) : null) ||
+    (value ? new Date(value) : null);
+  if (!date || Number.isNaN(date.getTime())) return "";
+  const diff = Date.now() - date.getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) {
+    const minutes = Math.max(1, Math.floor(diff / 60000));
+    if (minutes < 60) return `il y a ${minutes} min`;
+    return `il y a ${Math.floor(minutes / 60)} h`;
+  }
+  if (days === 1) return "hier";
+  if (days < 7) return `il y a ${days} j`;
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return "il y a 1 sem.";
+  if (weeks < 5) return `il y a ${weeks} sem.`;
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
 export function formatShortDate(timestamp) {
   if (!timestamp) return "";
 

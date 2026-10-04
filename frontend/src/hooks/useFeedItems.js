@@ -188,6 +188,9 @@ function enrichItemsWithDistance(items, userLocation) {
 
 // ─── Helpers display (réexportés pour les cards) ────────────────────────────
 
+const PLACEHOLDER_IMG =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23F0F0EE'/%3E%3Cpath d='M160 155h80a10 10 0 0 1 10 10v70a10 10 0 0 1-10 10h-80a10 10 0 0 1-10-10v-70a10 10 0 0 1 10-10Zm55 15-20 25-13-16-22 30h70Zm-28-8a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z' fill='%23C8C8C4'/%3E%3C/svg%3E";
+
 export function getItemImage(item) {
   return (
     item?.images?.[0] ||
@@ -195,7 +198,7 @@ export function getItemImage(item) {
     item?.imageUrl ||
     item?.image ||
     item?.photoUrl ||
-    "/assets/images/empty-library.png"
+    PLACEHOLDER_IMG
   );
 }
 
@@ -204,14 +207,23 @@ export function getItemTitle(item) {
 }
 
 export function getItemLocation(item) {
-  return (
-    item?.district ||
+  const raw =
     item?.arrondissement ||
-    item?.city ||
     item?.locationArea ||
+    item?.district ||
+    item?.city ||
     item?.location ||
-    "Paris"
-  );
+    "";
+
+  if (!raw) return "Paris";
+
+  const match = String(raw).match(/(\d{1,2})(?:er|e|ème|eme)?/i);
+  if (match?.[1]) {
+    const n = Number(match[1]);
+    if (n >= 1 && n <= 20) return `Paris ${n === 1 ? "1er" : `${n}e`}`;
+  }
+
+  return raw;
 }
 
 export function getItemCondition(item) {

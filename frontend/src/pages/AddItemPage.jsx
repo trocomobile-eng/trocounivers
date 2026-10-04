@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   addDoc,
@@ -28,7 +28,6 @@ import {
 
 import { db, storage } from "../firebase";
 import { isAmbassador } from "../utils/ambassador";
-import SurveyModal from "../components/SurveyModal";
 import { useAuth } from "../context/AuthContext";
 import {
   buildCleanItemFromSuggestion,
@@ -113,8 +112,6 @@ export default function AddItemPage() {
   const { user } = useAuth();
   const fileInputRef = useRef(null);
 
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [publishedItemId, setPublishedItemId] = useState(null);
 
   // Champs objet
   const [rawTitle, setRawTitle] = useState("");
@@ -135,6 +132,21 @@ export default function AddItemPage() {
 
   const [saving, setSaving] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const [errorField, setErrorField] = useState("");
+
+  // Pré-remplir la ville depuis le profil utilisateur
+  useEffect(() => {
+    if (!user?.uid) return;
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      const data = snap.data() || {};
+      const arr = data.arrondissement || data.locationArea || "";
+      const city = data.city || data.locationCity || "";
+      const userCity = arr
+        ? `${city && city.toLowerCase() !== arr.toLowerCase() ? city + " " : ""}${arr}`.trim()
+        : city;
+      if (userCity) setLocation(userCity);
+    });
+  }, [user?.uid]);
 
   const suggestions = useMemo(() => getItemSuggestions(rawTitle), [rawTitle]);
   const previewUrls = useMemo(() => photos.map((p) => p.previewUrl), [photos]);
@@ -197,6 +209,8 @@ export default function AddItemPage() {
     const finalTitle = title.trim() || rawTitle.trim();
 
     if (!finalTitle || !photos.length || !category) {
+      const field = !finalTitle ? "title" : !photos.length ? "photos" : "category";
+      setErrorField(field);
       setValidationError(
         !finalTitle ? "Ajoute un nom à ton objet."
         : !photos.length ? "Ajoute au moins une photo."
@@ -205,6 +219,7 @@ export default function AddItemPage() {
       return;
     }
 
+    setErrorField("");
     setValidationError("");
 
     if (!user?.uid) { navigate("/login"); return; }
@@ -219,6 +234,7 @@ export default function AddItemPage() {
       const userData = userSnapshot.data() || {};
       if (useMyLocation) ownerLocation = getGeoPoint(userData.location);
       ownerIsAmbassador = isAmbassador(userData);
+      const ownerArrondissement = userData.arrondissement || userData.locationArea || userData.city || userData.locationCity || "";
 
       const tradePreferences = {
         openToAll,
@@ -237,6 +253,7 @@ export default function AddItemPage() {
         description: description.trim(),
         location: location.trim() || "Paris",
         locationArea: location.trim() || "Paris",
+        arrondissement: ownerArrondissement,
         locationPrivacy: "approximate",
         geo: ownerLocation,
         hasGeo: Boolean(ownerLocation),
@@ -283,8 +300,7 @@ export default function AddItemPage() {
         });
       } catch (_) {}
 
-      setPublishedItemId(draftRef.id);
-      setShowSurvey(true);
+      navigate(`/items/${draftRef.id}`, { replace: true });
     } catch (error) {
       console.error("Erreur publication objet :", error);
       setValidationError("Impossible de publier. Réessaie.");
@@ -409,9 +425,14 @@ export default function AddItemPage() {
 
               <input
                 value={rawTitle}
-                onChange={(e) => handleRawTitleChange(e.target.value)}
+                onChange={(e) => { handleRawTitleChange(e.target.value); if (errorField === "title") setErrorField(""); }}
                 placeholder="Ex : Guitare folk"
-                className="h-[50px] w-full rounded-[18px] border border-slate-100 bg-white px-4 text-[15px] font-semibold text-[#081225] outline-none placeholder:text-slate-400 focus:border-emerald-200 focus:ring-4 focus:ring-emerald-50"
+                className={[
+                  "h-[50px] w-full rounded-[18px] border bg-white px-4 text-[15px] font-semibold text-[#081225] outline-none placeholder:text-slate-400 focus:ring-4",
+                  errorField === "title"
+                    ? "border-rose-400 focus:border-rose-400 focus:ring-rose-50"
+                    : "border-slate-100 focus:border-emerald-200 focus:ring-emerald-50",
+                ].join(" ")}
               />
               {rawTitle && rawTitle !== title && (
                 <div className="mt-2 flex items-center gap-2">
@@ -429,7 +450,7 @@ export default function AddItemPage() {
             </div>
 
             {/* Catégorie */}
-            <div className="mb-5">
+            <div className={["mb-5 rounded-[16px] transition", errorField === "category" ? "outline outline-2 outline-rose-400 p-2 -mx-2" : ""].join(" ")}>
               <RequiredLabel>Catégorie</RequiredLabel>
               <div className="flex flex-wrap gap-2">
                 {CATEGORY_OPTIONS.map((option) => (
@@ -625,16 +646,6 @@ export default function AddItemPage() {
         </form>
       </main>
 
-      {showSurvey && (
-        <SurveyModal
-          surveyId="after_add_item"
-          metadata={{ itemId: publishedItemId }}
-          onDone={() => {
-            setShowSurvey(false);
-            navigate(`/items/${publishedItemId}`, { replace: true });
-          }}
-        />
-      )}
     </>
   );
 }

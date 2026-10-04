@@ -99,14 +99,14 @@ export default function ChatPage() {
       return;
     }
 
-    const unsubscribe = onSnapshot(doc(db, "exchanges", id), (snap) => {
-      if (!snap.exists()) {
-        setExchange(null);
-        return;
-      }
-
-      setExchange({ id: snap.id, ...snap.data() });
-    });
+    const unsubscribe = onSnapshot(
+      doc(db, "exchanges", id),
+      (snap) => {
+        if (!snap.exists()) { setExchange(null); return; }
+        setExchange({ id: snap.id, ...snap.data() });
+      },
+      (err) => console.error("Erreur échange :", err)
+    );
 
     return () => unsubscribe();
   }, [id, user?.uid, authLoading, navigate]);
@@ -120,9 +120,11 @@ export default function ChatPage() {
       orderBy("createdAt", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setSubMessages(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => setSubMessages(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => console.error("Erreur messages :", err)
+    );
 
     return () => unsubscribe();
   }, [id]);

@@ -1,63 +1,70 @@
+import { useRef } from "react";
 import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getItemImage, getItemTitle } from "../hooks/useFeedItems";
 import { useFavoriteUsers } from "../hooks/useFavoriteUsers";
+import { DesktopFeedCard } from "../pages/feed/DesktopFeedPage";
 
-function FavItem({ item, cardWidth = "w-[160px]" }) {
-  const image = getItemImage(item);
-  const title = getItemTitle(item);
-  const ownerId = item.ownerId || item.userId || item.ownerUid || item.createdBy || "";
-
-  return (
-    <Link
-      to={`/items/${item.id}`}
-      className={`${cardWidth} shrink-0 block overflow-hidden rounded-[18px] bg-white shadow-[0_2px_14px_rgba(15,23,42,0.07)] transition active:scale-[0.97]`}
-    >
-      <div className="relative aspect-square overflow-hidden bg-[#F2F4F3]">
-        {image
-          ? <img src={image} alt={title} className="h-full w-full object-cover" />
-          : <div className="flex h-full w-full items-center justify-center text-2xl text-slate-300">📦</div>
-        }
-      </div>
-      <div className="px-2.5 py-2">
-        <p className="line-clamp-2 text-[12px] font-bold leading-snug text-[#17212B]">{title}</p>
-        {ownerId && (
-          <p className="mt-1 truncate text-[10.5px] font-medium text-[#6F7782]">
-            {item.ownerName || item.ownerDisplayName || "Troqueur"}
-          </p>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-export default function FavoriteUsersFeedSection({ cardWidth, maxItems = 6, showSeeAll = true }) {
+export default function FavoriteUsersFeedSection({ cardWidth = "w-[192px]", maxItems = 8, showSeeAll = true }) {
   const { favoriteItems, favoriteProfiles, loading } = useFavoriteUsers();
+  const scrollRef = useRef(null);
 
   if (loading || !favoriteItems.length || !favoriteProfiles.length) return null;
 
   const displayed = favoriteItems.slice(0, maxItems);
 
+  function scroll(dir) {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * 440, behavior: "smooth" });
+  }
+
   return (
-    <section className="mt-5">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-[12px] font-black tracking-[-0.01em] text-[#17212B]">
-          Nouveautés de vos favoris
-        </p>
-        {showSeeAll && favoriteItems.length > maxItems && (
-          <Link
-            to="/favorites"
-            className="text-[12px] font-bold text-[#22C58B]"
+    <section className="mt-8 rounded-[20px] bg-white px-5 pt-5 pb-6 shadow-[0_2px_14px_rgba(15,23,42,0.06)]">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FFF0F5] text-[15px]">
+            <Heart size={13} strokeWidth={2.2} className="text-[#1ABEA3]" fill="#1ABEA3" />
+          </span>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#1ABEA3]">
+            Nouveautés de vos favoris
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {showSeeAll && favoriteItems.length > maxItems && (
+            <Link
+              to="/favorites"
+              className="text-[12px] font-bold text-[#22C58B] transition hover:opacity-70"
+            >
+              Voir tout →
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => scroll(-1)}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8ecec] bg-white text-[#17212B] shadow-sm transition hover:bg-[#F4F8F6] active:scale-95"
+            aria-label="Précédent"
           >
-            Voir tout
-          </Link>
-        )}
+            <ChevronLeft size={16} strokeWidth={2.2} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scroll(1)}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8ecec] bg-white text-[#17212B] shadow-sm transition hover:bg-[#F4F8F6] active:scale-95"
+            aria-label="Suivant"
+          >
+            <ChevronRight size={16} strokeWidth={2.2} />
+          </button>
+        </div>
       </div>
 
-      <div className="overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         <motion.div
-          className="flex gap-3"
+          className="flex gap-4"
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.06 } } }}
@@ -65,12 +72,13 @@ export default function FavoriteUsersFeedSection({ cardWidth, maxItems = 6, show
           {displayed.map((item) => (
             <motion.div
               key={item.id}
+              className={`${cardWidth} shrink-0`}
               variants={{
                 hidden: { opacity: 0, x: 14 },
                 show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.2, 0.8, 0.2, 1] } },
               }}
             >
-              <FavItem item={item} cardWidth={cardWidth} />
+              <DesktopFeedCard item={item} />
             </motion.div>
           ))}
         </motion.div>

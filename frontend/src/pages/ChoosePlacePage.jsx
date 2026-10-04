@@ -10,7 +10,8 @@ import {
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import PlaceCard from "../components/PlaceCard";
-import { MOCK_PLACES, MIDDLE_POINTS, OTHER_PLACE } from "../data/mockPlaces";
+import MapPickerModal from "../components/MapPickerModal";
+import { MOCK_PLACES, MIDDLE_POINTS } from "../data/mockPlaces";
 
 function normalizePlace(place) {
   if (!place) return null;
@@ -81,7 +82,7 @@ export default function ChoosePlacePage() {
     id || exchangeId || location.state?.exchangeId || location.state?.exchange?.id;
 
   const allPlaces = useMemo(
-    () => [...MOCK_PLACES, ...MIDDLE_POINTS, OTHER_PLACE],
+    () => [...MOCK_PLACES, ...MIDDLE_POINTS],
     []
   );
 
@@ -90,6 +91,7 @@ export default function ChoosePlacePage() {
   const [saving, setSaving] = useState(false);
 
   const [selectedPlace, setSelectedPlace] = useState(MOCK_PLACES[0]);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -375,23 +377,22 @@ export default function ChoosePlacePage() {
 
             <div className="mt-5 space-y-3">
               {placeOptions.map((place, index) => (
-                <button
-                  key={place.id || index}
-                  type="button"
-                  onClick={() => acceptPlace(place)}
-                  disabled={saving}
-                  className="w-full rounded-[28px] border border-[#E4ECE8] bg-white/94 p-4 text-left shadow-[0_10px_26px_rgba(15,23,42,0.04)] disabled:opacity-50"
-                >
+                <div key={place.id || index} className="rounded-[28px] border border-[#E4ECE8] bg-white/94 p-4 shadow-[0_10px_26px_rgba(15,23,42,0.04)]">
                   <p className="text-[17px] font-black text-slate-950">
                     {place.title || place.name || "Lieu de rencontre"}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-slate-500">
                     {place.address || "Adresse à confirmer"}
                   </p>
-                  <p className="mt-3 text-sm font-black text-[#0f9f9a]">
+                  <button
+                    type="button"
+                    onClick={() => acceptPlace(place)}
+                    disabled={saving}
+                    className="troco-primary-btn mt-4 flex h-12 w-full items-center justify-center rounded-full text-[14px] disabled:opacity-50"
+                  >
                     Accepter ce lieu
-                  </p>
-                </button>
+                  </button>
+                </div>
               ))}
             </div>
 
@@ -513,17 +514,32 @@ export default function ChoosePlacePage() {
               </div>
             </section>
 
+            {/* Autre lieu — carte */}
             <section className="mt-7">
-              <h2 className="mb-3 text-[16px] font-black text-slate-950">
-                Autre lieu
-              </h2>
-
-              <PlaceCard
-                place={OTHER_PLACE}
-                selected={selectedPlace?.id === OTHER_PLACE.id}
-                onSelect={setSelectedPlace}
-                compact
-              />
+              <h2 className="mb-3 text-[16px] font-black text-slate-950">Autre lieu</h2>
+              <button
+                type="button"
+                onClick={() => setShowMapPicker(true)}
+                className={[
+                  "flex w-full items-center justify-between rounded-[24px] border bg-white/82 p-4 text-left shadow-[0_8px_28px_rgba(15,23,42,0.045)] backdrop-blur-xl transition active:scale-[0.985]",
+                  selectedPlace?.id?.startsWith("custom-")
+                    ? "border-emerald-300 ring-2 ring-emerald-300/20"
+                    : "border-white/80",
+                ].join(" ")}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[17px] bg-emerald-50 text-xl">🗺️</div>
+                  <div>
+                    <p className="text-[15px] font-black text-slate-950">
+                      {selectedPlace?.id?.startsWith("custom-") ? selectedPlace.address : "Choisir sur la carte"}
+                    </p>
+                    <p className="mt-0.5 text-[12px] font-semibold text-slate-500">
+                      {selectedPlace?.id?.startsWith("custom-") ? "Lieu personnalisé ✓" : "Poser un point sur la carte"}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xl text-slate-400">›</span>
+              </button>
             </section>
 
             {selectedPlace && (
@@ -531,10 +547,7 @@ export default function ChoosePlacePage() {
                 <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#0f9f9a]">
                   Lieu sélectionné
                 </p>
-
-                <p className="mt-1 text-sm font-bold text-slate-700">
-                  {selectedLabel}
-                </p>
+                <p className="mt-1 text-sm font-bold text-slate-700">{selectedLabel}</p>
               </div>
             )}
 
@@ -567,6 +580,16 @@ export default function ChoosePlacePage() {
       </main>
 
       {/* ── Desktop ── */}
+
+      {showMapPicker && (
+        <MapPickerModal
+          onCancel={() => setShowMapPicker(false)}
+          onConfirm={(place) => {
+            setSelectedPlace(place);
+            setShowMapPicker(false);
+          }}
+        />
+      )}
     </>
   );
 }

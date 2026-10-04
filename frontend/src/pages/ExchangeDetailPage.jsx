@@ -575,7 +575,7 @@ function MiniItemCard({ item, label, compact = false, onClick }) {
       >
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[16px] bg-slate-100">
           {image ? (
-            <img src={image} alt={title} className="h-full w-full object-cover" />
+            <img src={image} alt={title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-2xl text-slate-300">📦</div>
           )}
@@ -605,7 +605,7 @@ function MiniItemCard({ item, label, compact = false, onClick }) {
 
       <div className="mt-3 aspect-[1.12/0.9] w-full overflow-hidden bg-slate-100">
         {image ? (
-          <img src={image} alt={title} className="h-full w-full object-cover" />
+          <img src={image} alt={title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-4xl text-slate-300">📦</div>
         )}
@@ -729,7 +729,7 @@ function StatusHero({ stage, exchange, userId, navigate }) {
   function go() {
     if (stage === "chat") { navigate(`/exchanges/${exchange.id}/chat`); return; }
     if (["start_place", "waiting_place", "respond_place"].includes(stage)) {
-      navigate("/choose-place", { state: { exchangeId: exchange.id, exchange } }); return;
+      navigate(`/choose-place/${exchange.id}`); return;
     }
     if (["start_time", "waiting_time", "respond_time"].includes(stage)) {
       navigate(`/availability/${exchange.id}`); return;
@@ -796,7 +796,7 @@ function ItemTile({ item, label, labelColor = "teal", onClick }) {
       <div className="overflow-hidden rounded-[16px] border border-[#E4EDE9] bg-white shadow-[0_4px_12px_rgba(15,23,42,0.05)]">
         <div className="aspect-square lg:aspect-auto lg:h-36 overflow-hidden bg-[#F4F7F5]">
           {image
-            ? <img src={image} alt={title} className="h-full w-full object-cover" />
+            ? <img src={image} alt={title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
             : <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300">📦</div>
           }
         </div>
@@ -1004,7 +1004,7 @@ function MeetingValidationSection({
         <TrocoButton variant="plain"
           onClick={onConfirmClick}
           disabled={saving}
-          className="mt-5 h-[54px] w-full rounded-[20px] bg-emerald-600 text-[16px] font-black text-white shadow-[0_12px_26px_rgba(16,185,129,0.18)] disabled:opacity-50"
+          className="mt-5 h-[54px] w-full rounded-[20px] bg-emerald-600 text-[16px] font-black text-white shadow-[0_12px_26px_rgba(16,185,129,0.18)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Confirmer à mon tour
         </TrocoButton>
@@ -1037,7 +1037,7 @@ function MeetingValidationSection({
         onClick={onConfirmClick}
         disabled={saving}
         className={[
-          "mt-5 h-[54px] w-full rounded-[20px] text-[16px] font-black transition disabled:opacity-50",
+          "mt-5 h-[54px] w-full rounded-[20px] text-[16px] font-black transition disabled:opacity-50 disabled:cursor-not-allowed",
           afterMeeting
             ? "bg-emerald-600 text-white shadow-[0_12px_26px_rgba(16,185,129,0.18)]"
             : "border border-emerald-100 bg-white text-emerald-700",
@@ -1049,7 +1049,7 @@ function MeetingValidationSection({
       <TrocoButton variant="plain"
         onClick={onProblemClick}
         disabled={saving}
-        className="mt-3 w-full text-center text-[14px] font-black text-slate-500 disabled:opacity-50"
+        className="mt-3 w-full text-center text-[14px] font-black text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Il y a eu un problème
       </TrocoButton>
@@ -1632,7 +1632,7 @@ export default function ExchangeDetailPage() {
                 <TrocoButton variant="plain"
                   onClick={declineProposal}
                   disabled={saving}
-                  className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-rose-200 bg-rose-50 text-sm font-black text-rose-600 disabled:opacity-50"
+                  className="flex h-12 items-center justify-center gap-2 rounded-[16px] border border-rose-200 bg-rose-50 text-sm font-black text-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <XCircle size={18} />
                   Refuser
@@ -1641,7 +1641,7 @@ export default function ExchangeDetailPage() {
                 <TrocoButton variant="plain"
                   onClick={acceptProposal}
                   disabled={saving}
-                  className="troco-primary-btn flex h-12 items-center justify-center gap-2 rounded-[16px] disabled:opacity-50"
+                  className="troco-primary-btn flex h-12 items-center justify-center gap-2 rounded-[16px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2 size={18} />
                   Accepter
@@ -1654,7 +1654,7 @@ export default function ExchangeDetailPage() {
                 <TrocoButton variant="plain"
                   onClick={cancelOwnProposal}
                   disabled={saving}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 text-[13px] font-black text-rose-600 disabled:opacity-50"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 text-[13px] font-black text-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <XCircle size={16} strokeWidth={2.2} />
                   Annuler ma demande
@@ -1724,14 +1724,6 @@ export default function ExchangeDetailPage() {
 
             <ProgressTimeline stage={stage} />
 
-            {stage === "start_time" && (
-              <TrocoButton variant="plain"
-                onClick={goToAvailability}
-                className="troco-primary-btn flex h-14 w-full items-center justify-center rounded-full text-[15px]"
-              >
-                Valider mes disponibilités
-              </TrocoButton>
-            )}
           </div>
 
           {/* Colonne droite : les objets */}

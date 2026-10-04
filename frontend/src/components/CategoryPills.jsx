@@ -44,7 +44,7 @@ export default function CategoryPills({ activeCategory = "Tout", onChange }) {
             className={[
               "relative inline-flex h-[32px] shrink-0 items-center gap-1.5 rounded-[12px] border px-2.5 text-[11.5px] font-bold tracking-[-0.01em] overflow-hidden",
               active
-                ? "border-transparent text-white shadow-[0_4px_12px_rgba(34,197,139,0.20)]"
+                ? "border-transparent bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.20)]"
                 : "border-[#E8ECEC] bg-white text-[#17212B]",
             ].join(" ")}
           >

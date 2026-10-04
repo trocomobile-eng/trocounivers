@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { arrayRemove, arrayUnion, doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
@@ -8,6 +8,7 @@ const FavoritesContext = createContext({ favoriteIds: [], toggle: async () => {}
 export function FavoritesProvider({ children }) {
   const { user } = useAuth();
   const [favoriteIds, setFavoriteIds] = useState([]);
+  const pending = useRef(new Set());
 
   useEffect(() => {
     if (!user?.uid) { setFavoriteIds([]); return; }
@@ -20,8 +21,9 @@ export function FavoritesProvider({ children }) {
 
   async function toggle(itemId) {
     if (!user?.uid || !itemId) return;
+    if (pending.current.has(itemId)) return;
+    pending.current.add(itemId);
     const isFav = favoriteIds.includes(itemId);
-    // Optimistic update
     setFavoriteIds((cur) => isFav ? cur.filter((id) => id !== itemId) : [...cur, itemId]);
     try {
       await updateDoc(doc(db, "users", user.uid), {
@@ -34,9 +36,10 @@ export function FavoritesProvider({ children }) {
         }, { merge: true });
       } catch (err) {
         console.error("Erreur toggle favori :", err);
-        // Rollback
         setFavoriteIds((cur) => isFav ? [...cur, itemId] : cur.filter((id) => id !== itemId));
       }
+    } finally {
+      pending.current.delete(itemId);
     }
   }
 

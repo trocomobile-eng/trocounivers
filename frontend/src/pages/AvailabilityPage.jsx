@@ -89,11 +89,11 @@ function SlotRow({ slot, onRemove }) {
   );
 }
 
-function SlotButton({ slot, onAccept, saving }) {
+function SlotButton({ slot, onSelect, saving }) {
   return (
     <button
       type="button"
-      onClick={() => onAccept(slot)}
+      onClick={() => onSelect(slot)}
       disabled={saving}
       className="flex w-full items-center justify-between rounded-[14px] border border-[#1ABEA3]/30 bg-[#E8F7EF] px-4 py-3.5 text-left transition active:scale-[0.98] disabled:opacity-50"
     >
@@ -102,9 +102,49 @@ function SlotButton({ slot, onAccept, saving }) {
         {formatSlot(slot)}
       </span>
       <span className="rounded-full bg-[#1ABEA3]/15 px-2.5 py-1 text-[11px] font-bold text-[#0f9f9a]">
-        Accepter
+        Choisir
       </span>
     </button>
+  );
+}
+
+function ConfirmSlotModal({ slot, onConfirm, onCancel, saving }) {
+  if (!slot) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" style={{ background: "rgba(10,20,30,0.45)", backdropFilter: "blur(4px)" }}>
+      <div className="w-full max-w-sm rounded-t-[28px] bg-white p-6 shadow-[0_-8px_40px_rgba(15,23,42,0.18)] sm:rounded-[24px]">
+        <p className="mb-1 text-[11px] font-black uppercase tracking-[0.18em] text-[#1ABEA3]">Confirmation</p>
+        <h3 className="text-[20px] font-black leading-tight tracking-[-0.04em] text-[#102033]">
+          Valider ce créneau ?
+        </h3>
+        <div className="mt-3 flex items-center gap-2.5 rounded-[12px] bg-[#E8F7EF] px-4 py-3">
+          <CalendarDays size={15} strokeWidth={2.2} className="shrink-0 text-[#1ABEA3]" />
+          <span className="text-[14px] font-bold text-[#102033]">{formatSlot(slot)}</span>
+        </div>
+        <p className="mt-3 text-[13px] font-medium leading-relaxed text-slate-500">
+          Ce créneau sera confirmé et tu passeras à l'étape suivante.
+        </p>
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="flex h-12 flex-1 items-center justify-center rounded-full border border-[#E4ECE8] bg-white text-[14px] font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Non
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={saving}
+            className="troco-primary-btn flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[14px] disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={15} className="animate-spin" /> : null}
+            Oui, confirmer
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -125,6 +165,7 @@ export default function AvailabilityPage() {
   const [selectedTime, setSelectedTime]       = useState("");
   const [selectedSlots, setSelectedSlots]     = useState([]);
   const [showCounterForm, setShowCounterForm] = useState(false);
+  const [pendingSlot, setPendingSlot]         = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -206,7 +247,7 @@ export default function AvailabilityPage() {
     setSaving(true);
     try {
       await updateDoc(doc(db, "exchanges", exchange.id), { status: "choosing_place", selectedAvailability: slot, selectedAvailabilityAt: serverTimestamp(), selectedAvailabilityBy: user.uid, needsAttentionFor: "", lastActionBy: user.uid, notificationType: "availability_confirmed", updatedAt: serverTimestamp() });
-      navigate("/choose-place", { replace: true, state: { exchangeId: exchange.id, exchange: { ...exchange, selectedAvailability: slot, status: "choosing_place" } } });
+      navigate(`/choose-place/${exchange.id}`, { replace: true });
     } catch (err) {
       alert("Impossible de valider ce créneau.");
     } finally {
@@ -330,7 +371,7 @@ export default function AvailabilityPage() {
           </p>
           <div className="mt-4 space-y-2">
             {availabilityOptions.map((slot, i) => (
-              <SlotButton key={slot.id || i} slot={slot} onAccept={acceptSlot} saving={saving} />
+              <SlotButton key={slot.id || i} slot={slot} onSelect={setPendingSlot} saving={saving} />
             ))}
           </div>
           {canStillCounter ? (
@@ -448,6 +489,13 @@ export default function AvailabilityPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmSlotModal
+        slot={pendingSlot}
+        saving={saving}
+        onCancel={() => setPendingSlot(null)}
+        onConfirm={() => { acceptSlot(pendingSlot); setPendingSlot(null); }}
+      />
     </>
   );
 }

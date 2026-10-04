@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import NotificationButton from "../components/NotificationButton";
 import DesktopSidebar from "./DesktopSidebar";
 import TrocoFooter from "../components/TrocoFooter";
@@ -15,10 +16,11 @@ function getInitial(user) {
 function DesktopTopBar() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const photo = getPhoto(user);
 
   return (
-    <div className="sticky top-0 z-30 flex h-[56px] items-center justify-end gap-2.5 bg-white/80 backdrop-blur-md px-8">
+    <div className={["sticky top-0 z-30 flex h-[56px] items-center justify-end gap-2.5 backdrop-blur-md px-8", theme === "green" ? "bg-[#e8f7ef]/85" : "bg-white/80"].join(" ")}>
       <NotificationButton />
 
       <button

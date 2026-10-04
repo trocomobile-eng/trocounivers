@@ -872,7 +872,7 @@ export default function ProfilePage() {
                 <MapPin size={14} className="text-[#22C58B]" />
                 {locationName(profile)}
               </p>
-              <p className="mt-3 max-w-[380px] text-[13.5px] font-medium leading-relaxed text-[#6F7782]">
+              <p className="mt-3 line-clamp-3 max-w-[380px] text-[13.5px] font-medium leading-relaxed text-[#6F7782]">
                 {bioText(profile)}
               </p>
             </motion.div>

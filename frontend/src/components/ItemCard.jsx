@@ -5,12 +5,10 @@ import { useFavorites } from "../context/FavoritesContext";
 import { AIVerificationStatus } from "./AIVerification";
 import AmbassadorBadge from "./AmbassadorBadge";
 import { isAmbassador } from "../utils/ambassador";
+import { clean, formatRelativeTime } from "../utils/format";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function clean(value = "") {
-  return String(value || "").trim().replace(/\s+/g, " ");
-}
 
 function formatLocation(item) {
   const arrondissement = clean(
@@ -30,6 +28,9 @@ function formatLocation(item) {
   return location || arrondissement || "Paris";
 }
 
+const PLACEHOLDER_IMG =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23F0F0EE'/%3E%3Cpath d='M160 155h80a10 10 0 0 1 10 10v70a10 10 0 0 1-10 10h-80a10 10 0 0 1-10-10v-70a10 10 0 0 1 10-10Zm55 15-20 25-13-16-22 30h70Zm-28-8a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z' fill='%23C8C8C4'/%3E%3C/svg%3E";
+
 function getImage(item) {
   return (
     item?.images?.[0] ||
@@ -38,7 +39,7 @@ function getImage(item) {
     item?.imageUrl ||
     item?.photoURL ||
     item?.photoUrl ||
-    "/assets/images/empty-item.png"
+    PLACEHOLDER_IMG
   );
 }
 
@@ -103,23 +104,6 @@ function getOwnerPhoto(item) {
 
 function getInitial(value = "") {
   return String(value || "?").trim().charAt(0).toUpperCase();
-}
-
-function formatRelativeTime(value) {
-  const date =
-    value?.toDate?.() ||
-    (value?.seconds ? new Date(value.seconds * 1000) : null) ||
-    (value ? new Date(value) : null);
-  if (!date || Number.isNaN(date.getTime())) return "";
-  const diff = Date.now() - date.getTime();
-  const minutes = Math.max(1, Math.floor(diff / 60000));
-  if (minutes < 60) return `il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "hier";
-  if (days < 7) return `il y a ${days} j`;
-  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
 // Palette couleurs avatar par initiale
@@ -202,7 +186,7 @@ function ItemCard({
   const content = (
     <article
       className={[
-        "group relative overflow-hidden rounded-[16px] bg-white shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition-all duration-200",
+        "group relative overflow-hidden rounded-[16px] bg-white border border-[#e2f5f0] shadow-[0_2px_12px_rgba(15,23,42,0.07)] transition-all duration-200",
         effectiveMode === "browse"
           ? "hover:-translate-y-[2px] hover:shadow-[0_12px_28px_rgba(15,23,42,0.12)] cursor-pointer"
           : "active:scale-[0.985]",
@@ -219,6 +203,7 @@ function ItemCard({
           alt={title}
           draggable="false"
           loading="lazy"
+          decoding="async"
           className="pointer-events-none h-full w-full select-none object-cover transition duration-500 group-hover:scale-[1.015]"
         />
 

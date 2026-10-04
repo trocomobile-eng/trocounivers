@@ -17,6 +17,7 @@ import AmbassadorBadge from "../components/AmbassadorBadge";
 import { isAmbassador } from "../utils/ambassador";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
+import { useToast } from "../context/ToastContext";
 import { AIVerificationStatus } from "../components/AIVerification";
 
 import {
@@ -157,6 +158,7 @@ export default function ItemDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const { show: showToast } = useToast();
 
   const [item, setItem] = useState(location.state?.item || null);
   const [ownerProfile, setOwnerProfile] = useState(null);
@@ -221,6 +223,17 @@ export default function ItemDetailPage() {
   const description =
     clean(item?.description || item?.details || item?.itemDetails) ||
     "Encore en bon état, disponible pour un échange.";
+
+  async function handleShare() {
+    const url = `${window.location.origin}/items/${item?.id}`;
+    const text = item?.title || "Objet à échanger sur Troco";
+    if (navigator.share) {
+      try { await navigator.share({ title: text, url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      showToast({ icon: "success", title: "Lien copié !" });
+    }
+  }
 
   function goToEdit() {
     if (!item?.id) return;
@@ -356,7 +369,7 @@ export default function ItemDetailPage() {
 
             <button
               type="button"
-              onClick={isOwner ? goToEdit : undefined}
+              onClick={isOwner ? goToEdit : handleShare}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E7ECEB] bg-white text-[#6F7782] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition active:scale-95"
               aria-label={isOwner ? "Modifier l’objet" : "Partager"}
             >

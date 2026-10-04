@@ -8,10 +8,10 @@ function usePageTransition() {
   const ref = useRef(null);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
     const el = ref.current;
     if (!el) return;
     el.classList.remove("troco-page-enter");
-    // Force reflow
     void el.offsetHeight;
     el.classList.add("troco-page-enter");
   }, [location.pathname]);
