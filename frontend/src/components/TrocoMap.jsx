@@ -247,8 +247,8 @@ export default function TrocoMap({ items = [], className = "", onBackToList }) {
           attributionControl={false}
         >
           <TileLayer
-            attribution=""
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
+            url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
           />
 
           <FitMapToItems items={visibleItems} />
