@@ -1,6 +1,6 @@
 # Troco — Design Upgrade
 
-Statut : **Lots 1-2 livrés** · Lots 3-5 planifiés
+Statut : **Lots 1-3 livrés** · Lots 4-5 planifiés
 
 Objectif : harmoniser l'identité visuelle de Troco à partir des 7 maquettes de référence (`untitled folder/`) et des findings de `TROCO_AUDIT.md`. Pas de régression de features. Architecture Firebase intacte.
 
@@ -86,18 +86,28 @@ Cibles : maquette 1 (liste) et maquette 7 (carte).
 
 ---
 
-## Lot 3 — Trocs + Messages ⏳
+## Lot 3 — Trocs + Messages ✅
 
 Cibles : maquettes 2 et 3.
 
-### Trocs (`ExchangesPage`)
-- Header : `TrocoPageHeader` variant brand + titre `Trocs` + sous-titre `Tes échanges en cours`.
-- 3 tabs : `En cours · Propositions · Terminés`. Pill active teal.
-- Carte échange : les deux objets côte à côte, icône swap (`Repeat2`) centrée teal, statut badge en pied + bouton `Voir`.
+### Fait
 
-### Messages (`MessagesPage`)
-- Liste de cartes blanches : avatar rond + deux miniatures d'objets (swap) + nom + dernier message + horodatage + état (lu/non-lu) + chevron.
-- Fond bulles chat actuel conservé (pas de refonte du chat lui-même en Lot 3 — Lot 5).
+- **ExchangesPage**
+  - Nouveau composant `FilterTab` (container pill `bg-troco-primary-50 p-1`, active `bg-troco-primary text-white shadow-glow`, compteur avec fond `bg-white/25` ou `bg-troco-primary-50`).
+  - Redéfinition sémantique des filtres : `En cours` (ni pending ni ended) · `Propositions` (pending / pending_mine) · `Terminés` (completed / declined / cancelled). Default tab → `encours`.
+  - `StatusPill` migré en tokens pour les tons brand (emerald → `troco-primary-50 / troco-primary-600`, slate → `troco-bg / troco-muted`). Tons informatifs non-brand (sky / orange / rose / amber) conservés en hex (pas de token sémantique dédié).
+  - `PersonAvatar` : fallback en `bg-troco-gradient text-white font-black shadow-glow`.
+  - `ExchangeCard` : `rounded-troco-md shadow-card`, bandeau action requise `bg-troco-primary-50`, grid `1fr / 36px / 1fr` avec icône swap (`Repeat2`) centrée dans un rond teal `bg-troco-primary text-white shadow-glow`, CTA `rounded-[14px]` teal/glow sur myTurn.
+  - Placeholders image : `bg-troco-bg` au lieu de `bg-[#F2F4F3]`.
+  - Imports inutilisés supprimés (`Clock`, `CheckCircle2` → gardé car utilisé dans getStageVisual).
+
+- **MessagesPage**
+  - `ConversationCard` refondu selon maquette 3 : avatar rond gauche (local `PersonAvatar` avec `bg-troco-gradient shadow-glow`), bloc central nom + dernier message + horodatage, pied avec deux miniatures d'objets (`ItemMini` 28×28 `rounded-[8px]`) séparées par l'icône `Repeat2` teal, colonne droite = pastille non-lu teal + chevron.
+  - `ConversationPreview` (volet desktop) : header en tokens, séparateur swap `bg-troco-primary text-white shadow-glow` avec `Repeat2` au lieu du caractère `↔`, bloc dernier message `bg-troco-primary-50`, CTA `troco-primary-btn`.
+  - Empty state + loading state + search placeholder (`Rechercher une conversation…`) migrés en tokens.
+  - Chat bubbles non touchées (prévu Lot 5).
+
+- Build : `npm run build` ✅ (40.39 s). Smoke test `/exchanges` et `/messages` → HTTP 200.
 
 ---
 
@@ -156,3 +166,4 @@ Interdit : nouveaux hex en dur `#1ABEA3` / `#22C58B` / `#17212B` / etc. dans le 
 
 - 2026-11-18 — Lot 1 livré (tokens + Tailwind + BottomNav). Build OK.
 - 2026-11-21 — Lot 2 livré (MobileFeedPage, DesktopFeedPage, TrocoMap, ViewModeToggle extrait). Build OK, smoke test 200.
+- 2026-11-21 — Lot 3 livré (ExchangesPage tabs + sémantique filtres, MessagesPage ConversationCard refondue). Build OK, smoke test 200.

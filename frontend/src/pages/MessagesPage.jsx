@@ -5,6 +5,7 @@ import {
   Bell,
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   Clock3,
   MapPin,
   MessageCircle,
@@ -148,14 +149,36 @@ function getStatus(exchange, currentUserId) {
 
 function toneClasses(tone) {
   const tones = {
-    emerald: "bg-[#EAF7EF] text-[#166F4D] border-[#D6EEE0]",
+    emerald: "bg-troco-primary-50 text-troco-primary-600 border-troco-primary-100",
     sky: "bg-[#EAF5FB] text-[#246B8A] border-[#D9ECF4]",
     orange: "bg-[#F9EFE0] text-[#A06026] border-[#F1E1C9]",
     rose: "bg-[#F8EDEE] text-[#9A4050] border-[#EED6DA]",
-    slate: "bg-[#F1F3F3] text-slate-500 border-[#E4EAEA]",
+    slate: "bg-troco-bg text-troco-muted border-troco-border",
   };
 
   return tones[tone] || tones.slate;
+}
+
+function PersonAvatar({ name, photoURL, size = 48 }) {
+  if (photoURL) {
+    return (
+      <img
+        src={photoURL}
+        alt={name}
+        referrerPolicy="no-referrer"
+        className="shrink-0 rounded-full object-cover ring-2 ring-white shadow-soft"
+        style={{ height: size, width: size }}
+      />
+    );
+  }
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center rounded-full bg-troco-gradient text-[15px] font-black text-white shadow-glow"
+      style={{ height: size, width: size }}
+    >
+      {(name || "?").charAt(0).toUpperCase()}
+    </span>
+  );
 }
 
 function ConversationCard({ exchange, itemMap, currentUserId, selected }) {
@@ -165,108 +188,90 @@ function ConversationCard({ exchange, itemMap, currentUserId, selected }) {
   const mainItem = items[0];
   const secondItem = items[1];
 
-  const image =
-    getItemImage(mainItem) ||
-    exchange.requestedItemImage ||
-    exchange.offeredItemImage ||
-    "";
+  const otherPhoto = exchange.senderId === currentUserId
+    ? (exchange.receiverPhotoURL || exchange.receiverAvatar || "")
+    : (exchange.senderPhotoURL || exchange.senderAvatar || "");
 
-  const secondImage = getItemImage(secondItem) || "";
+  const image = getItemImage(mainItem) || exchange.requestedItemImage || "";
+  const secondImage = getItemImage(secondItem) || exchange.offeredItemImage || "";
 
-  const title =
-    getDisplayItemType(mainItem) ||
-    exchange.requestedItemTitle ||
-    exchange.offeredItemTitle ||
-    "Troc en cours";
-
-  const status = getStatus(exchange, currentUserId);
-  const StatusIcon = status.icon;
   const unread = exchange.needsAttentionFor === currentUserId;
 
   return (
     <Link
       to={`/exchanges/${exchange.id}/chat`}
       className={[
-        "troco-row-card group block w-full p-3 text-left active:scale-[0.985]",
-        selected ? "is-active" : "",
+        "group block w-full rounded-troco-md bg-white p-3 shadow-soft transition active:scale-[0.985]",
+        selected ? "ring-1 ring-troco-primary/40" : "",
       ].join(" ")}
     >
-      <div className="flex gap-3">
-        <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-[20px] bg-[#F4F8F6]">
-          {image ? (
-            <img src={image} alt={title} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300">
-              💬
-            </div>
-          )}
+      <div className="flex items-center gap-3">
+        <PersonAvatar name={otherName} photoURL={otherPhoto} size={48} />
 
-          {secondImage && (
-            <span className="absolute bottom-1 right-1 h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-slate-100">
-              <img src={secondImage} alt="" className="h-full w-full object-cover" />
-            </span>
-          )}
-
-          {unread && (
-            <span className="absolute right-1.5 top-1.5 h-3 w-3 rounded-full border-2 border-white bg-[#E98B61]" />
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1 py-0.5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-[16px] font-extrabold tracking-[-0.025em] text-[#102033]">
-                {shortName(otherName)}
-              </p>
-
-              <p className="mt-0.5 truncate text-[12px] font-bold text-[#315F51]">
-                {title}
-              </p>
-            </div>
-
-            <p className="shrink-0 text-[11px] font-semibold text-slate-400">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate text-[14px] font-extrabold tracking-[-0.02em] text-troco-ink">
+              {shortName(otherName)}
+            </p>
+            <p className="shrink-0 text-[11px] font-semibold text-troco-faint">
               {lastMessageTime(exchange)}
             </p>
           </div>
 
           <p
             className={[
-              "mt-2 line-clamp-2 text-[13.5px] leading-snug",
-              unread ? "font-extrabold text-[#263A43]" : "font-medium text-slate-500",
+              "mt-0.5 line-clamp-1 text-[12.5px] leading-snug",
+              unread ? "font-bold text-troco-ink" : "font-medium text-troco-muted",
             ].join(" ")}
           >
             {lastMessage(exchange)}
           </p>
 
-          <span
-            className={[
-              "mt-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-extrabold",
-              toneClasses(status.tone),
-            ].join(" ")}
-          >
-            <StatusIcon size={13} strokeWidth={2.3} />
-            {status.label}
-          </span>
+          {(image || secondImage) && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <ItemMini src={image} />
+              <Repeat2 size={11} strokeWidth={2.4} className="shrink-0 text-troco-primary" />
+              <ItemMini src={secondImage} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {unread && <span className="h-2 w-2 rounded-full bg-troco-primary shadow-glow" />}
+          <ChevronRight size={14} strokeWidth={2.3} className="text-troco-faint" />
         </div>
       </div>
     </Link>
   );
 }
 
+function ItemMini({ src }) {
+  if (!src) {
+    return <div className="h-7 w-7 shrink-0 rounded-[8px] bg-troco-primary-50" />;
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      className="h-7 w-7 shrink-0 rounded-[8px] object-cover"
+    />
+  );
+}
+
 function ConversationPreview({ exchange, itemMap, currentUserId }) {
   if (!exchange) {
     return (
-      <section className="hidden min-h-[560px] flex-1 rounded-[20px] bg-white p-8 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)] lg:flex lg:flex-col lg:items-center lg:justify-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#EEF7F2] text-4xl">
+      <section className="hidden min-h-[560px] flex-1 rounded-troco-md bg-white p-8 text-center shadow-soft lg:flex lg:flex-col lg:items-center lg:justify-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-troco-primary-50 text-4xl">
           💬
         </div>
 
-        <h2 className="mt-5 text-[28px] font-extrabold tracking-[-0.045em] text-[#102033]">
+        <h2 className="mt-5 text-[28px] font-extrabold tracking-[-0.045em] text-troco-ink">
           Sélectionne une discussion
         </h2>
 
-        <p className="mt-2 max-w-sm text-center text-sm font-medium leading-relaxed text-slate-500">
-          Tu verras ici le contexte du troc, l’action à faire et le dernier message.
+        <p className="mt-2 max-w-sm text-center text-sm font-medium leading-relaxed text-troco-muted">
+          Tu verras ici le contexte du troc, l'action à faire et le dernier message.
         </p>
       </section>
     );
@@ -281,12 +286,12 @@ function ConversationPreview({ exchange, itemMap, currentUserId }) {
   const second = items[1];
 
   return (
-    <section className="hidden min-h-[560px] flex-1 rounded-[20px] bg-white p-6 shadow-[0_2px_12px_rgba(15,23,42,0.07)] lg:block">
+    <section className="hidden min-h-[560px] flex-1 rounded-troco-md bg-white p-6 shadow-soft lg:block">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="troco-page-eyebrow">Discussion</p>
+          <p className="troco-caption">Discussion</p>
 
-          <h2 className="mt-2 text-[30px] font-extrabold tracking-[-0.055em] text-[#102033]">
+          <h2 className="mt-2 text-[30px] font-extrabold tracking-[-0.055em] text-troco-ink">
             Avec {shortName(otherName)}
           </h2>
 
@@ -303,7 +308,7 @@ function ConversationPreview({ exchange, itemMap, currentUserId }) {
 
         <Link
           to={`/exchanges/${exchange.id}/chat`}
-          className="troco-btn troco-btn-primary"
+          className="troco-primary-btn"
         >
           Ouvrir
         </Link>
@@ -315,19 +320,19 @@ function ConversationPreview({ exchange, itemMap, currentUserId }) {
           const title = getDisplayItemType(item) || (index === 0 ? "Objet demandé" : "Objet proposé");
 
           return (
-            <div key={index} className="overflow-hidden rounded-[24px] border border-[#EEF5F1] bg-white">
-              <div className="aspect-[1.15/0.9] bg-[#F4F8F6]">
+            <div key={index} className="overflow-hidden rounded-troco-lg border border-troco-border bg-white">
+              <div className="aspect-[1.15/0.9] bg-troco-primary-50">
                 {image ? (
                   <img src={image} alt={title} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-4xl text-slate-300">
+                  <div className="flex h-full w-full items-center justify-center text-4xl text-troco-faint">
                     📦
                   </div>
                 )}
               </div>
 
               <div className="p-4">
-                <p className="truncate text-[17px] font-extrabold text-[#102033]">
+                <p className="truncate text-[17px] font-extrabold text-troco-ink">
                   {title}
                 </p>
               </div>
@@ -335,17 +340,17 @@ function ConversationPreview({ exchange, itemMap, currentUserId }) {
           );
         })}
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EEF7F2] text-[#08755C]">
-          ↔
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-troco-primary text-white shadow-glow">
+          <Repeat2 size={18} strokeWidth={2.4} />
         </div>
       </div>
 
-      <div className="mt-6 rounded-[24px] bg-[#F8FCFA] p-5">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500">
+      <div className="mt-6 rounded-troco-lg bg-troco-primary-50 p-5">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-troco-primary">
           Dernier message
         </p>
 
-        <p className="mt-2 text-[16px] font-semibold leading-relaxed text-[#40545B]">
+        <p className="mt-2 text-[16px] font-semibold leading-relaxed text-troco-ink">
           {lastMessage(exchange)}
         </p>
       </div>
@@ -353,9 +358,9 @@ function ConversationPreview({ exchange, itemMap, currentUserId }) {
       {exchange.needsAttentionFor === currentUserId && (
         <Link
           to={`/exchanges/${exchange.id}`}
-          className="troco-btn troco-btn-primary mt-5 h-[54px] w-full"
+          className="troco-primary-btn mt-5 flex h-[54px] w-full items-center justify-center gap-2"
         >
-          Voir l’action à faire
+          Voir l'action à faire
           <ArrowRight size={18} />
         </Link>
       )}
@@ -478,28 +483,28 @@ export default function MessagesPage() {
               placeholder="Rechercher une discussion..."
               icon={<Search size={18} strokeWidth={2.2} />}
               className="w-full"
-              inputClassName="text-[15px] font-medium text-slate-700 placeholder:text-slate-400"
+              inputClassName="text-[15px] font-medium text-troco-ink placeholder:text-troco-faint"
             />
           </div>
 
           {loading ? (
-            <div className="rounded-[20px] bg-white p-6 text-center text-sm font-medium text-slate-400 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+            <div className="rounded-troco-md bg-white p-6 text-center text-sm font-medium text-troco-faint shadow-soft">
               Chargement des messages...
             </div>
           ) : filteredExchanges.length === 0 ? (
-            <div className="rounded-[20px] bg-white p-7 text-center shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+            <div className="rounded-troco-md bg-white p-7 text-center shadow-soft">
               <div className="mb-3 text-4xl">💬</div>
 
-              <p className="text-lg font-extrabold text-[#102033]">
-                Aucun message pour l’instant
+              <p className="text-lg font-extrabold text-troco-ink">
+                Aucun message pour l'instant
               </p>
 
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                Les discussions apparaîtront ici quand un échange aura besoin d’être finalisé par message.
+              <p className="mt-2 text-sm leading-relaxed text-troco-muted">
+                Les discussions apparaîtront ici quand un échange aura besoin d'être finalisé par message.
               </p>
               <Link
                 to="/exchanges"
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1ABEA3] px-5 py-2.5 text-[13px] font-black text-white"
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-troco-primary px-5 py-2.5 text-[13px] font-black text-white shadow-glow"
               >
                 Voir mes trocs
               </Link>
