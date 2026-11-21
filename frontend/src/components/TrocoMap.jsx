@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
+import { ChevronRight } from "lucide-react";
 
 import {
   formatLocation,
@@ -136,42 +137,35 @@ function PopupCard({ item }) {
   const distanceLabel = item.distanceLabel || "";
 
   return (
-    <div className="w-[235px] overflow-hidden rounded-[28px] bg-white text-left">
-      <div className="p-3">
-        <div className="flex gap-3">
-          <div className="h-[74px] w-[74px] shrink-0 overflow-hidden rounded-[22px] bg-slate-50">
-            {image ? (
-              <img
-                src={image}
-                alt={title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl text-slate-300">
-                📦
-              </div>
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1 pt-0.5">
-            <p className="line-clamp-2 text-[15px] font-semibold leading-[1.05] tracking-[-0.025em] text-slate-950">
-              {title}
-            </p>
-
-            <p className="mt-1.5 truncate text-[12px] font-semibold text-slate-500">
-📍 {distanceLabel || location}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => navigate(`/items/${item.id}`)}
-              className="mt-3 rounded-full bg-[#F0FAF7] px-3.5 py-2 text-[11.5px] font-black text-[#1ABEA3] transition active:scale-95"
-            >
-              Voir l’objet
-            </button>
-          </div>
+    <div className="w-[260px] overflow-hidden rounded-[28px] bg-white text-left">
+      <button
+        type="button"
+        onClick={() => navigate(`/items/${item.id}`)}
+        className="flex w-full items-center gap-3 p-3 transition active:scale-[0.98]"
+      >
+        <div className="h-[64px] w-[64px] shrink-0 overflow-hidden rounded-[18px] bg-troco-primary-50">
+          {image ? (
+            <img src={image} alt={title} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-2xl text-troco-faint">
+              📦
+            </div>
+          )}
         </div>
-      </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-2 text-[14px] font-bold leading-[1.15] tracking-[-0.02em] text-troco-ink">
+            {title}
+          </p>
+          <p className="mt-1 truncate text-[11.5px] font-semibold text-troco-muted">
+            📍 {distanceLabel || location}
+          </p>
+        </div>
+
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-troco-primary text-white shadow-glow">
+          <ChevronRight size={16} strokeWidth={2.5} />
+        </span>
+      </button>
     </div>
   );
 }
@@ -183,14 +177,14 @@ function ZoomControls() {
       <button
         type="button"
         onClick={() => map.zoomIn()}
-        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/80 bg-white/95 text-[20px] font-bold text-[#0d1b2a] shadow-[0_4px_16px_rgba(15,23,42,0.12)] backdrop-blur-xl transition active:scale-90"
+        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/80 bg-white/95 text-[20px] font-bold text-troco-ink shadow-strong backdrop-blur-xl transition active:scale-90"
       >
         +
       </button>
       <button
         type="button"
         onClick={() => map.zoomOut()}
-        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/80 bg-white/95 text-[20px] font-bold text-[#0d1b2a] shadow-[0_4px_16px_rgba(15,23,42,0.12)] backdrop-blur-xl transition active:scale-90"
+        className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/80 bg-white/95 text-[20px] font-bold text-troco-ink shadow-strong backdrop-blur-xl transition active:scale-90"
       >
         −
       </button>
@@ -198,35 +192,22 @@ function ZoomControls() {
   );
 }
 
-function MapOverlay({ count, onBackToList }) {
+function MapOverlay({ count }) {
   return (
-    <>
-      {/* Badge compteur + bouton retour */}
-      <div className="absolute left-4 right-4 top-4 z-[400] flex items-center justify-between gap-3">
-        <div className="rounded-[20px] border border-white/80 bg-white/90 px-4 py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.10)] backdrop-blur-xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1ABEA3]">
-            Autour de toi
-          </p>
-          <p className="text-[15px] font-extrabold tracking-[-0.02em] text-[#0d1b2a]">
-            {count} objet{count > 1 ? "s" : ""}
-          </p>
-        </div>
-
-        {onBackToList && (
-          <button
-            type="button"
-            onClick={onBackToList}
-            className="rounded-full border border-white/80 bg-white/90 px-4 py-2.5 text-[13px] font-bold text-[#0d1b2a] shadow-[0_4px_16px_rgba(15,23,42,0.10)] backdrop-blur-xl transition active:scale-95"
-          >
-            ☰ Liste
-          </button>
-        )}
+    <div className="absolute left-4 top-4 z-[400]">
+      <div className="rounded-troco-md border border-white/80 bg-white/90 px-4 py-2.5 shadow-strong backdrop-blur-xl">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-troco-primary">
+          Autour de toi
+        </p>
+        <p className="text-[15px] font-extrabold tracking-[-0.02em] text-troco-ink">
+          {count} objet{count > 1 ? "s" : ""}
+        </p>
       </div>
-    </>
+    </div>
   );
 }
 
-export default function TrocoMap({ items = [], className = "", onBackToList }) {
+export default function TrocoMap({ items = [], className = "" }) {
   const visibleItems = useMemo(() => items.filter((item) => item?.id), [items]);
 
   return (
@@ -247,8 +228,8 @@ export default function TrocoMap({ items = [], className = "", onBackToList }) {
           attributionControl={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-            url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
           <FitMapToItems items={visibleItems} />
@@ -281,7 +262,7 @@ export default function TrocoMap({ items = [], className = "", onBackToList }) {
           </MarkerClusterGroup>
         </MapContainer>
 
-        <MapOverlay count={visibleItems.length} onBackToList={onBackToList} />
+        <MapOverlay count={visibleItems.length} />
       </div>
 
       <style>{`
@@ -342,7 +323,7 @@ export default function TrocoMap({ items = [], className = "", onBackToList }) {
           transform: translateY(-2px) scale(1.07);
           box-shadow:
             0 18px 38px rgba(15, 23, 42, 0.18),
-            0 0 0 1px rgba(16, 185, 129, 0.18);
+            0 0 0 4px rgba(26, 190, 163, 0.35);
         }
 
         .troco-map-object-photo img {

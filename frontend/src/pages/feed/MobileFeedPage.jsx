@@ -22,6 +22,25 @@ const RADIUS_OPTIONS = [
   { label: "Tout Paris", value: "all" },
 ];
 
+function GuestFeedBanner() {
+  return (
+    <section className="mt-4 rounded-troco-md border border-troco-primary-100 bg-troco-primary-50 px-4 py-3.5">
+      <p className="text-[13px] font-black tracking-[-0.02em] text-troco-ink">
+        Explore les objets disponibles
+      </p>
+      <p className="mt-1 text-[11.5px] font-medium leading-relaxed text-troco-muted">
+        Connecte-toi pour publier, ajouter des favoris et proposer un troc.
+      </p>
+      <Link
+        to="/login"
+        className="mt-3 inline-flex h-9 items-center rounded-full bg-troco-primary px-4 text-[12px] font-black text-white shadow-glow active:scale-95"
+      >
+        Se connecter
+      </Link>
+    </section>
+  );
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getOwnerId(item) {
@@ -90,8 +109,8 @@ function DistancePill({ active, children, onClick }) {
       className={[
         "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[12px] font-bold transition active:scale-[0.97]",
         active
-          ? "border-transparent bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.22)]"
-          : "border-[#E7ECEB] bg-white text-[#17212B]",
+          ? "border-transparent bg-troco-primary text-white shadow-glow"
+          : "border-troco-border bg-white text-troco-ink",
       ].join(" ")}
     >
       {children}
@@ -131,8 +150,8 @@ function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false
             onToggleFavorite(item.id);
           }}
           className={[
-            "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.10)] transition active:scale-90",
-            favorite ? "text-[#22C58B]" : "text-[#6F7782]",
+            "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-soft transition active:scale-90",
+            favorite ? "text-troco-primary" : "text-troco-muted",
           ].join(" ")}
           aria-label="Ajouter aux favoris"
         >
@@ -140,7 +159,7 @@ function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false
         </button>
 
         {item.isMatch && (
-          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-[#22C58B] px-2 py-0.5 text-[9px] font-black text-white shadow-[0_2px_8px_rgba(34,197,139,0.35)]">
+          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-troco-primary px-2 py-0.5 text-[9px] font-black text-white shadow-glow">
             <Zap size={9} fill="currentColor" strokeWidth={0} />
             Match
           </span>
@@ -154,16 +173,16 @@ function MobileItemCard({ item, favorite, onToggleFavorite, carouselMode = false
       </div>
 
       <div className="px-2.5 py-2">
-        <h2 className="line-clamp-1 text-[12px] font-extrabold leading-snug tracking-[-0.02em] text-[#17212B]">
+        <h2 className="line-clamp-1 text-[12px] font-extrabold leading-snug tracking-[-0.02em] text-troco-ink">
           {title}
         </h2>
         <div className="mt-1.5 flex items-center gap-1.5">
           <OwnerAvatar item={item} name={ownerName} size="sm" />
-          <p className="line-clamp-1 text-[10px] font-semibold text-[#6F7782]">
+          <p className="line-clamp-1 text-[10px] font-semibold text-troco-muted">
             {ownerName}
           </p>
           {relativeTime && (
-            <p className="ml-auto shrink-0 text-[10px] font-semibold text-[#94a3b8]">
+            <p className="ml-auto shrink-0 text-[10px] font-semibold text-troco-faint">
               {relativeTime}
             </p>
           )}
@@ -187,7 +206,7 @@ function SocialProofBlock({ items }) {
   if (owners.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-3 rounded-[18px] border border-[#E7ECEB] bg-white px-4 py-3 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
+    <div className="flex items-center gap-3 rounded-[18px] border border-troco-border bg-white px-4 py-3 shadow-soft">
       <div className="flex -space-x-2">
         {owners.map((item, i) => (
           <div key={i} className="ring-2 ring-white rounded-full">
@@ -196,10 +215,10 @@ function SocialProofBlock({ items }) {
         ))}
       </div>
       <div className="min-w-0">
-        <p className="text-[12px] font-bold text-[#17212B]">
+        <p className="text-[12px] font-bold text-troco-ink">
           Troqueurs actifs près de vous
         </p>
-        <p className="text-[10.5px] font-medium text-[#6F7782]">
+        <p className="text-[10.5px] font-medium text-troco-muted">
           {items.length} objet{items.length > 1 ? "s" : ""} à échanger
         </p>
       </div>
@@ -266,10 +285,10 @@ export default function MobileFeedPage() {
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.10)]">
             {refreshing ? (
-              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#22C58B] border-t-transparent" />
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-troco-primary border-t-transparent" />
             ) : (
               <div
-                className="h-3.5 w-3.5 rounded-full border-2 border-[#22C58B] border-t-transparent"
+                className="h-3.5 w-3.5 rounded-full border-2 border-troco-primary border-t-transparent"
                 style={{ transform: `rotate(${progress * 360}deg)` }}
               />
             )}
@@ -281,24 +300,24 @@ export default function MobileFeedPage() {
 
       <section className="mt-1 space-y-2">
         {/* Barre de recherche */}
-        <div className="flex h-10 items-center gap-2.5 rounded-full border border-[#E7ECEB] bg-white px-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
-          <Search size={15} strokeWidth={2} className="shrink-0 text-[#6F7782]" />
+        <div className="flex h-10 items-center gap-2.5 rounded-full border border-troco-border bg-white px-4 shadow-soft">
+          <Search size={15} strokeWidth={2} className="shrink-0 text-troco-muted" />
           <input
             value={localSearch}
             onChange={(event) => handleSearchChange(event.target.value)}
-            placeholder="Rechercher un objet…"
-            className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-[#17212B] outline-none placeholder:text-[#94a3b8]"
+            placeholder="Rechercher un objet, une personne…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-troco-ink outline-none placeholder:text-troco-faint"
           />
-          <div className="h-3.5 w-px shrink-0 bg-[#E7ECEB]" />
+          <div className="h-3.5 w-px shrink-0 bg-troco-border" />
           <button
             type="button"
             onClick={() => setShowFilters(true)}
             className="relative shrink-0 p-0.5"
             aria-label="Filtres"
           >
-            <SlidersHorizontal size={15} strokeWidth={2} className={hasActiveFilters ? "text-[#22C58B]" : "text-[#6F7782]"} />
+            <SlidersHorizontal size={15} strokeWidth={2} className={hasActiveFilters ? "text-troco-primary" : "text-troco-muted"} />
             {hasActiveFilters && (
-              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#22C58B]" />
+              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-troco-primary" />
             )}
           </button>
         </div>
@@ -309,15 +328,15 @@ export default function MobileFeedPage() {
         </div>
 
         {/* Toggle Liste / Carte */}
-        <div className="flex w-fit items-center rounded-full bg-[#F0F3F2] p-[3px]">
+        <div className="flex w-fit items-center rounded-full bg-troco-primary-50 p-[3px]">
           <button
             type="button"
             onClick={() => setViewMode("list")}
             className={[
               "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-semibold transition",
               viewMode !== "map"
-                ? "bg-white text-[#17212B] shadow-[0_1px_6px_rgba(0,0,0,0.07)]"
-                : "text-[#6F7782]",
+                ? "bg-troco-primary text-white shadow-glow"
+                : "text-troco-muted",
             ].join(" ")}
           >
             <List size={12} strokeWidth={2.2} />
@@ -329,8 +348,8 @@ export default function MobileFeedPage() {
             className={[
               "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-semibold transition",
               viewMode === "map"
-                ? "bg-white text-[#17212B] shadow-[0_1px_6px_rgba(0,0,0,0.07)]"
-                : "text-[#6F7782]",
+                ? "bg-troco-primary text-white shadow-glow"
+                : "text-troco-muted",
             ].join(" ")}
           >
             <Map size={12} strokeWidth={2.2} />
@@ -340,23 +359,25 @@ export default function MobileFeedPage() {
 
       </section>
 
+      {!user && <GuestFeedBanner />}
+
       {/* Panneau filtres */}
       {showFilters && (
         <>
           <div className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px]" onClick={() => setShowFilters(false)} />
           <div className="fixed inset-x-0 bottom-[80px] z-50 flex max-h-[calc(60vh-80px)] flex-col rounded-t-[28px] bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.12)]">
             <div className="shrink-0 px-5 pt-4">
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#E7ECEB]" />
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-troco-border" />
               <div className="flex items-center justify-between">
-                <h3 className="text-[17px] font-black tracking-[-0.04em] text-[#17212B]">Filtres</h3>
-                <button type="button" onClick={() => setShowFilters(false)} className="text-[13px] font-bold text-[#22C58B]">
+                <h3 className="text-[17px] font-black tracking-[-0.04em] text-troco-ink">Filtres</h3>
+                <button type="button" onClick={() => setShowFilters(false)} className="text-[13px] font-bold text-troco-primary">
                   Fermer
                 </button>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4">
-              <p className="mb-3 text-[10px] font-black uppercase tracking-[0.20em] text-[#6F7782]">Distance</p>
+              <p className="mb-3 text-[10px] font-black uppercase tracking-[0.20em] text-troco-muted">Distance</p>
               <div className="flex flex-wrap gap-2">
                 {RADIUS_OPTIONS.map((option) => (
                   <DistancePill key={option.label} active={radius === option.value} onClick={() => setRadius(option.value)}>
@@ -374,8 +395,8 @@ export default function MobileFeedPage() {
         <section className="mt-5">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p className="text-[12px] font-black tracking-[-0.01em] text-[#17212B]">Pour toi</p>
-              <p className="text-[10px] font-medium text-[#6F7782]">D'après ta wishlist</p>
+              <p className="text-[12px] font-black tracking-[-0.01em] text-troco-ink">Pour toi</p>
+              <p className="text-[10px] font-medium text-troco-muted">D'après ta wishlist</p>
             </div>
           </div>
           <div className="-mx-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -407,23 +428,11 @@ export default function MobileFeedPage() {
         </section>
       )}
 
-      {/* Troqueurs favoris */}
-      {!isFiltered && viewMode !== "map" && (
-        <FavoriteUsersFeedSection cardWidth="w-[120px]" maxItems={6} />
-      )}
-
-      {/* Communautés */}
-      {!isFiltered && viewMode !== "map" && (
-        <div className="mt-5">
-          <CommunautesStrip />
-        </div>
-      )}
-
       {/* Près de chez vous */}
       {!isFiltered && viewMode !== "map" && nearbyItems.length >= 3 && (
         <section className="mt-5">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-[12px] font-black tracking-[-0.01em] text-[#17212B]">
+            <p className="text-[12px] font-black tracking-[-0.01em] text-troco-ink">
               Près de chez vous
             </p>
           </div>
@@ -460,7 +469,7 @@ export default function MobileFeedPage() {
       {!isFiltered && viewMode !== "map" && recentItems.length >= MIN_SECTION && (
         <section className="mt-5">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-[12px] font-black tracking-[-0.01em] text-[#17212B]">
+            <p className="text-[12px] font-black tracking-[-0.01em] text-troco-ink">
               Nouveautés
             </p>
           </div>
@@ -495,7 +504,7 @@ export default function MobileFeedPage() {
 
       {/* Titre grille */}
       {!isFiltered && viewMode !== "map" && recentItems.length >= MIN_SECTION && (
-        <p className="mt-5 mb-2.5 text-[12px] font-black tracking-[-0.01em] text-[#17212B]">
+        <p className="mt-5 mb-2.5 text-[12px] font-black tracking-[-0.01em] text-troco-ink">
           Tous les objets
         </p>
       )}
@@ -504,11 +513,11 @@ export default function MobileFeedPage() {
       {loading ? (
         <SkeletonGrid count={8} />
       ) : visibleItems.length === 0 ? (
-        <div className="mt-4 rounded-[20px] border border-[#E7ECEB] bg-white p-8 text-center text-[13px] font-semibold text-[#6F7782]">
+        <div className="mt-4 rounded-troco-md border border-troco-border bg-white p-8 text-center text-[13px] font-semibold text-troco-muted">
           Aucun objet trouvé.
         </div>
       ) : viewMode === "map" ? (
-        <TrocoMap items={visibleItems} className="mt-2 h-[calc(100vh-200px)]" onBackToList={() => setViewMode("list")} />
+        <TrocoMap items={visibleItems} className="mt-2 h-[calc(100vh-200px)]" />
       ) : (
         <motion.section
           className="mt-1 grid grid-cols-2 gap-3"
@@ -532,6 +541,18 @@ export default function MobileFeedPage() {
             </motion.div>
           ))}
         </motion.section>
+      )}
+
+      {/* Troqueurs favoris */}
+      {!isFiltered && viewMode !== "map" && (
+        <FavoriteUsersFeedSection cardWidth="w-[120px]" maxItems={6} />
+      )}
+
+      {/* Communautés */}
+      {!isFiltered && viewMode !== "map" && (
+        <div className="mt-5">
+          <CommunautesStrip />
+        </div>
       )}
     </>
   );

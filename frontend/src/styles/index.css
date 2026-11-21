@@ -13,6 +13,10 @@
   --t-faint: #94a3b8;
 
   /* Brand */
+  --t-primary:     #1ABEA3;
+  --t-primary-600: #108F7E;
+  --t-primary-50:  #E6F9F3;
+  --t-primary-100: #D1F3EA;
   --t-green:       #22C58B;
   --t-teal:        #1ABEA3;
   --t-green-light: #F0FAF7;

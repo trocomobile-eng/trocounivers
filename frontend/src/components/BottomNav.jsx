@@ -54,7 +54,7 @@ function useBadges() {
 function Badge({ count }) {
   if (!count) return null;
   return (
-    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#1ABEA3] text-[9px] font-black text-white shadow-[0_2px_6px_rgba(26,190,163,0.4)]">
+    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-troco-primary text-[9px] font-black text-white shadow-[0_2px_6px_rgba(26,190,163,0.4)]">
       {count > 9 ? "9+" : count}
     </span>
   );
@@ -66,12 +66,12 @@ function NavItem({ to, label, icon: Icon, badge = 0 }) {
       {({ isActive }) => (
         <motion.span
           whileTap={{ scale: 0.84 }}
-          animate={isActive ? { scale: 1.06 } : { scale: 1 }}
+          animate={isActive ? { scale: 1.04 } : { scale: 1 }}
           transition={{ type: "spring", stiffness: 420, damping: 26 }}
           className={[
-            "relative flex h-[46px] min-w-[54px] flex-col items-center justify-center rounded-[18px] px-2 text-[11px] font-extrabold",
+            "relative flex h-[42px] min-w-[52px] flex-col items-center justify-center rounded-[16px] px-2 text-[10.5px] font-bold",
             isActive
-              ? "bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.20)]"
+              ? "bg-troco-primary/10 text-troco-primary-600"
               : "text-slate-400",
           ].join(" ")}
         >
@@ -81,11 +81,11 @@ function NavItem({ to, label, icon: Icon, badge = 0 }) {
               transition={{ type: "spring", stiffness: 400, damping: 28 }}
               className="block"
             >
-              <Icon size={19} strokeWidth={isActive ? 2.5 : 2.1} className={isActive ? "drop-shadow-sm" : ""} />
+              <Icon size={18} strokeWidth={isActive ? 2.6 : 2.0} className={isActive ? "text-troco-primary" : ""} />
             </motion.span>
             <Badge count={badge} />
           </span>
-          <span className="mt-[2px]">{label}</span>
+          <span className={["mt-[2px]", isActive ? "font-extrabold text-troco-primary-600" : ""].join(" ")}>{label}</span>
         </motion.span>
       )}
     </NavLink>
@@ -99,19 +99,19 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Navigation principale"
-      className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[520px] items-end justify-center px-3 pb-[max(8px,env(safe-area-inset-bottom))] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-[520px] items-end justify-center px-0 pb-0 lg:hidden"
     >
-      <div className="flex h-[60px] w-full items-center justify-between rounded-[24px] border border-[#EEF2F2] bg-white px-4 shadow-[0_-2px_12px_rgba(0,0,0,0.05)]">
+      <div className="flex h-[calc(58px+env(safe-area-inset-bottom,0px))] w-full items-start justify-between rounded-t-[22px] border-x border-t border-[#EEF2F2] bg-white/90 px-3 pb-[env(safe-area-inset-bottom,0px)] pt-2 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-xl">
         <NavItem to="/feed"      label="Explorer" icon={Compass}       />
         <NavItem to="/exchanges" label="Trocs"    icon={Repeat2}       badge={exchangesBadge} />
 
         <button
           type="button"
           onClick={() => navigate("/add")}
-          className="mx-1 flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[14px] bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.24)] transition active:scale-95"
+          className="mx-1 flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-[13px] bg-troco-primary text-white shadow-[0_4px_14px_rgba(26,190,163,0.35)] transition active:scale-95"
           aria-label="Publier"
         >
-          <Plus size={24} strokeWidth={2.6} />
+          <Plus size={22} strokeWidth={2.6} />
         </button>
 
         <NavItem to="/messages" label="Messages" icon={MessageCircle} badge={messagesBadge} />

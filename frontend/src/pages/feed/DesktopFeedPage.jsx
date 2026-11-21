@@ -25,6 +25,27 @@ const DESKTOP_RADIUS_OPTIONS = [
   { label: "20 km+", value: "all" },
 ];
 
+function GuestFeedBanner() {
+  return (
+    <section className="mt-6 flex items-center justify-between gap-5 rounded-troco-md border border-troco-primary-100 bg-troco-primary-50 px-5 py-4">
+      <div className="min-w-0">
+        <p className="text-[15px] font-black tracking-[-0.02em] text-troco-ink">
+          Explore les objets disponibles
+        </p>
+        <p className="mt-1 text-[13px] font-medium text-troco-muted">
+          Connecte-toi pour publier un objet, ajouter des favoris et proposer un troc.
+        </p>
+      </div>
+      <Link
+        to="/login"
+        className="shrink-0 rounded-full bg-troco-primary px-4 py-2 text-[13px] font-black text-white shadow-glow transition hover:bg-troco-primary-600 active:scale-95"
+      >
+        Se connecter
+      </Link>
+    </section>
+  );
+}
+
 function DesktopFilterPill({ active, children, icon: Icon, onClick }) {
   return (
     <button
@@ -33,13 +54,43 @@ function DesktopFilterPill({ active, children, icon: Icon, onClick }) {
       className={[
         "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[12px] font-semibold transition active:scale-[0.97]",
         active
-          ? "border-transparent bg-[#22C58B] text-white shadow-[0_4px_12px_rgba(34,197,139,0.22)]"
-          : "border-[#E7ECEB] bg-white text-[#17212B]",
+          ? "border-transparent bg-troco-primary text-white shadow-glow"
+          : "border-troco-border bg-white text-troco-ink",
       ].join(" ")}
     >
       {Icon && <Icon size={14} strokeWidth={2.2} />}
       {children}
     </button>
+  );
+}
+
+function ViewModeToggle({ viewMode, setViewMode }) {
+  const isMap = viewMode === "map";
+  return (
+    <div className="flex shrink-0 items-center rounded-full bg-troco-primary-50 p-[3px]">
+      <button
+        type="button"
+        onClick={() => setViewMode("list")}
+        className={[
+          "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-semibold transition",
+          !isMap ? "bg-troco-primary text-white shadow-glow" : "text-troco-muted",
+        ].join(" ")}
+      >
+        <List size={13} strokeWidth={2.2} />
+        Liste
+      </button>
+      <button
+        type="button"
+        onClick={() => setViewMode("map")}
+        className={[
+          "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-semibold transition",
+          isMap ? "bg-troco-primary text-white shadow-glow" : "text-troco-muted",
+        ].join(" ")}
+      >
+        <Map size={13} strokeWidth={2.2} />
+        Carte
+      </button>
+    </div>
   );
 }
 
@@ -121,7 +172,7 @@ export function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
         />
 
         {item.isMatch && (
-          <span className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-[#22C58B] px-2 py-0.5 text-[9px] font-black text-white shadow-[0_2px_8px_rgba(34,197,139,0.35)]">
+          <span className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-troco-primary px-2 py-0.5 text-[9px] font-black text-white shadow-glow">
             <Zap size={9} fill="currentColor" strokeWidth={0} />
             Match
           </span>
@@ -136,8 +187,8 @@ export function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
           }}
           whileTap={{ scale: 0.78 }}
           className={[
-            "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-[0_2px_8px_rgba(15,23,42,0.10)]",
-            favorite ? "text-[#22C58B]" : "text-[#6F7782]",
+            "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm shadow-soft",
+            favorite ? "text-troco-primary" : "text-troco-muted",
           ].join(" ")}
         >
           <motion.span
@@ -152,7 +203,7 @@ export function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
 
       {/* Infos */}
       <div className="p-3">
-        <h2 className="line-clamp-2 text-[13.5px] font-bold leading-snug tracking-[-0.02em] text-[#17212B]">
+        <h2 className="line-clamp-2 text-[13.5px] font-bold leading-snug tracking-[-0.02em] text-troco-ink">
           {title}
         </h2>
 
@@ -172,14 +223,14 @@ export function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
               : (ownerName || "?").charAt(0).toUpperCase()
             }
           </span>
-          <span className="min-w-0 truncate text-[11.5px] font-semibold text-[#22C58B]">
+          <span className="min-w-0 truncate text-[11.5px] font-semibold text-troco-primary">
             {ownerName || "Utilisateur"}
           </span>
         </button>
 
         {/* Location */}
         {location && (
-          <p className="mt-1 flex items-center gap-1 truncate text-[10.5px] font-medium text-[#94a3b8]">
+          <p className="mt-1 flex items-center gap-1 truncate text-[10.5px] font-medium text-troco-faint">
             <MapPin size={9} strokeWidth={2.2} className="shrink-0" />
             {location}
           </p>
@@ -188,12 +239,12 @@ export function DesktopFeedCard({ item, favorite, onToggleFavorite }) {
         {/* Condition + date */}
         <div className="mt-2 flex items-center justify-between gap-2">
           {condition && (
-            <span className="inline-flex items-center rounded-full bg-[#F0FAF7] px-2 py-0.5 text-[10px] font-bold text-[#1ABEA3]">
+            <span className="inline-flex items-center rounded-full bg-troco-primary-50 px-2 py-0.5 text-[10px] font-bold text-troco-primary">
               {condition}
             </span>
           )}
           {relativeTime && (
-            <p className="ml-auto shrink-0 truncate text-[10px] font-medium text-[#b0bec5]">
+            <p className="ml-auto shrink-0 truncate text-[10px] font-medium text-troco-faint">
               {relativeTime}
             </p>
           )}
@@ -213,13 +264,13 @@ function CarouselSection({ title, icon, items, favoriteItemIds, toggleFavorite, 
   }
 
   return (
-    <section className="mt-8 rounded-[20px] bg-white px-5 pt-5 pb-6 shadow-[0_2px_14px_rgba(15,23,42,0.06)]">
+    <section className="mt-8 rounded-troco-md bg-white px-5 pt-5 pb-6 shadow-soft">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F0FAF7] text-[15px]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-troco-primary-50 text-[15px]">
             {icon}
           </span>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#1ABEA3]">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-troco-primary">
             {title}
           </p>
         </div>
@@ -229,7 +280,7 @@ function CarouselSection({ title, icon, items, favoriteItemIds, toggleFavorite, 
           <button
             type="button"
             onClick={() => scroll(-1)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8ecec] bg-white text-[#17212B] shadow-sm transition hover:bg-[#F4F8F6] active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-troco-border bg-white text-troco-ink shadow-sm transition hover:bg-troco-primary-50 active:scale-95"
             aria-label="Précédent"
           >
             <ChevronLeft size={16} strokeWidth={2.2} />
@@ -237,7 +288,7 @@ function CarouselSection({ title, icon, items, favoriteItemIds, toggleFavorite, 
           <button
             type="button"
             onClick={() => scroll(1)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8ecec] bg-white text-[#17212B] shadow-sm transition hover:bg-[#F4F8F6] active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-troco-border bg-white text-troco-ink shadow-sm transition hover:bg-troco-primary-50 active:scale-95"
             aria-label="Suivant"
           >
             <ChevronRight size={16} strokeWidth={2.2} />
@@ -306,10 +357,10 @@ export default function DesktopFeedPage() {
       {/* ── Header ── */}
       <div className="grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(380px,540px)]">
         <div className="min-w-0">
-          <h1 className="troco-soft-title text-[48px] font-extrabold leading-[1.1] tracking-[-0.04em] text-[#0d1b2a]">
+          <h1 className="troco-soft-title text-[48px] font-extrabold leading-[1.1] tracking-[-0.04em] text-troco-ink">
             Autour de toi
           </h1>
-          <p className="mt-2 text-[14.5px] font-medium text-[#6F7782]">
+          <p className="mt-2 text-[14.5px] font-medium text-troco-muted">
             Découvre les objets près de chez toi et donne-leur une seconde vie.
           </p>
         </div>
@@ -318,7 +369,7 @@ export default function DesktopFeedPage() {
           <TrocoInput
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Rechercher un objet, un membre…"
+            placeholder="Rechercher un objet, une personne…"
             icon={<Search size={18} strokeWidth={2.2} />}
             rightIcon={
               <button
@@ -328,17 +379,17 @@ export default function DesktopFeedPage() {
                   event.stopPropagation();
                   setShowFilters((current) => !current);
                 }}
-                className="relative -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-[#102033] transition hover:bg-[#F4F8F6] active:scale-95"
+                className="relative -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-troco-ink transition hover:bg-troco-primary-50 active:scale-95"
                 aria-label="Ouvrir les filtres"
               >
                 <SlidersHorizontal size={18} strokeWidth={2.1} />
-                {(radius !== 500 || viewMode === "map") && (
-                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#18A98E]" />
+                {radius !== 500 && (
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-troco-primary" />
                 )}
               </button>
             }
-            className="troco-search-surface w-full border-[#E7DED2] bg-white px-4"
-            inputClassName="text-[14.5px] font-medium text-[#344256] placeholder:text-[#94A0AF]"
+            className="troco-search-surface w-full border-troco-border bg-white px-4"
+            inputClassName="text-[14.5px] font-medium text-troco-ink placeholder:text-troco-faint"
           />
 
           {showFilters && (
@@ -349,18 +400,18 @@ export default function DesktopFeedPage() {
                 className="fixed inset-0 z-30 cursor-default bg-transparent"
                 onClick={() => setShowFilters(false)}
               />
-              <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-[480px] rounded-[20px] border border-[#E4ECE8] bg-white p-4 shadow-[0_8px_32px_rgba(15,23,42,0.12)]">
+              <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-[480px] rounded-troco-md border border-troco-border bg-white p-4 shadow-strong">
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-[13px] font-extrabold text-[#0d1b2a]">Filtres</p>
+                  <p className="text-[13px] font-extrabold text-troco-ink">Filtres</p>
                   <button
                     type="button"
                     onClick={() => setShowFilters(false)}
-                    className="text-[12px] font-bold text-[#1ABEA3] transition hover:opacity-70"
+                    className="text-[12px] font-bold text-troco-primary transition hover:opacity-70"
                   >
                     Fermer
                   </button>
                 </div>
-                <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#94a3b8]">
+                <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-troco-faint">
                   Distance
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -374,21 +425,6 @@ export default function DesktopFeedPage() {
                       {option.label}
                     </DesktopFilterPill>
                   ))}
-                  <div className="h-9 w-px bg-[#E7ECEB]" />
-                  <DesktopFilterPill
-                    active={viewMode !== "map"}
-                    icon={List}
-                    onClick={() => { setViewMode("list"); setShowFilters(false); }}
-                  >
-                    Liste
-                  </DesktopFilterPill>
-                  <DesktopFilterPill
-                    active={viewMode === "map"}
-                    icon={Map}
-                    onClick={() => { setViewMode("map"); setShowFilters(false); }}
-                  >
-                    Carte
-                  </DesktopFilterPill>
                 </div>
               </div>
             </>
@@ -396,10 +432,15 @@ export default function DesktopFeedPage() {
         </div>
       </div>
 
-      {/* ── Category pills ── */}
-      <div className="mt-6 overflow-x-auto pb-1 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
+      {/* ── Category pills + View toggle ── */}
+      <div className="mt-6 flex items-center gap-4">
+        <div className="min-w-0 flex-1 overflow-x-auto pb-1 pr-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
+        </div>
+        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
       </div>
+
+      {!user && <GuestFeedBanner />}
 
       {/* ── Recommandations ── */}
       {!search.trim() && activeCategory === "Tout" && viewMode !== "map" && recommendations.length > 0 && (
@@ -423,21 +464,9 @@ export default function DesktopFeedPage() {
         />
       )}
 
-      {/* ── Nouveautés de vos favoris ── */}
-      {!search.trim() && activeCategory === "Tout" && viewMode !== "map" && (
-        <FavoriteUsersFeedSection cardWidth="w-[192px]" maxItems={8} />
-      )}
-
-      {/* ── Communautés ── */}
-      {!search.trim() && activeCategory === "Tout" && viewMode !== "map" && (
-        <div className="mt-8">
-          <CommunautesStrip />
-        </div>
-      )}
-
       {/* ── Tous les objets ── */}
       {!search.trim() && activeCategory === "Tout" && viewMode !== "map" && recentItems.length >= MIN_SECTION && (
-        <p className="mt-8 mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+        <p className="mt-8 mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-troco-faint">
           Tous les objets
         </p>
       )}
@@ -445,7 +474,7 @@ export default function DesktopFeedPage() {
       {viewMode === "map" ? (
         <TrocoMap items={visibleItems} className="mt-4 h-[calc(100vh-220px)]" />
       ) : visibleItems.length === 0 ? (
-        <div className="mt-4 rounded-[20px] bg-white p-8 text-center text-sm font-medium text-slate-400 shadow-[0_2px_12px_rgba(15,23,42,0.07)]">
+        <div className="mt-4 rounded-troco-md bg-white p-8 text-center text-sm font-medium text-troco-faint shadow-soft">
           Aucun objet trouvé.
         </div>
       ) : (
@@ -471,6 +500,18 @@ export default function DesktopFeedPage() {
             </motion.div>
           ))}
         </motion.section>
+      )}
+
+      {/* ── Nouveautés de vos favoris ── */}
+      {!search.trim() && activeCategory === "Tout" && viewMode !== "map" && (
+        <FavoriteUsersFeedSection cardWidth="w-[192px]" maxItems={8} />
+      )}
+
+      {/* ── Communautés ── */}
+      {!search.trim() && activeCategory === "Tout" && viewMode !== "map" && (
+        <div className="mt-8">
+          <CommunautesStrip />
+        </div>
       )}
     </main>
   );
