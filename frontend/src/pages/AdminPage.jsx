@@ -16,11 +16,7 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-
-const ADMIN_EMAILS = ["alexandre.ranson@gmail.com", "doug.benchetrit@gmail.com"];
-const ADMIN_UID = "BkohLox5U1PGIn9H8ZV8giTsysm1";
+import { isAdminUser } from "../utils/adminAccess";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -691,7 +687,7 @@ export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const isAdmin = !authLoading && user && (ADMIN_EMAILS.includes(user.email) || user.uid === ADMIN_UID);
+  const isAdmin = !authLoading && isAdminUser(user);
 
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);

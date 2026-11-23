@@ -1,5 +1,6 @@
 import { CalendarDays, MapPin, MoreHorizontal, Shield, Sparkles, Star, ThumbsUp } from "lucide-react";
 import AmbassadorBadge from "../AmbassadorBadge";
+import AdminBadge from "./AdminBadge";
 import { isAmbassador } from "../../utils/ambassador";
 
 import {
@@ -130,7 +131,7 @@ function TrustBadges({ feedbacks = [] }) {
   );
 }
 
-export default function PublicProfileHeader({ profile, userId, feedbacks = [] }) {
+export default function PublicProfileHeader({ profile, userId, feedbacks = [], showAdminLink = false }) {
   const completed = getCompletedExchangeCount(profile);
   const bio = getBio(profile);
 
@@ -158,6 +159,8 @@ export default function PublicProfileHeader({ profile, userId, feedbacks = [] })
             <p className="mt-1 truncate text-[14px] font-black text-[#0F9F86]">
               {getHandle(profile, userId)}
             </p>
+
+            {showAdminLink && <AdminBadge className="mt-2" />}
 
             {isAmbassador(profile) && <AmbassadorBadge className="mt-1" />}
 

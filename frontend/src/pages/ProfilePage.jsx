@@ -49,11 +49,13 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { auth, db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import AdminBadge from "../components/profile/AdminBadge";
 import TrocoPageHeader from "../components/TrocoPageHeader";
 import { TrocoButton, TrocoInput } from "../components/ui";
 import { getDisplayItemType, getItemImage } from "../utils/format";
 import { getTradePreferences } from "../components/profile/profileUtils";
 import PreferenceModal from "../components/profile/PreferenceModal";
+import { isAdminUser } from "../utils/adminAccess";
 
 const PREFERENCE_CARDS = [
   { id: "vintage", label: "Vintage", image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=700&q=80", icon: Tag },
@@ -878,6 +880,7 @@ export default function ProfilePage() {
                 {displayName(user, profile)}
               </h1>
               <p className="mt-1.5 text-[14px] font-semibold tracking-[-0.01em] text-[#1ABEA3]">{handleName(user, profile)}</p>
+              {isAdminUser(user) && <AdminBadge className="mt-2" />}
               <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[#6F7782]">
                 <MapPin size={14} className="text-[#22C58B]" />
                 {locationName(profile)}

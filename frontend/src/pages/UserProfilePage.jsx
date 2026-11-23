@@ -22,6 +22,7 @@ import { ReviewCard } from "../components/ReviewSystem";
 import { useReputation } from "../hooks/useReputation";
 import { useFavoriteUsers } from "../hooks/useFavoriteUsers";
 import { useAuth } from "../context/AuthContext";
+import { isAdminUser } from "../utils/adminAccess";
 import {
   belongsToUser,
 } from "../components/profile/profileUtils";
@@ -118,7 +119,7 @@ export default function UserProfilePage() {
   return (
     <>
       <div className="space-y-3">
-          <PublicProfileHeader profile={profile} userId={resolvedUserId} feedbacks={feedbacks} />
+          <PublicProfileHeader profile={profile} userId={resolvedUserId} feedbacks={feedbacks} showAdminLink={isOwn && isAdminUser(user)} />
 
           {/* Bouton troqueur favori — masqué si c'est son propre profil */}
           {!isOwn && user && (

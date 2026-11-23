@@ -61,6 +61,7 @@ const TrocoVsPage = lazy(() => import("./pages/seo/TrocoVsPage"));
 
 import { useAuth } from "./context/AuthContext";
 import { usePushNotifications } from "./hooks/usePushNotifications";
+import { isAdminUser } from "./utils/adminAccess";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -86,15 +87,12 @@ function GuestRoute({ children }) {
   return <PageLayout>{children}</PageLayout>;
 }
 
-const ADMIN_UID = "BkohLox5U1PGIn9H8ZV8giTsysm1";
-const ADMIN_EMAILS = ["alexandre.ranson@gmail.com", "doug.benchetrit@gmail.com"];
-
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) return null;
 
-  const isAdmin = user && (user.uid === ADMIN_UID || ADMIN_EMAILS.includes(user.email));
+  const isAdmin = isAdminUser(user);
   return isAdmin ? children : <Navigate to="/feed" replace />;
 }
 
