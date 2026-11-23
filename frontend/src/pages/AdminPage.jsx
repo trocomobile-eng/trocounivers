@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import {
   collection,
   doc,
+  documentId,
   getCountFromServer,
   getDoc,
   getDocs,
@@ -10,7 +11,7 @@ import {
   onSnapshot,
   orderBy,
   query,
-  where,
+  startAfter,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -18,7 +19,7 @@ import { useAuth } from "../context/AuthContext";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
-const ADMIN_EMAILS = ["alexandre.ranson@gmail.com"];
+const ADMIN_EMAILS = ["alexandre.ranson@gmail.com", "doug.benchetrit@gmail.com"];
 const ADMIN_UID = "BkohLox5U1PGIn9H8ZV8giTsysm1";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -42,7 +43,28 @@ function fmtDateTime(value) {
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
-const safe = (p) => p.catch(() => null);
+const PAGE_SIZE = 250;
+
+function createdAtMillis(snapshot) {
+  const value = snapshot.data().createdAt;
+  return value?.toMillis?.() ?? (value ? new Date(value).getTime() || 0 : 0);
+}
+
+async function getAllDocuments(collectionName) {
+  const docs = [];
+  let cursor = null;
+
+  while (true) {
+    const parts = [collection(db, collectionName), orderBy(documentId())];
+    if (cursor) parts.push(startAfter(cursor));
+    const page = await getDocs(query(...parts, limit(PAGE_SIZE)));
+    docs.push(...page.docs);
+    if (page.size < PAGE_SIZE) break;
+    cursor = page.docs[page.docs.length - 1];
+  }
+
+  return { docs: docs.sort((a, b) => createdAtMillis(b) - createdAtMillis(a)) };
+}
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -319,7 +341,7 @@ function TabItems({ items }) {
 
 // ─── Tab: Exchanges ───────────────────────────────────────────────────────────
 
-function TabExchanges({ exchanges }) {
+function TabExchanges({ exchanges, unavailable }) {
   const [filter, setFilter] = useState("all");
   const filtered = useMemo(() => {
     if (filter === "all") return exchanges;
@@ -334,6 +356,10 @@ function TabExchanges({ exchanges }) {
     completed: exchanges.filter((e) => e.status === "completed").length,
     problems: exchanges.filter((e) => e.meetingProblem).length,
   }), [exchanges]);
+
+  if (unavailable) {
+    return <div role="alert" style={{ padding: 20, color: "#fca5a5", background: "rgba(252,165,165,0.06)", borderRadius: 12 }}>Lecture des échanges indisponible. Vérifiez les règles Firestore.</div>;
+  }
 
   return (
     <>
@@ -506,7 +532,7 @@ function TabFeedbacks({ feedbacks }) {
 
 // ─── Tab: Signalements ────────────────────────────────────────────────────────
 
-function TabReports({ problems, feedbackFlags }) {
+function TabReports({ problems, feedbackFlags, dataIncomplete }) {
   return (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 20 }}>
@@ -568,12 +594,84 @@ function TabReports({ problems, feedbackFlags }) {
         </>
       )}
 
-      {problems.length === 0 && feedbackFlags.length === 0 && (
+      {problems.length === 0 && feedbackFlags.length === 0 && !dataIncomplete && (
         <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, textAlign: "center", color: MUTED }}>
           Aucun signalement. Tout va bien ! 🎉
         </div>
       )}
     </>
+  );
+}
+
+// ─── Tab: Journal ────────────────────────────────────────────────────────────
+
+const TASK_JOURNAL_ENTRIES = [
+  {
+    date: "2026-10-05",
+    title: "Feed public Troco",
+    done: [
+      "Analyse de https://www.troco.app/feed via HTML live, rendu Chrome et code React.",
+      "Remplacement des noms/adresses de cafés réels par des lieux fictifs dans les données et fallbacks UI.",
+      "Remplacement des lieux réels proposés dans le chat par des points simulés.",
+      "Correction du strip communautés : les communautés sans compteur affichent Bientôt au lieu de membres seul.",
+      "Ajout d'un bandeau invité sur le feed desktop et mobile pour expliquer l'action attendue.",
+      "Réorganisation du feed : Tous les objets remonte avant les sections favoris/communautés.",
+      "Vérification avec npm run build : build OK.",
+    ],
+    pending: [
+      "Anonymiser ou nettoyer les objets/noms réels dans Firestore si le feed reste public.",
+      "Choisir la stratégie SEO pour /feed : noindex si c'est une page app, prerender/SSR si la page doit être indexable.",
+    ],
+    notes: [
+      "Les données Firestore live n'ont pas été modifiées.",
+      "La configuration SEO globale n'a pas été changée.",
+    ],
+  },
+];
+
+function JournalList({ title, items, color = MUTED2 }) {
+  return (
+    <div style={{ marginTop: 18 }}>
+      <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: MUTED }}>
+        {title}
+      </p>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+        {items.map((item) => (
+          <li key={item} style={{ display: "flex", gap: 10, alignItems: "flex-start", color, fontSize: 13, lineHeight: 1.45 }}>
+            <span style={{ marginTop: 7, width: 5, height: 5, borderRadius: "50%", background: color, flexShrink: 0 }} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function TabJournal() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {TASK_JOURNAL_ENTRIES.map((entry) => (
+        <article key={`${entry.date}-${entry.title}`} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: ACCENT }}>
+                {entry.date}
+              </p>
+              <h2 style={{ margin: "6px 0 0", fontSize: 22, lineHeight: 1.15 }}>
+                {entry.title}
+              </h2>
+            </div>
+            <span style={{ border: `1px solid rgba(16,185,129,0.3)`, background: "rgba(16,185,129,0.12)", color: ACCENT, borderRadius: 999, padding: "5px 10px", fontSize: 11, fontWeight: 700 }}>
+              Build OK
+            </span>
+          </div>
+
+          <JournalList title="Fait" items={entry.done} color={TEXT} />
+          <JournalList title="À décider" items={entry.pending} color="#ffd166" />
+          <JournalList title="Notes" items={entry.notes} color={MUTED2} />
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -586,6 +684,7 @@ const TABS = [
   { id: "exchanges",  label: "🤝 Échanges" },
   { id: "feedbacks",  label: "💬 Feedbacks" },
   { id: "reports",    label: "🚨 Signalements" },
+  { id: "journal",    label: "🗒️ Journal" },
 ];
 
 export default function AdminPage() {
@@ -597,13 +696,14 @@ export default function AdminPage() {
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
 
-  const [counts, setCounts] = useState({ users: 0, items: 0, exchanges: 0, feedbacks: 0, problems: 0 });
+  const [counts, setCounts] = useState({ users: null, items: null, exchanges: null, feedbacks: null, problems: null });
   const [users, setUsers] = useState([]);
   const [items, setItems] = useState([]);
   const [exchanges, setExchanges] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [recentExchanges, setRecentExchanges] = useState([]);
   const [recentItems, setRecentItems] = useState([]);
+  const [loadErrors, setLoadErrors] = useState({});
 
   // Load all data once authenticated
   useEffect(() => {
@@ -614,7 +714,22 @@ export default function AdminPage() {
     async function loadData() {
       setLoading(true);
 
-      // Parallel fetches
+      const labels = ["compteur membres", "compteur objets", "compteur échanges", "compteur feedbacks", "membres", "objets", "échanges", "échanges récents", "objets récents"];
+      const results = await Promise.allSettled([
+        getCountFromServer(collection(db, "users")),
+        getCountFromServer(collection(db, "items")),
+        getCountFromServer(collection(db, "exchanges")),
+        getCountFromServer(collection(db, "feedback")),
+        getAllDocuments("users"),
+        getAllDocuments("items"),
+        getAllDocuments("exchanges"),
+        getDocs(query(collection(db, "exchanges"), orderBy("createdAt", "desc"), limit(10))),
+        getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(10))),
+      ]);
+      setLoadErrors((previous) => ({
+        ...previous,
+        queries: results.flatMap((result, index) => result.status === "rejected" ? [labels[index]] : []),
+      }));
       const [
         usersCountSnap,
         itemsCountSnap,
@@ -625,17 +740,7 @@ export default function AdminPage() {
         exchangesSnap,
         recentExchangesSnap,
         recentItemsSnap,
-      ] = await Promise.all([
-        safe(getCountFromServer(collection(db, "users"))),
-        safe(getCountFromServer(collection(db, "items"))),
-        safe(getCountFromServer(collection(db, "exchanges"))),
-        safe(getCountFromServer(collection(db, "feedback"))),
-        safe(getDocs(query(collection(db, "users"), orderBy("createdAt", "desc"), limit(100)))),
-        safe(getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(100)))),
-        safe(getDocs(query(collection(db, "exchanges"), orderBy("createdAt", "desc"), limit(200)))),
-        safe(getDocs(query(collection(db, "exchanges"), orderBy("createdAt", "desc"), limit(10)))),
-        safe(getDocs(query(collection(db, "items"), orderBy("createdAt", "desc"), limit(10)))),
-      ]);
+      ] = results.map((result) => result.status === "fulfilled" ? result.value : null);
 
       const allExchanges = (exchangesSnap?.docs ?? []).map((d) => ({ id: d.id, ...d.data() }));
       const allUsers = (usersSnap?.docs ?? []).map((d) => ({ id: d.id, ...d.data() }));
@@ -661,11 +766,11 @@ export default function AdminPage() {
       const problems = enrichedExchanges.filter((ex) => ex.meetingProblem);
 
       setCounts({
-        users: usersCountSnap?.data().count ?? 0,
-        items: itemsCountSnap?.data().count ?? 0,
-        exchanges: exchangesCountSnap?.data().count ?? 0,
-        feedbacks: feedbackCountSnap?.data().count ?? 0,
-        problems: problems.length,
+        users: usersCountSnap?.data().count ?? null,
+        items: itemsCountSnap?.data().count ?? null,
+        exchanges: exchangesCountSnap?.data().count ?? null,
+        feedbacks: feedbackCountSnap?.data().count ?? null,
+        problems: exchangesSnap ? problems.length : null,
       });
       setUsers(allUsers);
       setItems(enrichedItems);
@@ -692,6 +797,7 @@ export default function AdminPage() {
     // Real-time feedbacks with user enrichment
     const feedbackQ = query(collection(db, "feedback"), orderBy("createdAt", "desc"));
     unsubFeedback = onSnapshot(feedbackQ, async (snap) => {
+      setLoadErrors((previous) => ({ ...previous, feedback: null }));
       const raw = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const enriched = await Promise.all(
         raw.map(async (fb) => {
@@ -711,6 +817,8 @@ export default function AdminPage() {
         })
       );
       setFeedbacks(enriched);
+    }, () => {
+      setLoadErrors((previous) => ({ ...previous, feedback: "feedbacks" }));
     });
 
     return () => unsubFeedback();
@@ -718,6 +826,9 @@ export default function AdminPage() {
 
   const problems = useMemo(() => exchanges.filter((ex) => ex.meetingProblem), [exchanges]);
   const feedbackFlags = useMemo(() => feedbacks.filter((fb) => fb.flags && Object.values(fb.flags).some(Boolean)), [feedbacks]);
+  const exchangeUnavailable = loadErrors.queries?.includes("échanges") ?? false;
+  const reportsIncomplete = exchangeUnavailable || Boolean(loadErrors.feedback);
+  const failedLoads = [...(loadErrors.queries || []), ...(loadErrors.feedback ? [loadErrors.feedback] : [])];
 
   // Auth checks
   if (authLoading) {
@@ -761,6 +872,12 @@ export default function AdminPage() {
           ))}
         </div>
 
+        {failedLoads.length > 0 && (
+          <div role="alert" style={{ padding: "12px 16px", marginBottom: 20, color: "#fca5a5", background: "rgba(252,165,165,0.08)", border: "1px solid rgba(252,165,165,0.2)", borderRadius: 12, fontSize: 13 }}>
+            Données indisponibles : {failedLoads.join(", ")}. Les sections concernées peuvent être incomplètes.
+          </div>
+        )}
+
         {/* Content */}
         {loading ? (
           <div style={{ textAlign: "center", padding: 60, color: MUTED, fontSize: 14 }}>Chargement des données…</div>
@@ -769,9 +886,10 @@ export default function AdminPage() {
             {tab === "overview"  && <TabOverview counts={counts} recentExchanges={recentExchanges} recentItems={recentItems} problems={problems} />}
             {tab === "users"     && <TabUsers users={users} />}
             {tab === "items"     && <TabItems items={items} />}
-            {tab === "exchanges" && <TabExchanges exchanges={exchanges} />}
+            {tab === "exchanges" && <TabExchanges exchanges={exchanges} unavailable={exchangeUnavailable} />}
             {tab === "feedbacks" && <TabFeedbacks feedbacks={feedbacks} />}
-            {tab === "reports"   && <TabReports problems={problems} feedbackFlags={feedbackFlags} />}
+            {tab === "reports"   && <TabReports problems={problems} feedbackFlags={feedbackFlags} dataIncomplete={reportsIncomplete} />}
+            {tab === "journal"   && <TabJournal />}
           </>
         )}
       </div>

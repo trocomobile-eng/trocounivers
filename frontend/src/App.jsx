@@ -85,7 +85,7 @@ function GuestRoute({ children }) {
 }
 
 const ADMIN_UID = "BkohLox5U1PGIn9H8ZV8giTsysm1";
-const ADMIN_EMAILS = ["alexandre.ranson@gmail.com"];
+const ADMIN_EMAILS = ["alexandre.ranson@gmail.com", "doug.benchetrit@gmail.com"];
 
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
