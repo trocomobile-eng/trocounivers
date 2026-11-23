@@ -14,6 +14,8 @@ import SignupPage from "./pages/SignupPage";
 // Pages lazy (chargées à la demande)
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const FeedPage = lazy(() => import("./pages/FeedPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const ProfileOnboardingPage = lazy(() => import("./pages/ProfileOnboardingPage"));
 
 // Pages lazy (chargées à la demande)
 const UniversPage = lazy(() => import("./pages/UniversPage"));
@@ -139,7 +141,15 @@ export default function App() {
       <Route path="/echanger-sans-argent" element={<EchangerSansArgentPage />} />
       <Route path="/troco-vs-vinted-leboncoin-geev" element={<TrocoVsPage />} />
 
-      <Route path="/onboarding" element={<Navigate to="/feed" replace />} />
+      <Route
+        path="/onboarding"
+        element={user ? <OnboardingPage /> : <Navigate to="/login" replace />}
+      />
+
+      <Route
+        path="/profile-onboarding"
+        element={user ? <ProfileOnboardingPage /> : <Navigate to="/login" replace />}
+      />
 
       <Route
         path="/login"

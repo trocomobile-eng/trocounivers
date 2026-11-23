@@ -242,7 +242,7 @@ export function getPlaceSubtitle(exchange) {
   const place = getPlace(exchange);
 
   if (place.isPartner || place.partner || place.type === "partner") {
-    return place.area || place.district || place.city || "Café partenaire";
+    return place.area || place.district || place.city || "Lieu de rencontre";
   }
 
   return place.address || place.area || place.district || exchange?.location || "Lieu local";

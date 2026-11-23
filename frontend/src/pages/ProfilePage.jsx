@@ -230,8 +230,8 @@ function Avatar({ user, profile, onEdit }) {
         </span>
       )}
 
-      <span className="absolute bottom-1.5 right-1.5 flex h-9 w-9 items-center justify-center rounded-full border border-white bg-white text-[#08755C] shadow-[0_8px_20px_rgba(15,23,42,0.12)]">
-        <Camera size={17} />
+      <span className="absolute bottom-1 right-1 flex h-[26px] w-[26px] items-center justify-center rounded-full border-[1.5px] border-white bg-white text-[#08755C] shadow-[0_4px_12px_rgba(15,23,42,0.14)]">
+        <Camera size={12} />
       </span>
     </button>
   );
@@ -239,24 +239,29 @@ function Avatar({ user, profile, onEdit }) {
 
 function StatCapsule({ icon: Icon, number, label }) {
   return (
-    <div className="flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border border-[#E7ECEB] bg-white px-3 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
-      <Icon size={16} strokeWidth={2.2} className="shrink-0 text-[#22C58B]" />
-      <span className="text-left leading-tight">
-        <span className="block text-[16px] font-black tracking-[-0.03em] text-[#17212B]">{number}</span>
-        <span className="block text-[11px] font-medium text-[#6F7782]">{label}</span>
+    <div className="flex flex-col items-center gap-2 rounded-[20px] border border-[#E7ECEB] bg-white px-3 py-3.5 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EAF8F4]">
+        <Icon size={15} strokeWidth={2.2} className="text-[#22C58B]" />
+      </span>
+      <span className="text-center leading-tight">
+        <span className="block text-[18px] font-black tracking-[-0.04em] text-[#17212B]">{number}</span>
+        <span className="block text-[10.5px] font-medium text-[#6F7782]">{label}</span>
       </span>
     </div>
   );
 }
 
-function ActionButton({ icon: Icon, children, onClick }) {
+function ActionButton({ icon: Icon, children, onClick, variant = "default" }) {
+  const cls = variant === "logout"
+    ? "border border-[#EAEDEC] bg-[#F7FAF9] text-[#6F7782] shadow-none"
+    : "border border-[#D6EDE7] bg-white text-[#17212B] shadow-[0_2px_8px_rgba(15,23,42,0.05)]";
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[18px] border border-[#E7ECEB] bg-white px-4 text-[13px] font-bold text-[#17212B] shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition active:scale-[0.97]"
+      className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-[16px] px-4 text-[13px] font-bold transition active:scale-[0.97] ${cls}`}
     >
-      <Icon size={15} strokeWidth={2.2} />
+      <Icon size={14} strokeWidth={2.2} />
       {children}
     </button>
   );
@@ -265,10 +270,14 @@ function ActionButton({ icon: Icon, children, onClick }) {
 function SectionTitle({ title, action }) {
   return (
     <div className="mb-4 flex items-center justify-between gap-4">
-      <h2 className="text-[22px] font-black leading-none tracking-[-0.055em] text-[#081225] sm:text-[26px]">
+      <h2 className="text-[19px] font-black leading-none tracking-[-0.045em] text-[#081225]">
         {title}
       </h2>
-      {action}
+      {action && (
+        <span className="flex items-center gap-0.5 text-[12px] font-semibold text-[#6F7782]">
+          {action}
+        </span>
+      )}
     </div>
   );
 }
@@ -280,33 +289,33 @@ function ObjectCard({ item, profile }) {
   return (
     <Link
       to={`/items/${item.id}/edit`}
-      className="group relative block w-[160px] shrink-0 overflow-hidden rounded-[20px] bg-white shadow-[0_4px_16px_rgba(15,23,42,0.08)] transition active:scale-[0.97] sm:w-[240px]"
+      className="group relative block w-[152px] shrink-0 overflow-hidden rounded-[18px] bg-white shadow-[0_3px_12px_rgba(15,23,42,0.08)] transition active:scale-[0.97] sm:w-[220px]"
     >
-      <div className="relative aspect-[0.82/1] bg-[#F4F8F6] sm:aspect-[1.18/1]">
+      <div className="relative aspect-[4/5] bg-[#F4F8F6]">
         {image ? (
           <img src={image} alt={title} className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.025]" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-5xl">📦</div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/12 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
 
         <button
           type="button"
           onClick={(event) => event.preventDefault()}
-          className="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#081225] shadow-[0_8px_20px_rgba(15,23,42,0.12)]"
+          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-[#081225] shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
           aria-label="Favori"
         >
-          <Heart size={17} />
+          <Heart size={13} />
         </button>
 
-        <div className="absolute inset-x-0 bottom-0 p-3 text-white sm:p-4">
-          <p className="truncate text-[15px] font-black tracking-[-0.035em] sm:text-[17px]">{title}</p>
-          <p className="mt-1 flex items-center gap-1.5 text-[11.5px] font-bold text-white/90 sm:text-[12.5px]">
-            <MapPin size={12} />
+        <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+          <p className="truncate text-[14px] font-black tracking-[-0.03em]">{title}</p>
+          <p className="mt-0.5 flex items-center gap-1 text-[10.5px] font-semibold text-white/85">
+            <MapPin size={10} />
             {itemPlace(item, profile)}
           </p>
-          <p className="mt-1 text-[11px] font-medium text-white/80 sm:text-[12px]">
+          <p className="mt-0.5 text-[10px] font-medium text-white/70">
             {relativeDate(item?.createdAt || item?.updatedAt)}
           </p>
         </div>
@@ -431,14 +440,14 @@ function WishlistSection() {
   const { items } = useWishlist();
   return (
     <motion.section
-      className="mt-8"
+      className="mt-10"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.56, ease: [0.2, 0.8, 0.2, 1] }}
     >
       <SectionTitle
         title="Ma wishlist"
-        action={<Link to="/wishlist" className="flex items-center gap-1 text-[13px] font-bold text-[#22C58B]">{items.length > 0 ? "Gérer" : "Ajouter"} <ChevronRight size={14} /></Link>}
+        action={<Link to="/wishlist" className="flex items-center gap-0.5 text-[12px] font-semibold text-[#6F7782] hover:text-[#22C58B]">{items.length > 0 ? "Gérer" : "Ajouter"} <ChevronRight size={12} /></Link>}
       />
       {items.length > 0 ? (
         <div className="space-y-2">
@@ -848,8 +857,9 @@ export default function ProfilePage() {
           <TrocoPageHeader user={user} showLogo={false} showNotifications={false} showAvatar={false} eyebrow="Profil" title="Mon profil" subtitle="Ton univers Troco, tes objets et tes envies d’échange." compact />
         </div>
 
-        <section className="sm:grid-cols-[140px_1fr] sm:items-center">
-          <div className="flex justify-start gap-4">
+        <section className="relative -mx-4 px-4 pb-2 sm:grid-cols-[140px_1fr] sm:items-center">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-[240px] rounded-b-[32px] bg-gradient-to-b from-[#EEF7F2]/70 to-transparent" />
+          <div className="flex justify-start gap-4 pt-3">
             <motion.div
               initial={{ opacity: 0, scale: 0.82 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -910,6 +920,7 @@ export default function ProfilePage() {
             <ActionButton icon={Edit3} onClick={() => navigate("/profile/edit")}>Modifier</ActionButton>
             <ActionButton
               icon={LogOut}
+              variant="logout"
               onClick={async () => {
                 await signOut(auth);
                 navigate("/login", { replace: true });
@@ -921,12 +932,12 @@ export default function ProfilePage() {
         </section>
 
         <motion.section
-          className="mt-8"
+          className="mt-10"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <SectionTitle title="Mes objets" action={items.length > 0 ? <Link to="/library" className="flex items-center gap-1 text-[13px] font-bold text-[#22C58B]">Voir tout <ChevronRight size={14} /></Link> : null} />
+          <SectionTitle title="Mes objets" action={items.length > 0 ? <Link to="/library" className="flex items-center gap-0.5 text-[12px] font-semibold text-[#6F7782] hover:text-[#22C58B]">Voir tout <ChevronRight size={12} /></Link> : null} />
           {items.length ? (
             <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {items.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}
@@ -939,7 +950,7 @@ export default function ProfilePage() {
         <WishlistSection />
 
         <motion.section
-          className="mt-8"
+          className="mt-10"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.62, ease: [0.2, 0.8, 0.2, 1] }}
@@ -1003,7 +1014,7 @@ export default function ProfilePage() {
         </motion.section>
 
         <motion.section
-          className="mt-8"
+          className="mt-10"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.74, ease: [0.2, 0.8, 0.2, 1] }}
@@ -1018,14 +1029,14 @@ export default function ProfilePage() {
 
         {favoriteProfiles.length > 0 && (
           <motion.section
-            className="mt-8"
+            className="mt-10"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.62, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <SectionTitle
               title="Mes troqueurs favoris"
-              action={<Link to="/favorites" className="flex items-center gap-1 text-[13px] font-bold text-[#22C58B]">Voir tout <ChevronRight size={14} /></Link>}
+              action={<Link to="/favorites" className="flex items-center gap-0.5 text-[12px] font-semibold text-[#6F7782] hover:text-[#22C58B]">Voir tout <ChevronRight size={12} /></Link>}
             />
             <div className="grid gap-2.5 sm:grid-cols-2">
               {favoriteProfiles.slice(0, 4).map((p) => (
@@ -1056,7 +1067,7 @@ export default function ProfilePage() {
         )}
 
         {favoriteItems.length > 0 && (
-          <section className="mt-8">
+          <section className="mt-10">
             <SectionTitle title="Mes favoris" />
             <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {favoriteItems.map((item) => <ObjectCard key={item.id} item={item} profile={profile} />)}

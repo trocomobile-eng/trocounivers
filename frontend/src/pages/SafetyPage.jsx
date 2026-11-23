@@ -11,7 +11,7 @@ export default function SafetyPage() {
       <h2>Rencontre dans un lieu public</h2>
       <p>
         Pour un premier échange, privilégie un lieu public, fréquenté et facile d’accès :
-        café, place animée, commerce partenaire ou lieu de passage.
+        café, place animée, commerce ouvert ou lieu de passage.
       </p>
 
       <h2>Informations privées</h2>

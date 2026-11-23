@@ -4,7 +4,17 @@
     "title": "Swapping around you.",
     "description": "Discover, exchange and meet locally. Troco turns forgotten objects into real-life local encounters.",
     "help": "Help us build Troco",
-    "prototype": "View prototype"
+    "explore": "Explore Troco",
+    "beta": {
+      "short": "Troco is in beta. Your feedback helps us improve it.",
+      "badge": "Open beta",
+      "title": "Let's build local swapping together.",
+      "description": "Troco is just getting started. Try the app, share your ideas, or tell us what isn't working. We're also open to working with local associations, businesses and communities.",
+      "feedback": "Share feedback",
+      "feedbackSubject": "Feedback on Troco",
+      "collaboration": "Suggest a collaboration",
+      "collaborationSubject": "Collaboration with Troco"
+    }
   },
   "cards": {
     "simple": {

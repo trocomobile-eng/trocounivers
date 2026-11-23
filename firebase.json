@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "troco-6c56c",
     "public": "frontend/dist",
     "ignore": [
       "firebase.json",

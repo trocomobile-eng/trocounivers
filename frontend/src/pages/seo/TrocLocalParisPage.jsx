@@ -53,8 +53,8 @@ export default function TrocLocalParisPage() {
             Quels objets peut-on troquer à Paris&nbsp;?
           </h2>
           <p className="mt-3 text-[16px] leading-relaxed text-[#64748B]">
-            Tout ce qui peut se transporter à pied ou en métro est trocanle. Les utilisateurs
-            parisiens échangent principalement&nbsp;:
+            Les objets faciles à transporter à pied ou en métro sont pratiques pour un échange
+            local. Vous pouvez notamment proposer&nbsp;:
           </p>
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {CATEGORIES.map((cat) => (
@@ -90,11 +90,10 @@ export default function TrocLocalParisPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-[#E4ECE8] bg-white p-6">
-              <h3 className="text-[16px] font-black text-[#081225]">Une communauté engagée</h3>
+              <h3 className="text-[16px] font-black text-[#081225]">Un lieu choisi ensemble</h3>
               <p className="mt-2 text-[15px] leading-relaxed text-[#64748B]">
-                Les premiers utilisateurs Troco sont majoritairement parisiens. La communauté
-                grandit arrondissement par arrondissement, créant un réseau d'échange de plus en
-                plus riche.
+                Avant de confirmer un troc, proposez un lieu public facile à trouver pour les deux
+                personnes. La carte de Troco permet de choisir un point de rendez-vous précis.
               </p>
             </div>
           </div>
@@ -106,10 +105,8 @@ export default function TrocLocalParisPage() {
             Troco dans d'autres villes
           </h2>
           <p className="mt-3 text-[16px] leading-relaxed text-[#64748B]">
-            Paris est le point de départ, mais Troco est disponible partout en France. Lyon,
-            Marseille, Bordeaux, Lille, Nantes, Toulouse — la communauté se développe dans toutes
-            les grandes villes. Si vous n'êtes pas à Paris, vous pouvez tout à fait utiliser
-            Troco : l'application affiche en priorité les objets proches de votre position.
+            Vous pouvez aussi utiliser Troco hors de Paris. Consultez les objets disponibles près
+            de vous, puis convenez d’un lieu public avec l’autre personne avant l’échange.
           </p>
         </section>
 

@@ -5,7 +5,6 @@ import { useAuth } from "../context/AuthContext";
 import {
   ArrowRight,
   CalendarCheck,
-  Coffee,
   MessageCircle,
   Repeat2,
   Sparkles,
@@ -14,7 +13,6 @@ import {
 } from "lucide-react";
 
 import TrocoLogo from "../components/TrocoLogo";
-import { PARTNER_CAFES } from "../data/partnerCafes";
 import TrocoFooter from "../components/TrocoFooter";
 import { db } from "../firebase";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
@@ -23,8 +21,6 @@ import { getItemImage, getItemTitle, getItemLocation } from "../hooks/useFeedIte
 import mockup1 from "../assets/mockups/mockup-1.png";
 import mockup2 from "../assets/mockups/mockup-2.png";
 import mockup3 from "../assets/mockups/mockup-3.png";
-
-const PROPOSER_URL = "https://tally.so/r/ob7NOb";
 
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
@@ -249,76 +245,6 @@ function ObjectStorySection() {
   );
 }
 
-function PartnerCafeCard({ cafe }) {
-  return (
-    <article className="overflow-hidden rounded-[28px] border border-[#E4ECE8] bg-white/86 shadow-[0_14px_40px_rgba(15,23,42,0.045)] backdrop-blur-xl">
-      <div className="aspect-[16/9] overflow-hidden bg-[#EEF7F3]">
-        <img
-          src={cafe.imageUrl}
-          alt={cafe.name}
-          className="h-full w-full object-cover"
-          draggable="false"
-        />
-      </div>
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-[17px] font-black tracking-[-0.035em] text-[#081225]">{cafe.name}</p>
-            <p className="mt-0.5 text-[13px] font-semibold text-[#64748B]">{cafe.area}</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-[#E8F7EF] px-2.5 py-1 text-[11px] font-black text-[#0f9f9a]">
-            Partenaire
-          </span>
-        </div>
-        <p className="mt-3 text-[13px] font-medium leading-relaxed text-[#64748B]">
-          {cafe.description}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {cafe.perks.slice(0, 3).map((perk) => (
-            <span
-              key={perk}
-              className="rounded-full border border-[#E4ECE8] bg-white px-2.5 py-0.5 text-[10px] font-semibold text-[#64748B]"
-            >
-              {perk}
-            </span>
-          ))}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function PartnerPlacesSection() {
-  return (
-    <section className="relative mx-auto mt-9 max-w-7xl px-5">
-      <div className="rounded-[38px] border border-[#E4ECE8] bg-white/84 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.05)] backdrop-blur-xl md:p-9">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[#E8F7EF] text-[#0f9f9a]">
-            <Coffee size={20} strokeWidth={2.35} />
-          </div>
-          <p className="text-[12px] font-black uppercase tracking-[0.24em] text-[#0f9f9a]">
-            Lieux partenaires
-          </p>
-        </div>
-
-        <h2 className="mt-4 max-w-xl text-[34px] font-black leading-[0.96] tracking-[-0.06em] text-[#081225] md:text-[48px]">
-          Troquez dans des lieux de confiance.
-        </h2>
-
-        <p className="mt-4 max-w-2xl text-[17px] font-medium leading-relaxed text-[#64748B]">
-          Nos cafés et bars partenaires sont des lieux publics sélectionnés pour que vos échanges se passent sereinement.
-        </p>
-
-        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PARTNER_CAFES.map((cafe) => (
-            <PartnerCafeCard key={cafe.id} cafe={cafe} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function LandingPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -365,11 +291,14 @@ export default function LandingPage() {
                 onClick={() => navigate("/feed")}
                 className="inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-[22px] bg-gradient-to-r from-[#18BFAF] to-[#2ECC8A] px-7 py-3 text-[17px] font-black text-white shadow-[0_16px_38px_rgba(24,191,175,0.30)] ring-1 ring-white/50 transition active:scale-[0.98] lg:w-auto"
               >
-                {t("landing.prototype")}
+                {t("landing.explore")}
                 <ArrowRight size={20} strokeWidth={2.5} />
               </button>
 
             </div>
+            <p className="mt-3 text-center text-[13px] font-semibold text-[#64748B] lg:text-left">
+              {t("landing.beta.short")}
+            </p>
           </div>
 
           <HeroMockups />
@@ -394,6 +323,36 @@ export default function LandingPage() {
           title={t("cards.sustainable.title")}
           text={t("cards.sustainable.text")}
         />
+      </section>
+
+      <section className="relative mx-auto mt-9 max-w-7xl px-5">
+        <div className="rounded-[32px] border border-[#D8EEE5] bg-[#F0FAF5] p-6 md:flex md:items-center md:justify-between md:gap-8 md:p-8">
+          <div className="max-w-2xl">
+            <p className="text-[12px] font-black uppercase tracking-[0.18em] text-[#0f9f9a]">
+              {t("landing.beta.badge")}
+            </p>
+            <h2 className="mt-3 text-[28px] font-black leading-tight tracking-[-0.045em] text-[#081225] md:text-[34px]">
+              {t("landing.beta.title")}
+            </h2>
+            <p className="mt-3 text-[15px] font-medium leading-relaxed text-[#536476]">
+              {t("landing.beta.description")}
+            </p>
+          </div>
+          <div className="mt-6 flex shrink-0 flex-col gap-3 sm:flex-row md:mt-0 md:flex-col">
+            <a
+              href={`mailto:troco.mobile@gmail.com?subject=${encodeURIComponent(t("landing.beta.feedbackSubject"))}`}
+              className="inline-flex min-h-[46px] items-center justify-center rounded-[16px] bg-[#0f9f9a] px-5 text-sm font-black text-white transition hover:bg-[#0c8783]"
+            >
+              {t("landing.beta.feedback")}
+            </a>
+            <a
+              href={`mailto:troco.mobile@gmail.com?subject=${encodeURIComponent(t("landing.beta.collaborationSubject"))}`}
+              className="inline-flex min-h-[46px] items-center justify-center rounded-[16px] border border-[#B9DCCF] bg-white px-5 text-sm font-black text-[#167a58] transition hover:border-[#0f9f9a]"
+            >
+              {t("landing.beta.collaboration")}
+            </a>
+          </div>
+        </div>
       </section>
 
       <section className="relative mx-auto mt-9 max-w-7xl px-5">
@@ -435,8 +394,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <PartnerPlacesSection />
-
       <section className="relative mx-auto mt-9 max-w-7xl px-5 pb-16">
         <div className="rounded-[38px] border border-[#E4ECE8] bg-white/86 p-7 shadow-[0_20px_70px_rgba(15,23,42,0.055)] backdrop-blur-xl md:p-10">
           <p className="text-[12px] font-black uppercase tracking-[0.24em] text-[#0f9f9a]">
@@ -457,7 +414,7 @@ export default function LandingPage() {
             onClick={() => navigate("/feed")}
             className="mt-8 inline-flex min-h-[58px] items-center justify-center gap-2 rounded-[24px] bg-gradient-to-r from-[#22C7B8] to-[#36C982] px-7 py-4 text-[16px] font-black text-white shadow-[0_14px_34px_rgba(45,212,191,0.20)] transition active:scale-[0.98]"
           >
-            {t("landing.prototype")}
+            {t("landing.explore")}
             <ArrowRight size={20} strokeWidth={2.5} />
           </button>
         </div>

@@ -1,10 +1,13 @@
 
+import { isFictitiousPlace } from "../utils/placeAuthenticity";
+
 export default function CinematicMeetingCard({
   exchange,
   otherUserName = "Alexis",
   otherPhone = "06 XX XX XX XX",
 }) {
-  const place = exchange?.place?.selected || exchange?.place || {};
+  const selectedPlace = exchange?.place?.selected || exchange?.place || {};
+  const place = isFictitiousPlace(selectedPlace) ? {} : selectedPlace;
   const availability = exchange?.availability?.selected || exchange?.availability || {};
 
   return (
@@ -19,7 +22,7 @@ export default function CinematicMeetingCard({
         </h2>
 
         <p className="mt-4 max-w-[92%] text-[15px] font-medium leading-relaxed text-emerald-50/85">
-          Tout est prêt pour votre échange. Il ne vous reste plus qu’à vous retrouver autour d’un café partenaire Troco.
+          Tout est prêt pour votre échange. Retrouvez-vous au lieu que vous avez choisi ensemble.
         </p>
 
         <div className="mt-6 flex items-center justify-center gap-5">
@@ -39,33 +42,28 @@ export default function CinematicMeetingCard({
         </div>
 
         <div className="mt-7 overflow-hidden rounded-[30px] bg-white text-[#081225] shadow-[0_14px_40px_rgba(0,0,0,0.14)]">
-          <div className="aspect-[1.7/1] overflow-hidden bg-emerald-50">
-            <img
-              src={place.imageUrl || "/src/assets/troco-cafes/cafe-atelier.jpg"}
-              alt={place.title}
-              className="h-full w-full object-cover"
-            />
-          </div>
+          {place.imageUrl && (
+            <div className="aspect-[1.7/1] overflow-hidden bg-emerald-50">
+              <img src={place.imageUrl} alt={place.title || "Lieu de rencontre"} className="h-full w-full object-cover" />
+            </div>
+          )}
 
           <div className="p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0f9f9a]">
-                  Café partenaire Troco
+                  Lieu de rencontre
                 </p>
 
                 <h3 className="mt-1 text-[28px] font-black tracking-[-0.05em]">
-                  {place.title || "Café L’Atelier"}
+                  {place.title || place.name || "Lieu à confirmer"}
                 </h3>
               </div>
 
-              <div className="rounded-full bg-[#E8F7EF] px-3 py-1 text-[11px] font-black text-[#0f9f9a]">
-                ☕ Partenaire
-              </div>
             </div>
 
             <p className="mt-2 text-sm font-semibold text-slate-500">
-              {place.address || "23 rue de la Paix, Paris 2e"}
+              {place.address || "Adresse à confirmer ensemble"}
             </p>
 
             <div className="mt-5 grid grid-cols-2 gap-3">

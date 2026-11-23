@@ -15,6 +15,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { isFictitiousPlace } from "../utils/placeAuthenticity";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,9 @@ function formatDateTime(selectedAvailability) {
 
 function getPlace(exchange) {
   const place = exchange?.selectedPlace || exchange?.place || exchange?.meetingPlace || {};
+  if (isFictitiousPlace(place)) {
+    return { title: "Lieu à redéfinir", address: "", isPartner: false };
+  }
   return {
     title: place.title || place.name || "",
     address: place.address || place.formattedAddress || "",
@@ -264,19 +268,25 @@ export default function MeetingConfirmedPage() {
             )}
 
             {/* Itinerary CTA */}
-            <button
-              type="button"
-              onClick={() => openDirections(place.address)}
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#22C58B] px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_14px_rgba(34,197,139,0.28)] transition hover:opacity-90 active:scale-95"
-            >
-              <Navigation size={13} strokeWidth={2.3} />
-              Ouvrir l'itinéraire
-            </button>
-
-            {/* MiniMap */}
-            <div className="mt-5">
-              <MiniMap address={place.address} />
-            </div>
+            {place.address ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => openDirections(place.address)}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#22C58B] px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_4px_14px_rgba(34,197,139,0.28)] transition hover:opacity-90 active:scale-95"
+                >
+                  <Navigation size={13} strokeWidth={2.3} />
+                  Ouvrir l'itinéraire
+                </button>
+                <div className="mt-5">
+                  <MiniMap address={place.address} />
+                </div>
+              </>
+            ) : (
+              <p className="mt-4 text-sm font-semibold text-amber-700">
+                Convenez d’un nouveau lieu public avant de vous déplacer.
+              </p>
+            )}
           </div>
 
           {/* ── DIVIDER ── */}
@@ -404,7 +414,7 @@ export default function MeetingConfirmedPage() {
           <ShieldCheck size={18} strokeWidth={2.2} />
         </span>
         <p className="flex-1 text-[12.5px] font-medium leading-relaxed text-[#344256]">
-          Troco encourage les rencontres dans des lieux publics partenaires pour des échanges en toute sécurité.
+          Pour votre sécurité, choisissez ensemble un lieu public et fréquenté pour la rencontre.
         </p>
         <ChevronRight size={16} strokeWidth={2.2} className="shrink-0 text-[#94a3b8]" />
       </div>

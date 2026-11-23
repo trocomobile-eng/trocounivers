@@ -52,6 +52,7 @@ export default function EditProfilePage() {
   const [photoURL, setPhotoURL] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("Paris");
@@ -88,6 +89,7 @@ export default function EditProfilePage() {
         setPhotoURL(data.photoURL || data.photoUrl || user?.photoURL || "");
         setDisplayName(data.displayName || data.name || user?.displayName || "");
         setUsername(data.username || data.handle || "");
+        setBio(data.bio || data.description || data.about || "");
         setEmail(data.email || user?.email || "");
         setPhone(data.phone || data.phoneNumber || "");
         setCity(isKnownCity ? loadedCity : "__custom__");
@@ -148,6 +150,7 @@ export default function EditProfilePage() {
 
     const cleanName = displayName.trim();
     const cleanUsername = username.trim();
+    const cleanBio = bio.trim();
     const cleanEmail = email.trim();
     const cleanPhone = phone.trim();
     const cleanCity = resolvedCity || "Paris";
@@ -178,6 +181,9 @@ export default function EditProfilePage() {
           name: cleanName,
           username: cleanUsername,
           handle: cleanUsername,
+          bio: cleanBio,
+          description: cleanBio,
+          about: cleanBio,
           email: cleanEmail,
           phone: cleanPhone,
           phoneNumber: cleanPhone,
@@ -301,6 +307,16 @@ setTimeout(() => {
                   className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-slate-700 outline-none"
                 />
               </div>
+            </label>
+
+            <label className="block md:col-span-2">
+              <span className="text-[13px] font-black text-slate-600">Bio</span>
+              <textarea
+                value={bio}
+                onChange={(event) => { setBio(event.target.value); markDirty(); }}
+                placeholder="Ex : J'aime chiner des objets déco, des livres et échanger autour d'un café."
+                className="mt-2 min-h-[104px] w-full resize-none rounded-[20px] border border-teal-100 bg-white/90 px-4 py-3 text-[14px] font-semibold leading-relaxed text-slate-700 outline-none placeholder:text-slate-400"
+              />
             </label>
 
             <label className="block">

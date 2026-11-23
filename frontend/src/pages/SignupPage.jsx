@@ -63,11 +63,13 @@ export default function SignupPage() {
         phone: cleanPhone,
         phoneNumber: cleanPhone,
         city: "Paris",
+        onboardingCompleted: false,
+        profileCompleted: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
-      navigate(redirectTo, { replace: true });
+      navigate("/onboarding", { replace: true, state: { redirectTo } });
     } catch (error) {
       console.error("Erreur inscription :", error);
       alert("Impossible de créer le compte. Vérifie les informations.");

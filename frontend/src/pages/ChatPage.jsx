@@ -19,16 +19,16 @@ import TrocoPageHeader from "../components/TrocoPageHeader";
 
 const PLACE_OPTIONS = [
   {
-    id: "montmartre",
-    title: "Montmartre",
+    id: "zone-nord-simulee",
+    title: "Zone nord simulée",
     description: "Un lieu vivant, public et facile à identifier.",
-    emoji: "🎨",
+    emoji: "📍",
   },
   {
-    id: "chatelet",
-    title: "Châtelet",
+    id: "point-central-simule",
+    title: "Point central simulé",
     description: "Central, pratique et bien desservi.",
-    emoji: "🚇",
+    emoji: "📌",
   },
 ];
 
@@ -276,7 +276,7 @@ export default function ChatPage() {
         showBack
       />
 
-      <div className="space-y-4 px-5 pb-36">
+      <div className="space-y-4 px-5 pb-[calc(152px+env(safe-area-inset-bottom,0px))] lg:pb-36">
         <div className="rounded-[26px] border border-amber-100 bg-amber-50/70 p-4 shadow-[0_8px_28px_rgba(15,23,42,0.045)]">
           <p className="text-[13px] font-black text-amber-800">
             Messagerie limitée
@@ -339,7 +339,7 @@ export default function ChatPage() {
 
         <div ref={bottomRef} />
 
-        <div className="fixed inset-x-0 bottom-6 z-40 px-4 lg:pl-[264px]">
+        <div className="fixed inset-x-0 bottom-[calc(74px+env(safe-area-inset-bottom,0px))] z-50 px-4 lg:bottom-6 lg:pl-[264px]">
           <div className="mx-auto flex max-w-[620px] gap-2 rounded-[28px] border border-[#E4ECE8] bg-white p-2 shadow-[0_4px_20px_rgba(15,23,42,0.10)]">
             <textarea
               value={message}

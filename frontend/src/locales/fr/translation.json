@@ -5,7 +5,17 @@
     "description": "Échangez vos objets simplement autour de vous, sans achat, sans vente, sans livraison.",
     "subDescription": "Publiez ce que vous n'utilisez plus, découvrez les objets disponibles près de chez vous, et proposez un échange simple avec votre communauté locale.",
     "help": "Aide-nous à construire Troco",
-    "prototype": "Voir le prototype"
+    "explore": "Explorer Troco",
+    "beta": {
+      "short": "Troco démarre en bêta. Vos retours nous aident à l'améliorer.",
+      "badge": "Bêta ouverte",
+      "title": "Construisons le troc local ensemble.",
+      "description": "Troco en est à ses débuts. Testez l'application, partagez vos idées ou signalez ce qui ne fonctionne pas. Associations, commerces et communautés locales : nous sommes aussi ouverts aux collaborations.",
+      "feedback": "Donner mon avis",
+      "feedbackSubject": "Retour sur Troco",
+      "collaboration": "Proposer une collaboration",
+      "collaborationSubject": "Collaboration avec Troco"
+    }
   },
   "cards": {
     "simple": {

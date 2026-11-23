@@ -8,6 +8,7 @@ import {
   Phone,
   UserRound,
 } from "lucide-react";
+import { isFictitiousPlace } from "../utils/placeAuthenticity";
 
 function getDayLabel(availability) {
   return availability?.day || availability?.label || "Mercredi 17 juillet";
@@ -48,6 +49,7 @@ export default function PremiumMeetingConfirmed({
   onComplete,
   onModify,
 }) {
+  const displayPlace = isFictitiousPlace(place) ? null : place;
   return (
     <section className="space-y-7 rounded-[34px] border border-white/70 bg-white/42 p-5 shadow-[0_10px_40px_rgba(15,23,42,0.04)] backdrop-blur-[14px]">
       <div>
@@ -94,7 +96,7 @@ export default function PremiumMeetingConfirmed({
           <div className="mb-1 flex items-center gap-2">
             <Coffee size={18} className="text-[#0f9f9a]" strokeWidth={2.25} />
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0f9f9a]">
-              Café partenaire Troco
+              Lieu choisi ensemble
             </p>
           </div>
 
@@ -116,8 +118,8 @@ export default function PremiumMeetingConfirmed({
 
           <InfoRow
             icon={MapPin}
-            title={place?.title || place?.name || "Maison Lune"}
-            subtitle={place?.address || "5 rue des Martyrs · Paris 18e"}
+            title={displayPlace?.title || displayPlace?.name || "Lieu à confirmer"}
+            subtitle={displayPlace?.address || "Adresse à confirmer ensemble"}
           />
 
           <div className="h-px bg-slate-200/70" />

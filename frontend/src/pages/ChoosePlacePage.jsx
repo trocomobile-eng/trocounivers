@@ -9,9 +9,8 @@ import {
 
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import PlaceCard from "../components/PlaceCard";
 import MapPickerModal from "../components/MapPickerModal";
-import { MOCK_PLACES, MIDDLE_POINTS } from "../data/mockPlaces";
+import { isFictitiousPlace } from "../utils/placeAuthenticity";
 
 function normalizePlace(place) {
   if (!place) return null;
@@ -81,16 +80,11 @@ export default function ChoosePlacePage() {
   const currentExchangeId =
     id || exchangeId || location.state?.exchangeId || location.state?.exchange?.id;
 
-  const allPlaces = useMemo(
-    () => [...MOCK_PLACES, ...MIDDLE_POINTS],
-    []
-  );
-
   const [exchange, setExchange] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [selectedPlace, setSelectedPlace] = useState(MOCK_PLACES[0]);
+  const [selectedPlace, setSelectedPlace] = useState(null);
   const [showMapPicker, setShowMapPicker] = useState(false);
 
   useEffect(() => {
@@ -125,7 +119,7 @@ export default function ChoosePlacePage() {
         setExchange(loadedExchange);
 
         const existingPlace = loadedExchange.placeOptions?.[0] || loadedExchange.selectedPlace;
-        if (existingPlace) {
+        if (existingPlace && !isFictitiousPlace(existingPlace)) {
           setSelectedPlace(existingPlace);
         }
       } catch (error) {
@@ -140,7 +134,7 @@ export default function ChoosePlacePage() {
   }, [authLoading, currentExchangeId, navigate, user?.uid]);
 
   const placeOptions = Array.isArray(exchange?.placeOptions)
-    ? exchange.placeOptions
+    ? exchange.placeOptions.filter((place) => !isFictitiousPlace(place))
     : [];
 
   const placeCounterCount = getPlaceCounterCount(exchange);
@@ -177,7 +171,7 @@ export default function ChoosePlacePage() {
   }, [selectedPlace]);
 
   async function proposePlace(place = selectedPlace) {
-    if (!exchange?.id || !place) return;
+    if (!exchange?.id || !place || isFictitiousPlace(place)) return;
 
     const normalizedPlace = normalizePlace(place);
     const otherId = getOtherId(exchange, user.uid);
@@ -471,52 +465,10 @@ export default function ChoosePlacePage() {
         {canPropose && (
           <>
             <section className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-[16px] font-black text-slate-950">
-                  Cafés partenaires
-                </h2>
-
-                <button
-                  type="button"
-                  className="text-[12px] font-black text-[#0f9f9a]"
-                >
-                  Voir tous
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {MOCK_PLACES.map((place) => (
-                  <PlaceCard
-                    key={place.id}
-                    place={place}
-                    selected={selectedPlace?.id === place.id}
-                    onSelect={setSelectedPlace}
-                  />
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-7">
-              <h2 className="mb-3 text-[16px] font-black text-slate-950">
-                Le milieu
-              </h2>
-
-              <div className="space-y-3">
-                {MIDDLE_POINTS.map((place) => (
-                  <PlaceCard
-                    key={place.id}
-                    place={place}
-                    selected={selectedPlace?.id === place.id}
-                    onSelect={setSelectedPlace}
-                    compact
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* Autre lieu — carte */}
-            <section className="mt-7">
-              <h2 className="mb-3 text-[16px] font-black text-slate-950">Autre lieu</h2>
+              <h2 className="mb-3 text-[16px] font-black text-slate-950">Choisir un lieu réel</h2>
+              <p className="mb-4 text-sm font-medium leading-relaxed text-slate-500">
+                Choisissez ensemble un lieu public sur la carte. Troco ne propose pas encore de lieux partenaires.
+              </p>
               <button
                 type="button"
                 onClick={() => setShowMapPicker(true)}

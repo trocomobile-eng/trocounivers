@@ -17,7 +17,7 @@ const CONTENT = {
     eyebrow: "Sécurité",
     title: "Échanger dans un cadre rassurant.",
     body:
-      "Privilégie les lieux publics, vérifie l’objet avant l’échange, évite les rendez-vous isolés et utilise les cafés partenaires lorsque c’est possible.",
+      "Privilégie un lieu public et fréquenté, vérifie l’objet avant l’échange et évite les rendez-vous isolés.",
   },
   privacy: {
     eyebrow: "Confidentialité",
@@ -70,7 +70,7 @@ export default function InfoPage({ type = "about" }) {
               </div>
 
               <p className="mt-2 text-sm font-semibold leading-relaxed">
-                Pour le prototype, les cafés partenaires sont simulés, mais l’intention produit est de créer des lieux de rencontre plus rassurants.
+                Choisissez ensemble un point de rendez-vous précis sur la carte et confirmez l’adresse avant de vous déplacer.
               </p>
             </div>
           )}

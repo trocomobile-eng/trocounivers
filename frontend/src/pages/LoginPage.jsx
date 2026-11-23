@@ -3,21 +3,38 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   GoogleAuthProvider,
   fetchSignInMethodsForEmail,
+  getAdditionalUserInfo,
   getRedirectResult,
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import TrocoLogo from "../components/TrocoLogo";
 
-async function ensureUserDoc(user) {
+async function ensureUserDoc(user, extra = {}) {
   await setDoc(doc(db, "users", user.uid), {
     displayName: user.displayName || user.email?.split("@")[0] || "Utilisateur Troco",
     email: user.email || "",
     avatarUrl: user.photoURL || "",
     updatedAt: serverTimestamp(),
+    ...extra,
   }, { merge: true });
+}
+
+async function getPostLoginPath(user, isNewUser = false) {
+  if (isNewUser) return "/onboarding";
+
+  try {
+    const snapshot = await getDoc(doc(db, "users", user.uid));
+    const data = snapshot.exists() ? snapshot.data() : {};
+    if (data?.onboardingCompleted === false) return "/onboarding";
+    if (data?.profileCompleted === false) return "/profile-onboarding";
+    return "/feed";
+  } catch (error) {
+    console.error("Erreur lecture onboarding :", error);
+    return "/feed";
+  }
 }
 
 function googleErrorMessage(code) {
@@ -42,8 +59,13 @@ export default function LoginPage() {
     getRedirectResult(auth)
       .then(async (result) => {
         if (!result) return;
-        await ensureUserDoc(result.user);
-        // PublicRoute redirige vers /feed dès que onAuthStateChanged met à jour l'auth
+        const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
+        await ensureUserDoc(result.user, isNewUser ? {
+          onboardingCompleted: false,
+          profileCompleted: false,
+          createdAt: serverTimestamp(),
+        } : {});
+        navigate(await getPostLoginPath(result.user, isNewUser), { replace: true });
       })
       .catch((e) => {
         console.error("[Google Redirect] code:", e.code, "message:", e.message, "customData:", e.customData);
@@ -60,8 +82,8 @@ export default function LoginPage() {
     if (!email || !password) { setError("Remplis tous les champs."); return; }
     setError(""); setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/feed", { replace: true });
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      navigate(await getPostLoginPath(result.user), { replace: true });
     } catch (e) {
       if (e.code === "auth/user-not-found" || e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") {
         setError("Email ou mot de passe incorrect.");
@@ -76,8 +98,13 @@ export default function LoginPage() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await ensureUserDoc(result.user);
-      navigate("/feed", { replace: true });
+      const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
+      await ensureUserDoc(result.user, isNewUser ? {
+        onboardingCompleted: false,
+        profileCompleted: false,
+        createdAt: serverTimestamp(),
+      } : {});
+      navigate(await getPostLoginPath(result.user, isNewUser), { replace: true });
     } catch (e) {
       console.error("[Google Login] code:", e.code, "message:", e.message, "customData:", e.customData);
       if (e.code === "auth/account-exists-with-different-credential") {

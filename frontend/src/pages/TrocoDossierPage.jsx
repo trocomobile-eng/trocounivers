@@ -19,7 +19,7 @@ const SECTIONS = [
   {
     number: "04",
     title: "Positionnement",
-    text: "Troco se situe entre marketplace locale, application lifestyle et outil de rencontre autour des objets. Le produit se différencie par la proximité, les cafés partenaires, la négociation guidée et une identité visuelle douce et premium.",
+    text: "Troco se situe entre marketplace locale, application lifestyle et outil de rencontre autour des objets. Le produit se différencie par la proximité, la négociation guidée et une identité visuelle douce et premium.",
   },
 ];
 

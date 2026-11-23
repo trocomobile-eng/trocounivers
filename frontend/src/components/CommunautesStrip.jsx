@@ -41,10 +41,6 @@ function CommunauteCard({ communaute }) {
           {communaute.label}
         </p>
 
-        {/* Compteur */}
-        <p className="mt-0.5 text-[10px] font-semibold text-white/75 lg:text-[11px]">
-          {communaute.members} membres
-        </p>
       </div>
 
       {/* Petit badge hover (desktop) */}

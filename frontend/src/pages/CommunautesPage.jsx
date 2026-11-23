@@ -2,20 +2,6 @@ import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { COMMUNAUTES } from "../data/communautes";
 
-// Compteurs de membres par communauté
-const MEMBERS = {
-  musique: "12,4k",
-  velo: "8,7k",
-  deco: "9,1k",
-  mode: "11,3k",
-  livres: "14,2k",
-  jeux: "6,8k",
-  photo: "7,2k",
-  maison: "15,2k",
-  sport: "10,9k",
-  enfants: "13,1k",
-};
-
 const HERO_CHIPS = [
   { label: "Musique", emoji: "🎵" },
   { label: "Vélo", emoji: "🚲" },
@@ -24,22 +10,6 @@ const HERO_CHIPS = [
   { label: "Jardin", emoji: "🌿" },
   { label: "et plus", emoji: "···" },
 ];
-
-// Petits cercles avatars placeholder (4 teintes de l'accent)
-function MemberAvatars({ accent }) {
-  const shades = ["CC", "AA", "88", "66"];
-  return (
-    <div className="flex -space-x-1.5">
-      {shades.map((s, i) => (
-        <div
-          key={i}
-          className="h-[18px] w-[18px] rounded-full border-2 border-white"
-          style={{ background: `${accent}${s}` }}
-        />
-      ))}
-    </div>
-  );
-}
 
 /* ─────────────────────────────────────────────
    HERO DESKTOP
@@ -147,8 +117,6 @@ function DesktopHero() {
    CARTE COMMUNAUTÉ DESKTOP
 ───────────────────────────────────────────── */
 function DesktopCommunauteRow({ communaute, onClick }) {
-  const members = MEMBERS[communaute.id] || "5k+";
-
   return (
     <button
       type="button"
@@ -194,13 +162,6 @@ function DesktopCommunauteRow({ communaute, onClick }) {
           <p className="mt-1 line-clamp-1 text-[12px] font-medium leading-snug text-slate-400">
             {communaute.description}
           </p>
-          {/* Membres */}
-          <div className="mt-2.5 flex items-center gap-2">
-            <MemberAvatars accent={communaute.accent} />
-            <span className="text-[11.5px] font-semibold text-slate-400">
-              {members} membres
-            </span>
-          </div>
         </div>
 
         {/* Bouton Explorer */}

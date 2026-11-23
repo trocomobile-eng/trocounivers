@@ -5,3 +5,6 @@ dist/
 uploads/
 files/
 *.log
+.pw-browsers/
+playwright-report/
+playwright-results/

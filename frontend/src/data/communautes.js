@@ -23,7 +23,6 @@ export const COMMUNAUTES = [
     label: "Musique",
     tagline: "Instruments, vinyles et matériel audio.",
     description: "Échangez instruments, matos et accessoires avec des passionnés.",
-    members: "12,4k",
     img: imgMusique,
     accent: "#4BA8B8",
     emoji: "🎵",
